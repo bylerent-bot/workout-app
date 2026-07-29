@@ -9,9 +9,10 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <style>
-  /* IRON & CHALK — matte black, bone white, oxblood. Flat ink; the numbers are the poster. */
+  /* IRON & CHALK v2 — matte black, bone white, oxblood. Flat ink; the numbers are the poster.
+     v2: tighter type scale, hairline discipline, ceremony on the seal, honest press states. */
   :root{
-    --bg:#121110; --card:#1B1917; --card2:#242220; --line:#2E2B27;
+    --bg:#100F0E; --card:#191715; --card2:#22201D; --line:#2C2925; --hair:#3A362F;
     --text:#EDE9E2; --dim:#8A857C; --ox:#A64B3F; --oxdeep:#8E3B34; --chalk:#F5F2EA;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -24,15 +25,21 @@
   h1{font-size:30px; line-height:1.05; margin:10px 0 4px}
   .kicker{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ox); font-weight:700; margin:14px 0 2px}
   .sub{color:var(--dim); font-size:14px; margin-bottom:14px}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; margin-bottom:12px}
+  .card{background:var(--card); border:1px solid var(--line); border-top:1px solid var(--hair);
+    border-radius:2px; padding:16px; margin-bottom:12px}
   .rule{border:0; border-top:1px solid var(--line); margin:12px 0}
-  button{font:inherit; border:none; border-radius:3px; cursor:pointer}
-  .big{display:block; width:100%; padding:16px; font-size:15px; font-weight:800; letter-spacing:.14em;
-    text-transform:uppercase; background:var(--ox); color:var(--chalk)}
+  button{font:inherit; border:none; border-radius:2px; cursor:pointer; transition:transform .06s}
+  button:active{transform:scale(.985)}
+  .big{display:block; width:100%; padding:17px; font-size:15px; font-weight:800; letter-spacing:.16em;
+    text-transform:uppercase; background:var(--ox); color:var(--chalk); box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
   .big:active{background:var(--oxdeep)}
   .ghost{background:none; border:1px solid var(--line); color:var(--dim); width:100%; padding:12px;
     margin-top:10px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; font-weight:700}
-  .locked{text-align:center; padding:44px 20px}
+  .locked{text-align:center; padding:40px 20px; position:relative}
+  .locked::before,.locked::after{content:''; display:block; height:0; border-top:1px solid var(--hair);
+    border-bottom:1px solid var(--line); padding-top:2px; margin:0 8px}
+  .locked::before{margin-bottom:26px}
+  .locked::after{margin-top:26px}
   .locked .disp{font-size:34px}
   .block h3{margin:0 0 2px; font-size:20px}
   .block .detail{color:var(--dim); font-size:14px; margin-bottom:12px}
@@ -52,8 +59,9 @@
   .setrow.done .log{background:var(--chalk); color:var(--bg); border-color:var(--chalk)}
   .skip{background:none; color:var(--dim); font-size:13px; padding:8px 0; text-decoration:underline}
   .timer{position:fixed; left:0; right:0; bottom:56px; background:var(--card2);
-    border-top:2px solid var(--ox); padding:10px 16px; display:none; align-items:center; justify-content:space-between}
+    border-top:2px solid var(--ox); padding:10px 16px; display:none; align-items:center; justify-content:space-between; overflow:hidden}
   .timer.on{display:flex}
+  .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(166,75,63,.14); pointer-events:none; transition:width 1s linear}
   .timer .t{font-size:38px; font-variant-numeric:tabular-nums}
   .timer button{background:none; color:var(--dim); padding:10px 14px; border:1px solid var(--line);
     text-transform:uppercase; font-size:12px; font-weight:700; letter-spacing:.1em}
@@ -68,10 +76,11 @@
   .unsynced{color:var(--ox); font-size:13px; margin-top:8px}
   /* bottom tab bar */
   .tabbar{position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--bg);
-    border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom)}
-  .tabbar button{flex:1; padding:13px 0 11px; background:none; color:var(--dim); font-size:11px;
-    font-weight:800; letter-spacing:.14em; text-transform:uppercase; border-top:2px solid transparent; border-radius:0}
+    border-top:1px solid var(--hair); box-shadow:0 -1px 0 var(--line); padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{flex:1; padding:14px 0 12px; background:none; color:var(--dim); font-size:11px;
+    font-weight:800; letter-spacing:.16em; text-transform:uppercase; border-top:2px solid transparent; border-radius:0}
   .tabbar button.sel{color:var(--chalk); border-top-color:var(--ox)}
+  .tabbar button:active{transform:none; color:var(--text)}
   video{width:100%; border-radius:3px; margin-top:10px; background:#000}
   .fb{border-left:3px solid var(--ox); background:var(--card2); font-size:14px;
     padding:10px 12px; margin-top:10px; white-space:pre-wrap}
@@ -93,6 +102,7 @@
 <body>
 <div class="wrap" id="app"></div>
 <div class="timer" id="timer">
+  <div class="drain" id="tdrain"></div>
   <div><div style="font-size:11px;color:var(--dim);letter-spacing:.14em">REST</div><div class="t disp" id="tval">0:00</div></div>
   <button onclick="stopTimer()">Done resting</button>
 </div>
@@ -271,8 +281,14 @@ function skipBlock(bid){
   if(!confirm('Skip this one? It carries forward — nothing gets lost.'))return;
   log[S.id].blocks[bid].skipped=true;store.save(log);render();
 }
-function startTimer(n){sec=n;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
-function tick(){if(sec<0)return stopTimer();$('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');sec--}
+let tTotal=90;
+function startTimer(n){sec=n;tTotal=n;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
+function tick(){
+  if(sec<0)return stopTimer();
+  $('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
+  $('tdrain').style.width=(100*(1-sec/tTotal))+'%';
+  sec--;
+}
 function stopTimer(){clearInterval(tint);$('timer').classList.remove('on')}
 function film(bid){$(`f_${bid}`).click()}
 async function gotClip(bid,input){
