@@ -436,6 +436,7 @@ async function checkMealQueue(){
 }
 function renderFuel(){
   if(j('mealq',[]).length){checkMealQueue().then(ch=>{if(ch&&view==='fuel')renderFuel()});pollMeals()}
+  if(j('suggestq',[]).length)pollSuggest();
   const key='fuel:'+today();
   const f=j(key,{g:0,items:[]});
   const pct=Math.min(100,Math.round(f.g/140*100));
@@ -444,15 +445,71 @@ function renderFuel(){
     <div class="bignum disp">${f.g}<small> / 140 G</small></div>
     <div class="bar ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
     <div class="sub">${f.g>=140?'Hit. That\'s the whole game — done for today.':f.g>=100?'Past the floor — push to 140.':'Floor is 100. Anchor meals below.'}</div>
-    <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <b>+${g}</b></button>`).join('')}
-      <button onclick="addCustom()">Custom <b>+?</b></button>
-      <button onclick="$('mealIn').click()" style="border-color:var(--ox)">📷 Snap meal / menu</button></div>
+    <button class="big" style="margin-top:10px" onclick="$('mealIn').click()">📷 Snap meal / menu</button>
+    <button class="ghost" onclick="nearMe()">🧭 What's good near me</button>
     <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
     ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="sub" style="margin-top:10px">📷 Analyzing your photo — protein lands here in ~2 min…</div>`).join('')}
+    <div id="suggestBox">${suggestBox()}</div>
+    <hr class="rule">
+    <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <b>+${g}</b></button>`).join('')}
+      <button onclick="addCustom()">Custom <b>+?</b></button></div>
     ${f.items.length?`<hr class="rule">`+f.items.map((it,i)=>`<div class="statrow"><span>${it.n}</span><span class="v">${it.g}g <a style="color:var(--dim);font-size:13px;margin-left:8px" onclick="rmFuel(${i})">✕</a></span></div>`).join(''):''}
   </div>
   <div class="card sub" style="font-size:13px">Rule from your plan: hit ~140 g protein, food mostly real, don't count calories. Breakfast shake is the anchor — never protein-free again.</div>`;
   $('app').innerHTML=h;
+}
+function suggestBox(){
+  const s=j('suggest',null);
+  const pending=j('suggestq',[]).length;
+  let h='';
+  if(pending)h+=`<div class="sub" style="margin-top:10px">🧭 Scouting nearby protein — picks land here in ~3 min…</div>`;
+  if(s&&s.date===today()){
+    h+=`<div class="cue" style="margin-top:12px"><b>NEAR ${(s.where||'YOU').toUpperCase()}</b>`+
+      s.picks.map(p=>`<div style="margin-top:8px"><b style="color:var(--text);letter-spacing:0;font-size:15px;display:inline">${p.spot}</b> — ${p.order} <span style="color:var(--ox);font-weight:700">~${p.protein_g}g</span></div>`).join('')+`</div>`;
+  }
+  return h;
+}
+async function nearMe(){
+  const send=async txt=>{
+    const c=cfg();if(!c){alert('Connect first (Today tab).');return}
+    const [endpoint,token]=c;
+    const key=`suggest/${today()}-${Date.now()}.txt`;
+    const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:txt});
+    const rj=res.ok?await res.json():null;
+    if(rj&&rj.size>0){const q=j('suggestq',[]);q.push({key,date:today()});sv('suggestq',q);renderFuel();pollSuggest()}
+    else alert('Request failed — try again.');
+  };
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      p=>send(p.coords.latitude.toFixed(5)+','+p.coords.longitude.toFixed(5)),
+      ()=>{const t=prompt('Location unavailable — where are you? (e.g. "Town Center VB")');if(t)send(t)},
+      {timeout:8000});
+  }else{const t=prompt('Where are you?');if(t)send(t)}
+}
+let sugTimer=null;
+function pollSuggest(){
+  clearInterval(sugTimer);
+  sugTimer=setInterval(async()=>{
+    const q=j('suggestq',[]);
+    if(!q.length){clearInterval(sugTimer);return}
+    const c=cfg();if(!c)return;
+    const [endpoint,token]=c;
+    try{
+      const fb=await fetch(endpoint+'/feedback',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json());
+      const remain=[];
+      for(const it of q){
+        const f=fb[it.key];
+        if(!f){remain.push(it);continue}
+        try{
+          const m=JSON.parse(f.notes.match(/\{.*\}/s)[0]);
+          sv('suggest',{...m,date:it.date});
+        }catch(e){}
+      }
+      sv('suggestq',remain);
+      if(view==='fuel')renderFuel();
+    }catch(e){}
+  },20000);
 }
 async function gotMeal(input){
   const files=[...input.files];if(!files.length)return;
