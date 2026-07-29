@@ -222,9 +222,12 @@ async function gotClip(bid,input){
   const [endpoint,token]=cfg.split('|');
   try{
     const key=`${S.id}/${bid}-${Date.now()}.${(f.name.split('.').pop()||'mov')}`;
+    const buf=await f.arrayBuffer();
+    if(!buf.byteLength)throw new Error('empty file');
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'video/quicktime'},body:f});
-    bl.upload=res.ok?{state:'done',key}:{state:'error'};
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'video/quicktime'},body:buf});
+    const rj=res.ok?await res.json():null;
+    bl.upload=(rj&&rj.size>0)?{state:'done',key}:{state:'error'};
   }catch(e){bl.upload={state:'error'}}
   store.save(log);render();
 }

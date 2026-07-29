@@ -24,7 +24,8 @@ export default {
 
     if (req.method === 'POST' && path === '/log') {
       const body = await req.json();
-      const key = `log:${body.sessionId || 'unknown'}:${Date.now()}`;
+      // timestamp-first so key order == time order (the sync cursor relies on it)
+      const key = `log:${Date.now()}:${body.sessionId || 'unknown'}`;
       await env.LOGS.put(key, JSON.stringify(body));
       return json({ ok: true, key });
     }
@@ -32,10 +33,12 @@ export default {
     if (req.method === 'POST' && path === '/upload') {
       const key = url.searchParams.get('key');
       if (!key || key.includes('..')) return json({ error: 'bad key' }, 400);
-      await env.FOOTAGE.put(key, req.body, {
+      const bytes = await req.arrayBuffer();
+      if (!bytes || bytes.byteLength === 0) return json({ error: 'empty upload' }, 400);
+      await env.FOOTAGE.put(key, bytes, {
         httpMetadata: { contentType: req.headers.get('Content-Type') || 'application/octet-stream' },
       });
-      return json({ ok: true, key });
+      return json({ ok: true, key, size: bytes.byteLength });
     }
 
     if (req.method === 'GET' && path === '/pull') {
