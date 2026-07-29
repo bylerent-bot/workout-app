@@ -303,7 +303,7 @@ async function renderReview(){
       fetch(endpoint+'/pull',{headers:H}).then(r=>r.json()).catch(()=>({media:[]})),
       fetch(endpoint+'/feedback',{headers:H}).then(r=>r.json()).catch(()=>({}))
     ]);
-    const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
+    const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')&&!m.key.startsWith('meals/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
     let h='<div class="kicker">Film room</div><h1 class="disp">Review</h1>';
     if(!media.length)h+='<div class="card sub" style="margin-top:12px">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
     for(const m of media){
@@ -413,7 +413,29 @@ const MEALS=[
   ['Panera Cobb + chicken','40'],['Steak (6-8 oz)','50'],['Burger (double)','45'],
   ['Sushi / poke','40'],['Chicken dinner','40'],['Greek yogurt','18'],['Eggs (3)','19']
 ];
+async function checkMealQueue(){
+  const q=j('mealq',[]);const c=cfg();
+  if(!q.length||!c)return false;
+  const [endpoint,token]=c;
+  try{
+    const fb=await fetch(endpoint+'/feedback',{headers:{'Authorization':'Bearer '+token}}).then(r=>r.json());
+    let changed=false;const remain=[];
+    for(const it of q){
+      const f=fb[it.key];
+      if(!f){remain.push(it);continue}
+      try{
+        const m=JSON.parse(f.notes.match(/\{.*\}/s)[0]);
+        const dk='fuel:'+it.date;const day=j(dk,{g:0,items:[]});
+        day.items.push({n:'📷 '+m.desc+(m.note?' — '+m.note:''),g:m.protein_g});
+        day.g+=m.protein_g;sv(dk,day);changed=true;
+        postLog({type:'nutrition',date:it.date,protein_g:day.g,items:day.items});
+      }catch(e){remain.push(it)}
+    }
+    sv('mealq',remain);return changed;
+  }catch(e){return false}
+}
 function renderFuel(){
+  if(j('mealq',[]).length){checkMealQueue().then(ch=>{if(ch&&view==='fuel')renderFuel()});pollMeals()}
   const key='fuel:'+today();
   const f=j(key,{g:0,items:[]});
   const pct=Math.min(100,Math.round(f.g/140*100));
@@ -423,11 +445,39 @@ function renderFuel(){
     <div class="bar ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
     <div class="sub">${f.g>=140?'Hit. That\'s the whole game — done for today.':f.g>=100?'Past the floor — push to 140.':'Floor is 100. Anchor meals below.'}</div>
     <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <b>+${g}</b></button>`).join('')}
-      <button onclick="addCustom()">Custom <b>+?</b></button></div>
+      <button onclick="addCustom()">Custom <b>+?</b></button>
+      <button onclick="$('mealIn').click()" style="border-color:var(--ox)">📷 Snap meal / menu</button></div>
+    <input type="file" id="mealIn" accept="image/*" capture="environment" style="display:none" onchange="gotMeal(this)">
+    ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="sub" style="margin-top:10px">📷 Analyzing your photo — protein lands here in ~2 min…</div>`).join('')}
     ${f.items.length?`<hr class="rule">`+f.items.map((it,i)=>`<div class="statrow"><span>${it.n}</span><span class="v">${it.g}g <a style="color:var(--dim);font-size:13px;margin-left:8px" onclick="rmFuel(${i})">✕</a></span></div>`).join(''):''}
   </div>
   <div class="card sub" style="font-size:13px">Rule from your plan: hit ~140 g protein, food mostly real, don't count calories. Breakfast shake is the anchor — never protein-free again.</div>`;
   $('app').innerHTML=h;
+}
+async function gotMeal(input){
+  const f=input.files[0];if(!f)return;
+  const c=cfg();
+  if(!c){alert('Connect first (Today tab) — photo can\'t upload.');return}
+  const [endpoint,token]=c;
+  try{
+    const key=`meals/${today()}-${Date.now()}.jpg`;
+    const buf=await f.arrayBuffer();
+    const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+    const rj=res.ok?await res.json():null;
+    if(rj&&rj.size>0){
+      const q=j('mealq',[]);q.push({key,date:today()});sv('mealq',q);
+      renderFuel();pollMeals();
+    }else alert('Upload failed — try again.');
+  }catch(e){alert('Upload failed — try again.')}
+}
+let mealTimer=null;
+function pollMeals(){
+  clearInterval(mealTimer);
+  mealTimer=setInterval(async()=>{
+    if(!j('mealq',[]).length){clearInterval(mealTimer);return}
+    if(await checkMealQueue()&&view==='fuel')renderFuel();
+  },20000);
 }
 function addFuel(n,g){
   const key='fuel:'+today();const f=j(key,{g:0,items:[]});
