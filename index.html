@@ -161,12 +161,20 @@ function connectBanner(){
     <div class="unsynced" style="margin:0 0 8px">Not connected to your coach — logs stay on this phone and video upload won't work.</div>
     <button class="ghost" onclick="connect()">Connect (paste setup link)</button></div>`;
 }
+const DEFAULT_ENDPOINT='https://train-sync.byler-train.workers.dev';
 function connect(){
-  const v=prompt('Paste the setup link from Claude (the long one with #cfg=...)');
+  let v=prompt('Paste your setup key (or the full link) from Claude');
   if(!v)return;
-  const m=v.includes('#cfg=')?v.split('#cfg=')[1]:v;
-  if(!m.includes('|')){alert('That doesn\'t look right — it needs the full link with the key after #cfg=.');return}
-  localStorage.setItem('synccfg',m.trim());alert('Connected ✓');render();
+  v=v.replace(/["'\s]/g,'');
+  if(v.includes('#cfg='))v=v.split('#cfg=')[1];
+  let cfg;
+  if(v.includes('|'))cfg=v;
+  else{
+    const tok=(v.match(/[a-f0-9]{32,}/i)||[])[0];
+    if(!tok){alert('No key found in that paste — paste the long code Claude sent.');return}
+    cfg=DEFAULT_ENDPOINT+'|'+tok;
+  }
+  localStorage.setItem('synccfg',cfg);alert('Connected ✓');render();
 }
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
