@@ -53,6 +53,20 @@ export default {
       return json({ logs: out, media });
     }
 
+    if (req.method === 'POST' && path === '/feedback') {
+      const body = await req.json();
+      if (!body.clipKey) return json({ error: 'clipKey required' }, 400);
+      await env.LOGS.put('fb:' + body.clipKey, JSON.stringify({ notes: body.notes, at: Date.now() }));
+      return json({ ok: true });
+    }
+
+    if (req.method === 'GET' && path === '/feedback') {
+      const list = await env.LOGS.list({ prefix: 'fb:' });
+      const out = {};
+      for (const k of list.keys) out[k.name.slice(3)] = JSON.parse(await env.LOGS.get(k.name));
+      return json(out);
+    }
+
     if (path.startsWith('/media/')) {
       const key = decodeURIComponent(path.slice(7));
       if (req.method === 'GET') {

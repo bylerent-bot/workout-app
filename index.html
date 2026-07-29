@@ -61,6 +61,12 @@
     padding:12px; margin-top:10px}
   .synced{color:var(--accent); font-size:13px; margin-top:8px}
   .unsynced{color:var(--warn); font-size:13px; margin-top:8px}
+  .tabs{display:flex; gap:8px; margin-bottom:14px}
+  .tabs button{flex:1; padding:12px; font-weight:600; background:var(--card); color:var(--dim); border:1px solid var(--line)}
+  .tabs button.sel{background:var(--card2); color:var(--text); border-color:var(--accent)}
+  video{width:100%; border-radius:12px; margin-top:10px; background:#000}
+  .fb{background:#1a2a22; border:1px solid #2a4a3a; color:#a8d8bf; font-size:14px; border-radius:12px; padding:10px 12px; margin-top:10px; white-space:pre-wrap}
+  .fb.pending{background:var(--card2); border-color:var(--line); color:var(--dim)}
 </style>
 </head>
 <body>
@@ -94,13 +100,57 @@ async function init(){
   render();
 }
 
+let view='today';
+function tabs(){
+  return `<div class="tabs">
+    <button class="${view==='today'?'sel':''}" onclick="view='today';render()">Today</button>
+    <button class="${view==='review'?'sel':''}" onclick="view='review';renderReview()">Review</button></div>`;
+}
+async function renderReview(){
+  view='review';
+  const app=$('app');
+  const cfg=localStorage.getItem('synccfg');
+  if(!cfg){app.innerHTML=tabs()+connectBanner();return}
+  app.innerHTML=tabs()+'<div class="sub">Loading clips…</div>';
+  const [endpoint,token]=cfg.split('|');
+  try{
+    const H={'Authorization':'Bearer '+token};
+    const [pull,fb]=await Promise.all([
+      fetch(endpoint+'/pull',{headers:H}).then(r=>r.json()).catch(()=>({media:[]})),
+      fetch(endpoint+'/feedback',{headers:H}).then(r=>r.json()).catch(()=>({}))
+    ]);
+    const media=(pull.media||[]).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
+    let h=tabs();
+    if(!media.length)h+='<div class="card sub">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
+    for(const m of media){
+      const f=fb[m.key];
+      const label=m.key.replace(/\//g,' · ').replace(/-\d+\.\w+$/,'');
+      const date=new Date(m.uploaded).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+      h+=`<div class="card"><h3 style="margin:0">${label}</h3><div class="detail">${date} · ${(m.size/1048576).toFixed(1)} MB</div>
+        <button class="ghost" onclick="playClip('${m.key}',this)">▶ Watch</button>
+        <div class="fb ${f?'':'pending'}">${f?('🧠 Coach: '+f.notes):'Coach review pending — lands after the next sync.'}</div></div>`;
+    }
+    app.innerHTML=h;
+  }catch(e){app.innerHTML=tabs()+'<div class="card unsynced">Couldn\'t reach the server — check connection.</div>'}
+}
+async function playClip(key,btn){
+  btn.textContent='Loading…';
+  const [endpoint,token]=localStorage.getItem('synccfg').split('|');
+  try{
+    const r=await fetch(endpoint+'/media/'+encodeURIComponent(key),{headers:{'Authorization':'Bearer '+token}});
+    const blob=await r.blob();
+    const v=document.createElement('video');
+    v.src=URL.createObjectURL(blob);v.controls=true;v.playsInline=true;
+    btn.after(v);btn.remove();v.play();
+  }catch(e){btn.textContent='▶ Watch (failed — retry)'}
+}
 function render(){
   const app=$('app');
   if(!S){app.innerHTML='<div class="card locked"><div class="lock">🏁</div><h1>No session queued</h1><p class="sub">Claude programs the next one tonight.</p></div>';return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed){return renderDone()}
   if(!L.revealed && today()<S.date){
-    app.innerHTML=`<div class="card locked"><div class="lock">🔒</div>
+    app.innerHTML=tabs()+`<div class="card locked"><div class="lock">🔒</div>
       <h1>Sealed until ${S.date}</h1>
       <p class="sub">${S.place} · ${S.time}</p>
       <p class="sub">Show up. It'll be here.</p></div>`;
@@ -113,7 +163,7 @@ function render(){
       <button class="big" onclick="reveal()">Reveal workout</button></div>`;
     return;
   }
-  let h=connectBanner()+`<h1>${S.phase}</h1><div class="sub">${S.place} · ${S.date}</div>`;
+  let h=tabs()+connectBanner()+`<h1>${S.phase}</h1><div class="sub">${S.place} · ${S.date}</div>`;
   if(S.formCue)h+=`<div class="cue">🎯 ${S.formCue}</div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
@@ -206,7 +256,7 @@ async function finish(){
 }
 function renderDone(){
   const L=log[S.id];
-  $('app').innerHTML=`<div class="card doneview"><div style="font-size:44px">✅</div>
+  $('app').innerHTML=tabs()+`<div class="card doneview"><div style="font-size:44px">✅</div>
     <h1>Session logged</h1>
     <p class="sub">RPE ${L.rpe??'—'} · Feel ${L.feel??'—'}</p>
     <div id="syncstate" class="${L.synced?'synced':'unsynced'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
