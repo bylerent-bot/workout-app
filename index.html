@@ -161,6 +161,16 @@ function render(){
   if(!S){app.innerHTML=connectBanner()+`<div class="card locked"><div class="disp" style="font-size:30px">No session queued</div><p class="sub">Claude programs the next one tonight.</p></div>`;return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
+  // rollover pacing: one session per day — if the previous session was finished today, the next unlocks tomorrow
+  const idx=ALLSESS.indexOf(S);
+  const prev=idx>0?log[ALLSESS[idx-1].id]:null;
+  if(prev&&prev.completedAt&&prev.completedAt.slice(0,10)===today()){
+    app.innerHTML=connectBanner()+`<div class="card locked">
+      <div class="kicker">Done for today</div>
+      <div class="disp" style="font-size:34px">Recover</div>
+      <p class="sub" style="margin-top:8px">Next session unlocks tomorrow. Protein and sleep are the workout now.</p></div>`+requestsCard();
+    return;
+  }
   if(!L.revealed && today()<S.date){
     app.innerHTML=connectBanner()+`<div class="card locked">
       <div class="kicker">Sealed</div>
@@ -219,7 +229,30 @@ function render(){
     <div class="detail">Anything for your coach?</div>
     <textarea id="notes" placeholder="niggles, wins, whatever">${L.notes||''}</textarea>
     <button class="big" style="margin-top:12px" onclick="finish()">Finish session</button></div>`;
-  app.innerHTML=h;
+  app.innerHTML=h+requestsCard();
+}
+function requestsCard(){
+  const reqs=j('movereqs',[]);
+  return `<div class="card"><div class="kicker" style="margin-top:0">Request a movement</div>
+    <div class="detail">Want a lift or movement programmed that isn't showing up? Tell your coach — it gets woven into upcoming sessions.</div>
+    <div class="setrow"><input id="mreq" style="flex:1;width:auto;font-size:16px;text-align:left;font-family:inherit;font-weight:400" placeholder="e.g. farmer carries, sled pushes">
+    <button class="log" style="flex:0 0 90px" onclick="sendReq()">Send</button></div>
+    ${reqs.map(r=>`<div class="statrow"><span>${r.t}</span><span class="sub" style="font-size:12px">${r.d}${r.synced?' · sent ✓':' · queued'}</span></div>`).join('')}</div>`;
+}
+async function sendReq(){
+  const t=$('mreq').value.trim();if(!t)return;
+  const reqs=j('movereqs',[]);
+  const r={t,d:today(),synced:false};reqs.push(r);sv('movereqs',reqs);
+  const c=cfg();
+  if(c){
+    const [endpoint,token]=c;
+    try{
+      const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({sessionId:'movement-request',log:{type:'movement-request',date:today(),request:t}})});
+      if(res.ok)r.synced=true;
+    }catch(e){}
+  }
+  sv('movereqs',reqs);render();
 }
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
