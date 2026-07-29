@@ -8,113 +8,138 @@
 <title>Train</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  /* IRON & CHALK v2 — matte black, bone white, oxblood. Flat ink; the numbers are the poster.
-     v2: tighter type scale, hairline discipline, ceremony on the seal, honest press states. */
+  /* IRON & CHALK v3 — design language from the 7/29 Gemini pass, functionality intact. */
   :root{
-    --bg:#100F0E; --card:#191715; --card2:#22201D; --line:#2C2925; --hair:#3A362F;
-    --text:#EDE9E2; --dim:#8A857C; --ox:#A64B3F; --oxdeep:#8E3B34; --chalk:#F5F2EA;
+    --black:#050505; --card:#0C0C0C; --bone:#EAE6DF; --dim:#8A8883;
+    --ox:#7D1111; --oxbright:#A64B3F; --line:#222222; --line2:#3A3A3A;
+    --fnum:'Anton',sans-serif; --fhead:'Oswald',sans-serif; --fbody:'Inter',sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-  body{margin:0; background:var(--bg); color:var(--text);
-    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+  body{margin:0; background:var(--black); color:var(--bone);
+    font:15px/1.5 var(--fbody);
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-  .wrap{max-width:520px; margin:0 auto; padding:14px 16px 90px}
-  .disp{font-family:"HelveticaNeue-CondensedBlack","Helvetica Neue Condensed","Arial Narrow",-apple-system,sans-serif;
-    font-weight:900; letter-spacing:.01em; text-transform:uppercase}
-  h1{font-size:30px; line-height:1.05; margin:10px 0 4px}
-  .kicker{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ox); font-weight:700; margin:14px 0 2px}
-  .sub{color:var(--dim); font-size:14px; margin-bottom:14px}
-  .card{background:var(--card); border:1px solid var(--line); border-top:1px solid var(--hair);
-    border-radius:2px; padding:16px; margin-bottom:12px}
-  .rule{border:0; border-top:1px solid var(--line); margin:12px 0}
-  button{font:inherit; border:none; border-radius:2px; cursor:pointer; transition:transform .06s}
-  button:active{transform:scale(.985)}
-  .big{display:block; width:100%; padding:17px; font-size:15px; font-weight:800; letter-spacing:.16em;
-    text-transform:uppercase; background:var(--ox); color:var(--chalk); box-shadow:inset 0 -3px 0 rgba(0,0,0,.25)}
-  .big:active{background:var(--oxdeep)}
-  .ghost{background:none; border:1px solid var(--line); color:var(--dim); width:100%; padding:12px;
-    margin-top:10px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; font-weight:700}
-  .locked{text-align:center; padding:40px 20px; position:relative}
-  .locked::before,.locked::after{content:''; display:block; height:0; border-top:1px solid var(--hair);
-    border-bottom:1px solid var(--line); padding-top:2px; margin:0 8px}
-  .locked::before{margin-bottom:26px}
-  .locked::after{margin-top:26px}
-  .locked .disp{font-size:34px}
-  .block h3{margin:0 0 2px; font-size:20px}
-  .block .detail{color:var(--dim); font-size:14px; margin-bottom:12px}
-  .filmchip{display:inline-block; border:1px solid var(--ox); color:var(--ox); font-size:11px;
-    font-weight:800; letter-spacing:.1em; padding:2px 7px; border-radius:2px; margin-left:8px; vertical-align:2px}
-  .cue{border-left:3px solid var(--ox); background:var(--card); color:var(--text); font-size:15px;
-    padding:12px 14px; margin:12px 0 16px}
-  .cue b{color:var(--ox); letter-spacing:.12em; font-size:11px; display:block; margin-bottom:3px}
-  .setrow{display:flex; align-items:center; gap:8px; margin-bottom:8px}
-  .setrow .lbl{width:46px; color:var(--dim); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
-  .setrow input{width:76px; padding:12px 6px; font-size:22px; text-align:center; border-radius:3px;
-    background:var(--card2); border:1px solid var(--line); color:var(--text);
-    font-family:"HelveticaNeue-CondensedBold","Arial Narrow",sans-serif; font-weight:700}
-  .setrow .x{color:var(--dim)}
-  .setrow .log{flex:1; padding:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
-    font-size:13px; background:var(--card2); color:var(--text); border:1px solid var(--line)}
-  .setrow.done .log{background:var(--chalk); color:var(--bg); border-color:var(--chalk)}
-  .skip{background:none; color:var(--dim); font-size:13px; padding:8px 0; text-decoration:underline}
-  .timer{position:fixed; left:0; right:0; bottom:56px; background:var(--card2);
-    border-top:2px solid var(--ox); padding:10px 16px; display:none; align-items:center; justify-content:space-between; overflow:hidden}
+  .wrap{max-width:520px; margin:0 auto; padding:20px 20px 110px}
+  .num{font-family:var(--fnum); letter-spacing:.02em}
+  .head{font-family:var(--fhead); text-transform:uppercase; letter-spacing:.03em}
+  h1{font-family:var(--fhead); font-size:30px; text-transform:uppercase; letter-spacing:.02em; margin:4px 0 16px; line-height:1.1}
+  .label{font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim)}
+  .label.lit{color:var(--bone)}
+  .card{background:var(--card); border:2px solid var(--line); padding:18px; margin-bottom:16px}
+  .rule{border:0; border-top:2px solid var(--line); margin:18px 0}
+  .dotted{border:0; border-top:2px dotted var(--line); margin:18px 0}
+  button{font:inherit; border:none; border-radius:0; cursor:pointer; color:var(--bone); background:none}
+  .btn{display:flex; align-items:center; justify-content:center; width:100%; height:60px;
+    border:2px solid var(--bone); font-family:var(--fhead); font-size:18px; text-transform:uppercase; letter-spacing:.06em}
+  .btn:active{background:var(--bone); color:var(--black)}
+  .btn.primary{background:var(--bone); color:var(--black)}
+  .btn.primary:active{background:#CCC}
+  .btn.accent{background:var(--ox); border-color:var(--ox)}
+  .btn.accent:active{background:#5E0D0D}
+  .btn.small{height:48px; font-size:15px; border:1px solid var(--line2); color:var(--dim)}
+  .btn+.btn{margin-top:12px}
+  /* sealed ticket */
+  .sealwrap{text-align:center; padding:26px 0}
+  .seal{border:4px solid var(--line); padding:36px 18px; position:relative; margin:18px 0}
+  .seal::before,.seal::after{content:''; position:absolute; width:18px; height:18px; background:var(--black);
+    border:4px solid var(--line); border-radius:50%; top:50%; transform:translateY(-50%)}
+  .seal::before{left:-13px} .seal::after{right:-13px}
+  .seal .day{font-family:var(--fnum); font-size:96px; line-height:.95; margin:0}
+  .seal .mon{font-family:var(--fhead); font-size:26px; text-transform:uppercase; letter-spacing:.08em; margin:2px 0 0}
+  /* coach banner */
+  .coach{border-left:4px solid var(--ox); background:var(--card); padding:12px 16px; margin:0 0 20px}
+  .coach .label{margin-bottom:4px}
+  .coach p{margin:0; font-style:italic; color:var(--dim); font-size:14px}
+  /* exercise blocks */
+  .block .exname{font-family:var(--fhead); font-size:19px; text-transform:uppercase; color:var(--bone); margin:0 0 4px}
+  .block .rx{margin-bottom:14px}
+  .logrow{display:flex; height:60px; border-bottom:2px solid var(--line); margin-bottom:8px; background:transparent}
+  .logrow .sn{flex:0 0 44px; display:flex; align-items:center; font-family:var(--fhead); font-size:17px; color:var(--dim)}
+  .logrow .grp{flex:1; display:flex; border-left:2px solid var(--line); border-right:2px solid var(--line)}
+  .logrow .box{flex:1; position:relative; display:flex; flex-direction:column; justify-content:center}
+  .logrow .box+.box{border-left:2px solid var(--line)}
+  .logrow .box span{position:absolute; bottom:3px; left:0; width:100%; text-align:center;
+    font-family:var(--fhead); font-size:9px; letter-spacing:.1em; color:var(--dim)}
+  .logrow input{background:transparent; border:none; outline:none; color:var(--bone); width:100%;
+    font-family:var(--fhead); font-size:22px; text-align:center; padding-bottom:8px}
+  .logrow .go{flex:0 0 76px; font-family:var(--fhead); font-size:16px; letter-spacing:.06em; text-transform:uppercase}
+  .logrow.done{background:var(--bone)}
+  .logrow.done .sn,.logrow.done .box span{color:var(--black)}
+  .logrow.done input{color:var(--black)}
+  .logrow.done .go{color:var(--black); font-weight:700; border-left:2px solid var(--black)}
+  .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-size:14px;
+    text-transform:uppercase; letter-spacing:.06em; color:#C8574A; border:1px solid var(--ox); padding:10px 16px; margin-top:12px}
+  .filmbadge .dot{width:10px; height:10px; background:var(--ox); border-radius:50%}
+  .skip{color:var(--dim); font-size:13px; text-decoration:underline; padding:10px 0; display:inline-block}
+  /* scales */
+  .scales{display:flex; gap:8px; overflow-x:auto; padding:8px 0 10px; scrollbar-width:none}
+  .scales::-webkit-scrollbar{display:none}
+  .scales button{flex:0 0 56px; height:56px; border:2px solid var(--line); font-family:var(--fnum); font-size:22px}
+  .scales button.sel{background:var(--bone); color:var(--black); border-color:var(--bone)}
+  textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--line);
+    color:var(--bone); font:14px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
+  /* rest timer */
+  .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom)); background:var(--black);
+    border-top:2px solid var(--ox); padding:10px 20px; display:none; align-items:center; justify-content:space-between; z-index:10; overflow:hidden}
   .timer.on{display:flex}
-  .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(166,75,63,.14); pointer-events:none; transition:width 1s linear}
-  .timer .t{font-size:38px; font-variant-numeric:tabular-nums}
-  .timer button{background:none; color:var(--dim); padding:10px 14px; border:1px solid var(--line);
-    text-transform:uppercase; font-size:12px; font-weight:700; letter-spacing:.1em}
-  .scale{display:flex; gap:5px; flex-wrap:wrap; margin:8px 0 14px}
-  .scale button{width:42px; height:46px; background:var(--card2); border:1px solid var(--line);
-    color:var(--text); font-size:18px; border-radius:3px; font-family:"HelveticaNeue-CondensedBold","Arial Narrow",sans-serif}
-  .scale button.sel{background:var(--ox); color:var(--chalk); border-color:var(--ox)}
-  textarea{width:100%; background:var(--card2); border:1px solid var(--line); border-radius:3px;
-    color:var(--text); font:inherit; padding:10px; min-height:60px}
-  .doneview{text-align:center; padding:34px 16px}
-  .synced{color:var(--chalk); font-size:13px; margin-top:8px}
-  .unsynced{color:var(--ox); font-size:13px; margin-top:8px}
-  /* bottom tab bar */
-  .tabbar{position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--bg);
-    border-top:1px solid var(--hair); box-shadow:0 -1px 0 var(--line); padding-bottom:env(safe-area-inset-bottom)}
-  .tabbar button{flex:1; padding:14px 0 12px; background:none; color:var(--dim); font-size:11px;
-    font-weight:800; letter-spacing:.16em; text-transform:uppercase; border-top:2px solid transparent; border-radius:0}
-  .tabbar button.sel{color:var(--chalk); border-top-color:var(--ox)}
-  .tabbar button:active{transform:none; color:var(--text)}
-  video{width:100%; border-radius:3px; margin-top:10px; background:#000}
-  .fb{border-left:3px solid var(--ox); background:var(--card2); font-size:14px;
-    padding:10px 12px; margin-top:10px; white-space:pre-wrap}
-  .fb.pending{border-left-color:var(--line); color:var(--dim)}
+  .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(125,17,17,.22); transition:width 1s linear; pointer-events:none}
+  .timer .t{font-family:var(--fnum); font-size:40px}
+  .timer .stop{border:1px solid var(--line2); color:var(--dim); padding:12px 16px; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.08em}
+  /* review */
+  .fb{border-left:2px solid var(--dim); padding-left:14px; margin-top:12px; font-size:14px; color:var(--dim); white-space:pre-wrap}
+  .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:#C8574A; margin-top:12px}
+  video{width:100%; margin-top:10px; background:#000; border:2px solid var(--line)}
+  /* progress */
+  .poster{font-family:var(--fnum); font-size:92px; line-height:.95; margin:0}
+  .poster small{font-family:var(--fhead); font-size:22px; color:var(--dim); letter-spacing:.04em}
+  .spark{width:100%; height:56px; border-bottom:2px solid var(--line); margin:18px 0}
+  .lb-row{display:flex; align-items:baseline; margin-bottom:12px; font-family:var(--fhead); font-size:17px; text-transform:uppercase}
+  .lb-dots{flex:1; border-bottom:2px dotted var(--line); margin:0 8px; position:relative; top:-4px}
+  .lb-val{font-family:var(--fnum); font-size:22px}
+  .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px}
   /* fuel */
-  .bignum{font-size:76px; line-height:1; font-variant-numeric:tabular-nums}
-  .bignum small{font-size:24px; color:var(--dim)}
-  .bar{height:10px; background:var(--card2); border:1px solid var(--line); border-radius:2px; margin:12px 0 4px}
-  .bar i{display:block; height:100%; background:var(--ox); transition:width .3s}
-  .bar.hit i{background:var(--chalk)}
-  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
-  .chips button{background:var(--card2); border:1px solid var(--line); color:var(--text);
-    padding:12px 14px; font-size:14px; font-weight:600; border-radius:3px}
-  .chips button b{color:var(--ox)}
-  .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line); font-size:15px}
-  .statrow .v{font-family:"HelveticaNeue-CondensedBold","Arial Narrow",sans-serif; font-size:22px}
+  .track{width:100%; height:14px; background:var(--line); margin:14px 0 8px}
+  .track i{display:block; height:100%; background:var(--ox); transition:width .3s}
+  .track.hit i{background:var(--bone)}
+  .chips{display:flex; gap:10px; overflow-x:auto; padding:6px 0 12px; scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chips button{flex:0 0 auto; border:2px solid var(--line); padding:12px 18px;
+    font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em}
+  .chips button:active{background:var(--bone); color:var(--black)}
+  .mealrow{display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid var(--line); padding:12px 0;
+    font-family:var(--fhead); font-size:14px; text-transform:uppercase; color:var(--dim)}
+  .mealrow .g{color:var(--bone); font-family:var(--fnum); font-size:16px; white-space:nowrap}
+  /* tab bar */
+  .tabbar{position:fixed; left:0; right:0; bottom:0; height:calc(72px + env(safe-area-inset-bottom)); display:flex;
+    background:var(--black); border-top:2px solid var(--line); padding-bottom:env(safe-area-inset-bottom); z-index:20}
+  .tabbar button{flex:1; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); position:relative}
+  .tabbar button.sel{color:var(--bone)}
+  .tabbar button.sel::after{content:''; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--ox)}
+  .warn{color:#C8574A; font-size:13px; margin-top:8px}
+  .good{color:var(--bone); font-size:13px; margin-top:8px}
+  .cuebox{border-left:3px solid var(--ox); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
+  .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:#C8574A; margin-bottom:6px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <div class="timer" id="timer">
   <div class="drain" id="tdrain"></div>
-  <div><div style="font-size:11px;color:var(--dim);letter-spacing:.14em">REST</div><div class="t disp" id="tval">0:00</div></div>
-  <button onclick="stopTimer()">Done resting</button>
+  <div class="label lit">Rest</div>
+  <div class="t" id="tval">0:00</div>
+  <button class="stop" onclick="stopTimer()">Done</button>
 </div>
 <div class="tabbar" id="tabbar"></div>
 <script>
 const $=id=>document.getElementById(id);
+const MONTHS=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 const store={
   get k(){return 'wlog'},
   load(){try{return JSON.parse(localStorage.getItem(this.k))||{}}catch(e){return{}}},
   save(d){localStorage.setItem(this.k,JSON.stringify(d))}
 };
-let S=null, ALLSESS=[], log=store.load(), sec=0, tint=null, view='today';
+let S=null, ALLSESS=[], log=store.load(), sec=0, tint=null, tTotal=90, view='today';
 const DEFAULT_ENDPOINT='https://train-sync.byler-train.workers.dev';
 
 if(location.hash.startsWith('#cfg=')){
@@ -143,8 +168,8 @@ function route(){tabbar();({today:render,review:renderReview,progress:renderProg
 function connectBanner(){
   if(cfg())return '';
   return `<div class="card" style="border-color:var(--ox)">
-    <div class="unsynced" style="margin:0 0 8px">NOT CONNECTED — logs stay on this phone; uploads won't work.</div>
-    <button class="ghost" onclick="connect()">Connect (paste setup key)</button></div>`;
+    <div class="warn" style="margin:0 0 10px">NOT CONNECTED — logs stay on this phone; uploads won't work.</div>
+    <button class="btn small" onclick="connect()">Connect (paste setup key)</button></div>`;
 }
 function connect(){
   let v=prompt('Paste your setup key (or the full link) from Claude');
@@ -166,88 +191,93 @@ function connect(){
 }
 
 /* ---------- TODAY ---------- */
+function sealCard(kicker,btn){
+  const d=new Date(S.date+'T12:00');
+  return `<div class="sealwrap">
+    <div class="label">${kicker}</div>
+    <div class="seal">
+      <div class="day num">${d.getDate()}</div>
+      <div class="mon">${MONTHS[d.getMonth()]}</div>
+      <hr class="dotted">
+      <div class="label lit">${S.place.toUpperCase()}</div>
+      <div class="label" style="margin-top:8px">${S.time.toUpperCase()}</div>
+    </div>${btn}</div>`;
+}
 function render(){
   const app=$('app');
-  if(!S){app.innerHTML=connectBanner()+`<div class="card locked"><div class="disp" style="font-size:30px">No session queued</div><p class="sub">Claude programs the next one tonight.</p></div>`;return}
+  if(!S){app.innerHTML=connectBanner()+`<div class="sealwrap"><div class="seal"><div class="mon">No session queued</div><hr class="dotted"><div class="label">Claude programs the next one tonight.</div></div></div>`;return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
-  // rollover pacing: one session per day — if the previous session was finished today, the next unlocks tomorrow
   const idx=ALLSESS.indexOf(S);
   const prev=idx>0?log[ALLSESS[idx-1].id]:null;
   if(prev&&prev.completedAt&&prev.completedAt.slice(0,10)===today()){
-    app.innerHTML=connectBanner()+`<div class="card locked">
-      <div class="kicker">Done for today</div>
-      <div class="disp" style="font-size:34px">Recover</div>
-      <p class="sub" style="margin-top:8px">Next session unlocks tomorrow. Protein and sleep are the workout now.</p></div>`+requestsCard();
+    app.innerHTML=connectBanner()+`<div class="sealwrap">
+      <div class="poster num">DONE</div>
+      <hr class="rule">
+      <div class="head" style="color:#C8574A;font-size:20px">Recovery required</div>
+      <p style="color:var(--dim)">Next session unlocks tomorrow. Protein and sleep are the workout now.</p></div>`+requestsCard();
     return;
   }
   if(!L.revealed && today()<S.date){
-    app.innerHTML=connectBanner()+`<div class="card locked">
-      <div class="kicker">Sealed</div>
-      <div class="disp" style="font-size:40px">${S.date}</div>
-      <p class="sub" style="margin-top:8px">${S.place} · ${S.time}</p>
-      <p class="sub">Show up. It'll be here.</p></div>`;
+    app.innerHTML=connectBanner()+sealCard('Sealed','');
     return;
   }
   if(!L.revealed){
-    app.innerHTML=connectBanner()+`<div class="card locked">
-      <div class="kicker">Today</div>
-      <div class="disp" style="font-size:34px">Session ready</div>
-      <p class="sub" style="margin:8px 0 18px">${S.place} · ${S.time}</p>
-      <button class="big" onclick="reveal()">Reveal workout</button></div>`;
+    app.innerHTML=connectBanner()+sealCard('Today',`<button class="btn accent" onclick="reveal()">Break seal</button>`);
     return;
   }
-  let h=connectBanner()+`<div class="kicker">${S.date} · ${S.place}</div><h1 class="disp">${S.phase}</h1>`;
-  if(S.formCue)h+=`<div class="cue"><b>FORM FOCUS</b>${S.formCue}</div>`;
+  const snum=String(idx+1).padStart(3,'0');
+  let h=connectBanner()+`<div class="label">Session ${snum} · ${S.place.toUpperCase()}</div><h1>${S.phase.replace(/^Phase \d+ · /,'')}</h1>`;
+  if(S.formCue)h+=`<div class="coach"><div class="label" style="color:#C8574A">Form focus</div><p>"${S.formCue}"</p></div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
-    h+=`<div class="card block"><h3 class="disp">${b.name}${b.film?'<span class="filmchip">FILM · SIDE-ON</span>':''}</h3>
-      <div class="detail">${b.detail}</div>`;
-    if(bl.skipped){h+=`<div class="unsynced">Skipped — carries to next session.</div></div>`;continue}
+    h+=`<div class="card block"><div class="exname">${b.name}</div>
+      <div class="label rx">${b.detail}</div>`;
+    if(bl.skipped){h+=`<div class="warn">Skipped — carries to next session.</div></div>`;continue}
     if(b.type==='timed'){
       const d=bl.sets[0]||{};
-      h+=`<div class="setrow ${d.done?'done':''}">
-        <span class="lbl">time</span>
-        <input id="t_${b.id}" inputmode="decimal" placeholder="min" value="${d.time??''}">
-        <button class="log" onclick="logTimed('${b.id}')">${d.done?'✓ Logged':'Log'}</button></div>`;
+      h+=`<div class="logrow ${d.done?'done':''}">
+        <div class="sn">1</div>
+        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="decimal" placeholder="0:00" value="${d.time??''}"><span>TIME (MIN)</span></div></div>
+        <button class="go" onclick="logTimed('${b.id}')">${d.done?'DONE':'LOG'}</button></div>`;
     }else{
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
-        h+=`<div class="setrow ${d.done?'done':''}">
-          <span class="lbl">set ${i+1}</span>
-          <input id="w_${b.id}_${i}" inputmode="decimal" placeholder="lb" value="${d.w??b.targetWeight??''}">
-          <span class="x">×</span>
-          <input id="r_${b.id}_${i}" inputmode="numeric" placeholder="reps" value="${d.r??b.targetReps??''}">
-          <button class="log" onclick="logSet('${b.id}',${i})">${d.done?'✓':'Log'}</button></div>`;
+        h+=`<div class="logrow ${d.done?'done':''}">
+          <div class="sn">${i+1}</div>
+          <div class="grp">
+            <div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${d.w??b.targetWeight??''}"><span>LBS</span></div>
+            <div class="box"><input id="r_${b.id}_${i}" inputmode="numeric" placeholder="—" value="${d.r??b.targetReps??''}"><span>REPS</span></div>
+          </div>
+          <button class="go" onclick="logSet('${b.id}',${i})">${d.done?'DONE':'LOG'}</button></div>`;
       }
     }
     if(b.film){
       const ups=bl.uploads||[];
       const busy=bl.uploading;
-      h+=`<div class="setrow">
-        <button class="log" style="flex:1" onclick="film('${b.id}')">🎥 ${busy?'Uploading…':ups.length?`Film another angle (${ups.length} in)`:'Film this set'}</button>
-        <input type="file" id="f_${b.id}" accept="video/*" capture="environment" style="display:none" onchange="gotClip('${b.id}',this)">
-      </div>`;
-      if(ups.length&&!busy)h+=`<div class="synced">${ups.length} clip${ups.length>1?'s':''} in — coach reviews land in ~3 min (Review tab). More sets or a second angle sharpen the read.</div>`;
-      if(bl.uploadError)h+=`<div class="unsynced">Last upload failed — clip NOT saved. Film with the Camera app, attach here after.</div>`;
+      h+=`<button class="filmbadge" onclick="film('${b.id}')"><span class="dot"></span>${busy?'UPLOADING…':ups.length?`FILM ANOTHER ANGLE (${ups.length} IN)`:'FILM THIS SET'}</button>
+        <input type="file" id="f_${b.id}" accept="video/*" capture="environment" style="display:none" onchange="gotClip('${b.id}',this)">`;
+      if(ups.length&&!busy)h+=`<div class="good">${ups.length} clip${ups.length>1?'s':''} in — coach review lands in ~3 min (Review tab).</div>`;
+      if(bl.uploadError)h+=`<div class="warn">Last upload failed — clip NOT saved. Film with the Camera app, attach here after.</div>`;
     }
-    h+=`<button class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</button></div>`;
+    h+=`<br><span class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</span></div>`;
   }
-  h+=`<div class="card"><div class="kicker">Wrap up</div>
-    <div class="detail">RPE — how hard overall?</div><div class="scale">${scale('rpe',L.rpe)}</div>
-    <div class="detail">Feel — mood / energy today?</div><div class="scale">${scale('feel',L.feel)}</div>
-    <div class="detail">Anything for your coach?</div>
-    <textarea id="notes" placeholder="niggles, wins, whatever">${L.notes||''}</textarea>
-    <button class="big" style="margin-top:12px" onclick="finish()">Finish session</button></div>`;
+  h+=`<div class="card"><div class="exname">Session wrap-up</div>
+    <div class="label">RPE — how hard overall</div><div class="scales">${scale('rpe',L.rpe)}</div>
+    <div class="label">Feel — mood / energy</div><div class="scales">${scale('feel',L.feel)}</div>
+    <div class="label">Notes</div>
+    <textarea id="notes" placeholder="Pain points or breakthroughs?">${L.notes||''}</textarea>
+    <button class="btn primary" style="margin-top:16px" onclick="finish()">Finish session</button></div>`;
   app.innerHTML=h+requestsCard();
 }
 function requestsCard(){
   const reqs=j('movereqs',[]);
-  return `<div class="card"><div class="kicker" style="margin-top:0">Request a movement</div>
-    <div class="detail">Want a lift or movement programmed that isn't showing up? Tell your coach — it gets woven into upcoming sessions.</div>
-    <div class="setrow"><input id="mreq" style="flex:1;width:auto;font-size:16px;text-align:left;font-family:inherit;font-weight:400" placeholder="e.g. farmer carries, sled pushes">
-    <button class="log" style="flex:0 0 90px" onclick="sendReq()">Send</button></div>
-    ${reqs.map(r=>`<div class="statrow"><span>${r.t}</span><span class="sub" style="font-size:12px">${r.d}${r.synced?' · sent ✓':' · queued'}</span></div>`).join('')}</div>`;
+  return `<div class="card" style="border-style:dotted;background:transparent">
+    <div class="label" style="margin-bottom:10px">+ Request a movement</div>
+    <div style="display:flex;gap:10px">
+      <input id="mreq" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font:15px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. farmer carries, sled pushes">
+      <button class="go head" style="border:1px solid var(--line2);padding:0 18px" onclick="sendReq()">Send</button></div>
+    ${reqs.map(r=>`<div class="statrow"><span>${r.t}</span><span class="label" style="font-size:11px">${r.d}${r.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
 }
 async function sendReq(){
   const t=$('mreq').value.trim();if(!t)return;
@@ -281,7 +311,6 @@ function skipBlock(bid){
   if(!confirm('Skip this one? It carries forward — nothing gets lost.'))return;
   log[S.id].blocks[bid].skipped=true;store.save(log);render();
 }
-let tTotal=90;
 function startTimer(n){sec=n;tTotal=n;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
 function tick(){
   if(sec<0)return stopTimer();
@@ -316,13 +345,27 @@ async function finish(){
   L.notes=$('notes')?$('notes').value:L.notes;
   store.save(log);await sync();renderDone();
 }
+function sessionStats(L){
+  let vol=0;
+  for(const bid in L.blocks)for(const st of (L.blocks[bid].sets||[])){
+    const w=parseFloat(st&&st.w),r=parseFloat(st&&st.r);
+    if(w&&r)vol+=w*r;
+  }
+  let dur=null;
+  if(L.revealedAt&&L.completedAt)dur=Math.round((new Date(L.completedAt)-new Date(L.revealedAt))/60000);
+  return {vol,dur};
+}
 function renderDone(){
   const L=log[S.id];
-  $('app').innerHTML=`<div class="card doneview"><div class="kicker">Logged</div>
-    <div class="disp" style="font-size:44px">Session done</div>
-    <p class="sub" style="margin-top:8px">RPE ${L.rpe??'—'} · Feel ${L.feel??'—'}</p>
-    <div class="${L.synced?'synced':'unsynced'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
-    <button class="ghost" onclick="exportLog()">Export log (share to Claude)</button></div>`;
+  const {vol,dur}=sessionStats(L);
+  $('app').innerHTML=`<div class="sealwrap">
+    <div class="poster num">DONE</div>
+    <hr class="rule">
+    ${dur?`<div style="display:flex;justify-content:space-between" class="label lit"><span>DURATION</span><span class="num" style="font-size:18px">${dur} MIN</span></div><hr class="dotted" style="margin:10px 0">`:''}
+    ${vol?`<div style="display:flex;justify-content:space-between" class="label lit"><span>VOLUME</span><span class="num" style="font-size:18px">${vol.toLocaleString()} LBS</span></div><hr class="rule">`:''}
+    <div class="label lit" style="margin-top:8px">RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div>
+    <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
+    <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button></div>`;
 }
 async function sync(){
   const c=cfg();if(!c)return;
@@ -344,7 +387,7 @@ async function renderReview(){
   const app=$('app');
   const c=cfg();
   if(!c){app.innerHTML=connectBanner();return}
-  app.innerHTML='<div class="kicker">Film room</div><h1 class="disp">Review</h1><div class="sub">Loading clips…</div>';
+  app.innerHTML='<h1 style="margin-top:8px">Film room</h1><div class="label">Loading clips…</div>';
   const [endpoint,token]=c;
   try{
     const H={'Authorization':'Bearer '+token};
@@ -352,19 +395,20 @@ async function renderReview(){
       fetch(endpoint+'/pull',{headers:H}).then(r=>r.json()).catch(()=>({media:[]})),
       fetch(endpoint+'/feedback',{headers:H}).then(r=>r.json()).catch(()=>({}))
     ]);
-    const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')&&!m.key.startsWith('meals/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
-    let h='<div class="kicker">Film room</div><h1 class="disp">Review</h1>';
-    if(!media.length)h+='<div class="card sub" style="margin-top:12px">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
+    const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')&&!m.key.startsWith('meals/')&&!m.key.startsWith('suggest/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
+    let h='<h1 style="margin-top:8px">Film room</h1>';
+    if(!media.length)h+='<div class="label" style="margin-top:12px">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
     for(const m of media){
       const f=fb[m.key];
-      const label=m.key.replace(/\//g,' · ').replace(/-\d+\.\w+$/,'');
-      const date=new Date(m.uploaded).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
-      h+=`<div class="card"><h3 class="disp" style="margin:0">${label}</h3><div class="sub" style="margin-bottom:6px">${date} · ${(m.size/1048576).toFixed(1)} MB</div>
-        <button class="ghost" style="margin-top:4px" onclick="playClip('${m.key}',this)">▶ Watch</button>
-        <div class="fb ${f?'':'pending'}">${f?f.notes:'Coach review pending — lands ~3 min after upload.'}</div></div>`;
+      const d=new Date(m.uploaded);
+      const label=`${MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()} // ${m.key.split('/').pop().replace(/-clip\d+-\d+\.\w+$/,'').replace(/-\d+\.\w+$/,'').toUpperCase()}`;
+      h+=`<div class="card"><div class="label lit">${label}</div>
+        <div class="label" style="font-size:11px;margin-top:2px">${(m.size/1048576).toFixed(1)} MB</div>
+        <button class="btn small" style="margin-top:12px" onclick="playClip('${m.key}',this)">▶ Watch</button>
+        ${f?`<div class="fb">${f.notes}</div>`:`<div class="pending">Review pending…</div>`}</div>`;
     }
     app.innerHTML=h;
-  }catch(e){app.innerHTML='<div class="card unsynced">Couldn\'t reach the server — check connection.</div>'}
+  }catch(e){app.innerHTML='<div class="card warn">Couldn\'t reach the server — check connection.</div>'}
 }
 async function playClip(key,btn){
   btn.textContent='Loading…';
@@ -382,7 +426,6 @@ async function playClip(key,btn){
 function renderProgress(){
   const weights=j('weights',[]);
   const done=ALLSESS.filter(s=>log[s.id]&&log[s.id].completed).length;
-  // PRs: max logged weight per exercise across completed sessions
   const prs={};
   for(const s of ALLSESS){
     const L=log[s.id];if(!L||!L.completed)continue;
@@ -395,38 +438,48 @@ function renderProgress(){
     }
   }
   const lastW=weights.length?weights[weights.length-1]:null;
-  let h=`<div class="kicker">The record</div><h1 class="disp">Progress</h1>
-  <div class="card"><div class="kicker" style="margin-top:0">Bodyweight</div>
-    ${lastW?`<div class="bignum disp">${lastW.w}<small> LB</small></div><div class="sub">logged ${lastW.d}</div>`:'<div class="sub" style="font-size:16px;padding:10px 0">No entries yet — first weigh-in starts the line.</div>'}
-    ${sparkline(weights.map(x=>x.w))}
-    <div class="setrow" style="margin-top:12px">
-      <input id="bw" inputmode="decimal" placeholder="lb" style="flex:1">
-      <button class="log" style="flex:1" onclick="logWeight()">Log weight</button></div></div>
-  <div class="card"><div class="kicker" style="margin-top:0">Weekly photos</div>
-    <div class="sub">Same spot, same light. Front · side · back.</div>
-    <button class="ghost" onclick="$('photoIn').click()">📷 Take progress photo</button>
-    <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="gotPhoto(this)">
-    <div id="photoStatus"></div></div>
-  <div class="card"><div class="kicker" style="margin-top:0">Lifts — best logged</div>`;
+  const wk=weekCount();
+  let h=`<div class="label" style="margin-top:8px">Current bodyweight</div>`;
+  h+=lastW
+    ?`<div style="display:flex;align-items:baseline;gap:10px"><div class="poster num">${lastW.w}</div><span class="poster small" style="font-size:22px;font-family:var(--fhead);color:var(--dim)">LBS</span></div>
+      <div class="label" style="font-size:11px">LOGGED ${lastW.d}</div>`
+    :`<div class="label lit" style="padding:14px 0">No entries yet — first weigh-in starts the line.</div>`;
+  h+=sparkline(weights.map(x=>x.w));
+  h+=`<div style="display:flex;gap:10px;margin:14px 0 26px">
+    <input id="bw" inputmode="decimal" placeholder="LB" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font-family:var(--fhead);font-size:22px;text-align:center;outline:none">
+    <button class="go head" style="border:2px solid var(--line2);padding:0 22px;height:52px" onclick="logWeight()">Log weight</button></div>
+  <button class="btn" onclick="$('photoIn').click()">◯ Log physique</button>
+  <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="gotPhoto(this)">
+  <div id="photoStatus"></div>
+  <div class="label" style="margin:6px 0 22px;font-size:11px">Weekly. Same spot, same light. Front · side · back.</div>
+  <h1 style="font-size:24px">Best logged</h1>
+  <div class="card">`;
   const keys=Object.keys(prs);
-  h+=keys.length?keys.map(k=>`<div class="statrow"><span>${k}</span><span class="v">${prs[k]} lb</span></div>`).join(''):'<div class="sub">complete a session and your numbers land here</div>';
+  h+=keys.length?keys.map(k=>`<div class="lb-row"><span>${k}</span><span class="lb-dots"></span><span class="lb-val num">${prs[k]} LB</span></div>`).join(''):'<div class="label">Complete a session and your numbers land here</div>';
   h+=`</div>
-  <div class="card"><div class="statrow"><span>Sessions completed</span><span class="v">${done}</span></div>
-    <div class="statrow" style="border:0"><span>This week vs 3/wk floor</span><span class="v">${weekCount()} / 3</span></div></div>`;
+  <h1 style="font-size:24px">Consistency</h1>
+  <div class="card">
+    <div class="poster num" style="font-size:56px">${wk} / 3</div>
+    <div class="label">${wk>=3?'SESSIONS THIS WEEK (FLOOR MET)':'SESSIONS THIS WEEK VS FLOOR'}</div>
+    <hr class="dotted">
+    <div class="statrow" style="border:0"><span>Total sessions logged</span><span class="num" style="font-size:18px">${done}</span></div>
+  </div>`;
   $('app').innerHTML=h;
 }
 function weekCount(){
-  const now=new Date(); const day=(now.getDay()+6)%7; // Mon=0
+  const now=new Date(); const day=(now.getDay()+6)%7;
   const mon=new Date(now); mon.setDate(now.getDate()-day); mon.setHours(0,0,0,0);
   let n=0;
   for(const s of ALLSESS){const L=log[s.id];if(L&&L.completed&&L.completedAt&&new Date(L.completedAt)>=mon)n++}
   return n;
 }
 function sparkline(vals){
-  if(vals.length<2)return '';
-  const w=280,h=40,min=Math.min(...vals),max=Math.max(...vals),rng=(max-min)||1;
+  if(vals.length<2)return '<div class="spark"></div>';
+  const w=280,h=50,min=Math.min(...vals),max=Math.max(...vals),rng=(max-min)||1;
   const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-4-((v-min)/rng)*(h-8)).toFixed(1)}`).join(' ');
-  return `<svg width="100%" viewBox="0 0 ${w} ${h}" style="margin-top:8px"><polyline points="${pts}" fill="none" stroke="#A64B3F" stroke-width="2"/></svg>`;
+  return `<div class="spark"><svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible">
+    <polyline points="${pts}" fill="none" stroke="#7D1111" stroke-width="4" opacity=".4" transform="translate(0,2)"/>
+    <polyline points="${pts}" fill="none" stroke="#7D1111" stroke-width="2"/></svg></div>`;
 }
 function logWeight(){
   const v=parseFloat($('bw').value);if(!v)return;
@@ -437,8 +490,8 @@ function logWeight(){
 async function gotPhoto(input){
   const f=input.files[0];if(!f)return;
   const c=cfg();const el=$('photoStatus');
-  if(!c){el.innerHTML='<div class="unsynced">Connect first — photo not saved.</div>';return}
-  el.innerHTML='<div class="sub">Uploading…</div>';
+  if(!c){el.innerHTML='<div class="warn">Connect first — photo not saved.</div>';return}
+  el.innerHTML='<div class="label">Uploading…</div>';
   const [endpoint,token]=c;
   try{
     const key=`photos/${today()}-${Date.now()}.jpg`;
@@ -446,8 +499,8 @@ async function gotPhoto(input){
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
       headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
     const rj=res.ok?await res.json():null;
-    el.innerHTML=(rj&&rj.size>0)?'<div class="synced">Photo filed to the vault ✓</div>':'<div class="unsynced">Upload failed — try again.</div>';
-  }catch(e){el.innerHTML='<div class="unsynced">Upload failed — try again.</div>'}
+    el.innerHTML=(rj&&rj.size>0)?'<div class="good">Photo filed to the vault ✓</div>':'<div class="warn">Upload failed — try again.</div>';
+  }catch(e){el.innerHTML='<div class="warn">Upload failed — try again.</div>'}
 }
 async function postLog(obj){
   const c=cfg();if(!c)return;
@@ -458,10 +511,21 @@ async function postLog(obj){
 
 /* ---------- FUEL ---------- */
 const MEALS=[
-  ['Protein shake','45'],['RTD (Core Power)','42'],['CAVA double protein','50'],
-  ['Panera Cobb + chicken','40'],['Steak (6-8 oz)','50'],['Burger (double)','45'],
-  ['Sushi / poke','40'],['Chicken dinner','40'],['Greek yogurt','18'],['Eggs (3)','19']
+  ['Shake','45'],['RTD Core Power','42'],['CAVA 2x protein','50'],
+  ['Panera Cobb','40'],['Steak','50'],['Double burger','45'],
+  ['Sushi / poke','40'],['Chicken dinner','40'],['Greek yogurt','18'],['3 eggs','19']
 ];
+function suggestBox(){
+  const s=j('suggest',null);
+  const pending=j('suggestq',[]).length;
+  let h='';
+  if(pending)h+=`<div class="label" style="margin-top:12px">🧭 SCOUTING NEARBY PROTEIN — PICKS LAND IN ~3 MIN…</div>`;
+  if(s&&s.date===today()){
+    h+=`<div class="cuebox"><b>NEAR ${(s.where||'YOU').toUpperCase()}</b>`+
+      s.picks.map(p=>`<div style="margin-top:10px"><span class="head" style="font-size:15px">${p.spot}</span> — ${p.order} <span class="num" style="color:#C8574A">~${p.protein_g}G</span></div>`).join('')+`</div>`;
+  }
+  return h;
+}
 async function checkMealQueue(){
   const q=j('mealq',[]);const c=cfg();
   if(!q.length||!c)return false;
@@ -489,34 +553,61 @@ function renderFuel(){
   const key='fuel:'+today();
   const f=j(key,{g:0,items:[]});
   const pct=Math.min(100,Math.round(f.g/140*100));
-  let h=`<div class="kicker">One number</div><h1 class="disp">Protein</h1>
-  <div class="card">
-    <div class="bignum disp">${f.g}<small> / 140 G</small></div>
-    <div class="bar ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
-    <div class="sub">${f.g>=140?'Hit. That\'s the whole game — done for today.':f.g>=100?'Past the floor — push to 140.':'Floor is 100. Anchor meals below.'}</div>
-    <button class="big" style="margin-top:10px" onclick="$('mealIn').click()">📷 Snap meal / menu</button>
-    <button class="ghost" onclick="nearMe()">🧭 What's good near me</button>
-    <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
-    ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="sub" style="margin-top:10px">📷 Analyzing your photo — protein lands here in ~2 min…</div>`).join('')}
-    <div id="suggestBox">${suggestBox()}</div>
-    <hr class="rule">
-    <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <b>+${g}</b></button>`).join('')}
-      <button onclick="addCustom()">Custom <b>+?</b></button></div>
-    ${f.items.length?`<hr class="rule">`+f.items.map((it,i)=>`<div class="statrow"><span>${it.n}</span><span class="v">${it.g}g <a style="color:var(--dim);font-size:13px;margin-left:8px" onclick="rmFuel(${i})">✕</a></span></div>`).join(''):''}
-  </div>
-  <div class="card sub" style="font-size:13px">Rule from your plan: hit ~140 g protein, food mostly real, don't count calories. Breakfast shake is the anchor — never protein-free again.</div>`;
+  let h=`<div class="label" style="margin-top:8px">Daily target: 140G protein</div>
+  <div style="display:flex;align-items:baseline;gap:6px">
+    <div class="poster num">${f.g}</div>
+    <span class="num" style="font-size:40px;color:var(--dim)">/140</span>
+    <span class="head" style="font-size:20px;color:var(--dim)">G</span></div>
+  <div class="track ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
+  <div class="label" style="margin-bottom:18px">${f.g>=140?"HIT. THAT'S THE WHOLE GAME.":f.g>=100?'PAST THE FLOOR — PUSH TO 140.':'FLOOR IS 100.'}</div>
+  <button class="btn primary" onclick="$('mealIn').click()">+ Snap meal / menu</button>
+  <button class="btn small" onclick="nearMe()">// What's good near me</button>
+  <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
+  ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="label" style="margin-top:12px">📷 ANALYZING — PROTEIN LANDS IN ~2 MIN…</div>`).join('')}
+  <div id="suggestBox">${suggestBox()}</div>
+  <div class="label" style="margin:22px 0 6px">Quick add</div>
+  <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <span style="color:#C8574A">+${g}G</span></button>`).join('')}
+    <button onclick="addCustom()">Custom +?</button></div>`;
+  if(f.items.length){
+    h+=`<h1 style="font-size:24px;margin-top:22px">Today's log</h1>`+
+      f.items.map((it,i)=>`<div class="mealrow"><span>${it.n}</span><span class="g">${it.g}G <a style="color:var(--dim);font-family:var(--fbody);margin-left:6px" onclick="rmFuel(${i})">✕</a></span></div>`).join('');
+  }
   $('app').innerHTML=h;
 }
-function suggestBox(){
-  const s=j('suggest',null);
-  const pending=j('suggestq',[]).length;
-  let h='';
-  if(pending)h+=`<div class="sub" style="margin-top:10px">🧭 Scouting nearby protein — picks land here in ~3 min…</div>`;
-  if(s&&s.date===today()){
-    h+=`<div class="cue" style="margin-top:12px"><b>NEAR ${(s.where||'YOU').toUpperCase()}</b>`+
-      s.picks.map(p=>`<div style="margin-top:8px"><b style="color:var(--text);letter-spacing:0;font-size:15px;display:inline">${p.spot}</b> — ${p.order} <span style="color:var(--ox);font-weight:700">~${p.protein_g}g</span></div>`).join('')+`</div>`;
-  }
-  return h;
+async function gotMeal(input){
+  const files=[...input.files];if(!files.length)return;
+  const c=cfg();
+  if(!c){alert('Connect first (Today tab) — photo can\'t upload.');return}
+  const [endpoint,token]=c;
+  const note=prompt('What is it? (optional — helps me get it right)')||'';
+  const group=`meals/${today()}-${Date.now()}`;
+  try{
+    let firstKey=null;
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      const key=`${group}/p${i+1}.jpg`;
+      const buf=await f.arrayBuffer();
+      const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+      const rj=res.ok?await res.json():null;
+      if(!(rj&&rj.size>0))throw new Error('upload failed');
+      if(!firstKey)firstKey=key;
+    }
+    if(note){
+      await fetch(endpoint+'/upload?key='+encodeURIComponent(group+'/note.txt'),{method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:note});
+    }
+    const q=j('mealq',[]);q.push({key:firstKey,date:today()});sv('mealq',q);
+    renderFuel();pollMeals();
+  }catch(e){alert('Upload failed — try again.')}
+}
+let mealTimer=null;
+function pollMeals(){
+  clearInterval(mealTimer);
+  mealTimer=setInterval(async()=>{
+    if(!j('mealq',[]).length){clearInterval(mealTimer);return}
+    if(await checkMealQueue()&&view==='fuel')renderFuel();
+  },20000);
 }
 async function nearMe(){
   const send=async txt=>{
@@ -558,41 +649,6 @@ function pollSuggest(){
       sv('suggestq',remain);
       if(view==='fuel')renderFuel();
     }catch(e){}
-  },20000);
-}
-async function gotMeal(input){
-  const files=[...input.files];if(!files.length)return;
-  const c=cfg();
-  if(!c){alert('Connect first (Today tab) — photo can\'t upload.');return}
-  const [endpoint,token]=c;
-  const note=prompt('What is it? (optional — helps me get it right)')||'';
-  const group=`meals/${today()}-${Date.now()}`;
-  try{
-    let firstKey=null;
-    for(let i=0;i<files.length;i++){
-      const f=files[i];
-      const key=`${group}/p${i+1}.jpg`;
-      const buf=await f.arrayBuffer();
-      const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
-      const rj=res.ok?await res.json():null;
-      if(!(rj&&rj.size>0))throw new Error('upload failed');
-      if(!firstKey)firstKey=key;
-    }
-    if(note){
-      await fetch(endpoint+'/upload?key='+encodeURIComponent(group+'/note.txt'),{method:'POST',
-        headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:note});
-    }
-    const q=j('mealq',[]);q.push({key:firstKey,date:today()});sv('mealq',q);
-    renderFuel();pollMeals();
-  }catch(e){alert('Upload failed — try again.')}
-}
-let mealTimer=null;
-function pollMeals(){
-  clearInterval(mealTimer);
-  mealTimer=setInterval(async()=>{
-    if(!j('mealq',[]).length){clearInterval(mealTimer);return}
-    if(await checkMealQueue()&&view==='fuel')renderFuel();
   },20000);
 }
 function addFuel(n,g){
