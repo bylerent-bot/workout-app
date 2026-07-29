@@ -1,0 +1,11 @@
+name = "train-sync"
+main = "src/index.js"
+compatibility_date = "2026-07-01"
+
+[[r2_buckets]]
+binding = "FOOTAGE"
+bucket_name = "train-footage"
+
+[[kv_namespaces]]
+binding = "LOGS"
+id = "aa57e8d43f504022853f7ff90fb28e34"

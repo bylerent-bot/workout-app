@@ -137,6 +137,14 @@ function render(){
           <button class="log" onclick="logSet('${b.id}',${i})">${d.done?'✓':'Log'}</button></div>`;
       }
     }
+    if(b.film){
+      const up=bl.upload||{};
+      h+=`<div class="setrow">
+        <button class="log" style="flex:1" onclick="film('${b.id}')">🎥 ${up.state==='done'?'Filmed ✓ (retake?)':up.state==='uploading'?'Uploading…':'Film this set'}</button>
+        <input type="file" id="f_${b.id}" accept="video/*" capture="environment" style="display:none" onchange="gotClip('${b.id}',this)">
+      </div>`;
+      if(up.state==='error')h+=`<div class="unsynced">Upload failed — clip NOT saved. Film with the Camera app instead, attach here after.</div>`;
+    }
     h+=`<button class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</button></div>`;
   }
   h+=`<div class="card"><h3>Wrap up</h3>
@@ -179,12 +187,28 @@ function renderDone(){
     <div id="syncstate" class="${L.synced?'synced':'unsynced'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
     <button class="ghost" onclick="exportLog()">Export log (share to Claude)</button></div>`;
 }
+function film(bid){$(`f_${bid}`).click()}
+async function gotClip(bid,input){
+  const f=input.files[0];if(!f)return;
+  const bl=log[S.id].blocks[bid];
+  bl.upload={state:'uploading'};store.save(log);render();
+  const cfg=localStorage.getItem('synccfg');
+  if(!cfg){bl.upload={state:'error'};store.save(log);render();return}
+  const [endpoint,token]=cfg.split('|');
+  try{
+    const key=`${S.id}/${bid}-${Date.now()}.${(f.name.split('.').pop()||'mov')}`;
+    const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'video/quicktime'},body:f});
+    bl.upload=res.ok?{state:'done',key}:{state:'error'};
+  }catch(e){bl.upload={state:'error'}}
+  store.save(log);render();
+}
 async function sync(){
   const cfg=localStorage.getItem('synccfg');
   if(!cfg)return;
   const [endpoint,token]=cfg.split('|');
   try{
-    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({type:'session-log',sessionId:S.id,log:log[S.id]})});
     if(res.ok){log[S.id].synced=true;store.save(log)}
   }catch(e){}
