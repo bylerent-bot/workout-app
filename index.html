@@ -9,72 +9,94 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <style>
+  /* IRON & CHALK — matte black, bone white, oxblood. Flat ink; the numbers are the poster. */
   :root{
-    --bg:#0d0f12; --card:#171a1f; --card2:#1f242b; --line:#2a303a;
-    --text:#e8eaed; --dim:#8a919c; --accent:#4fc08d; --warn:#e0a04f; --red:#d06060;
+    --bg:#121110; --card:#1B1917; --card2:#242220; --line:#2E2B27;
+    --text:#EDE9E2; --dim:#8A857C; --ox:#A64B3F; --oxdeep:#8E3B34; --chalk:#F5F2EA;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   body{margin:0; background:var(--bg); color:var(--text);
-    font:17px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-  .wrap{max-width:520px; margin:0 auto; padding:16px}
-  h1{font-size:22px; margin:8px 0 2px}
-  .sub{color:var(--dim); font-size:14px; margin-bottom:16px}
-  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px}
-  .locked{text-align:center; padding:40px 20px}
-  .locked .lock{font-size:44px; margin-bottom:10px}
-  button{font:inherit; border:none; border-radius:12px; cursor:pointer}
-  .big{display:block; width:100%; padding:16px; font-size:18px; font-weight:600;
-    background:var(--accent); color:#0d0f12}
-  .big:active{opacity:.8}
-  .block{margin-bottom:14px}
-  .block h3{margin:0 0 2px; font-size:17px}
-  .block .detail{color:var(--dim); font-size:14px; margin-bottom:10px}
-  .filmchip{display:inline-block; background:#3a2f1a; color:var(--warn); font-size:12px;
-    font-weight:700; padding:3px 8px; border-radius:8px; margin-left:6px; vertical-align:middle}
-  .cue{background:#1a2a22; border:1px solid #2a4a3a; color:#a8d8bf; font-size:14px;
-    border-radius:12px; padding:10px 12px; margin-bottom:14px}
+  .wrap{max-width:520px; margin:0 auto; padding:14px 16px 90px}
+  .disp{font-family:"HelveticaNeue-CondensedBlack","Helvetica Neue Condensed","Arial Narrow",-apple-system,sans-serif;
+    font-weight:900; letter-spacing:.01em; text-transform:uppercase}
+  h1{font-size:30px; line-height:1.05; margin:10px 0 4px}
+  .kicker{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--ox); font-weight:700; margin:14px 0 2px}
+  .sub{color:var(--dim); font-size:14px; margin-bottom:14px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:4px; padding:16px; margin-bottom:12px}
+  .rule{border:0; border-top:1px solid var(--line); margin:12px 0}
+  button{font:inherit; border:none; border-radius:3px; cursor:pointer}
+  .big{display:block; width:100%; padding:16px; font-size:15px; font-weight:800; letter-spacing:.14em;
+    text-transform:uppercase; background:var(--ox); color:var(--chalk)}
+  .big:active{background:var(--oxdeep)}
+  .ghost{background:none; border:1px solid var(--line); color:var(--dim); width:100%; padding:12px;
+    margin-top:10px; letter-spacing:.08em; text-transform:uppercase; font-size:13px; font-weight:700}
+  .locked{text-align:center; padding:44px 20px}
+  .locked .disp{font-size:34px}
+  .block h3{margin:0 0 2px; font-size:20px}
+  .block .detail{color:var(--dim); font-size:14px; margin-bottom:12px}
+  .filmchip{display:inline-block; border:1px solid var(--ox); color:var(--ox); font-size:11px;
+    font-weight:800; letter-spacing:.1em; padding:2px 7px; border-radius:2px; margin-left:8px; vertical-align:2px}
+  .cue{border-left:3px solid var(--ox); background:var(--card); color:var(--text); font-size:15px;
+    padding:12px 14px; margin:12px 0 16px}
+  .cue b{color:var(--ox); letter-spacing:.12em; font-size:11px; display:block; margin-bottom:3px}
   .setrow{display:flex; align-items:center; gap:8px; margin-bottom:8px}
-  .setrow .lbl{width:44px; color:var(--dim); font-size:14px}
-  .setrow input{width:70px; padding:12px 8px; font-size:18px; text-align:center;
-    background:var(--card2); border:1px solid var(--line); border-radius:10px; color:var(--text)}
+  .setrow .lbl{width:46px; color:var(--dim); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+  .setrow input{width:76px; padding:12px 6px; font-size:22px; text-align:center; border-radius:3px;
+    background:var(--card2); border:1px solid var(--line); color:var(--text);
+    font-family:"HelveticaNeue-CondensedBold","Arial Narrow",sans-serif; font-weight:700}
   .setrow .x{color:var(--dim)}
-  .setrow .log{flex:1; padding:12px; font-weight:600; background:var(--card2);
-    color:var(--accent); border:1px solid var(--line)}
-  .setrow.done .log{background:var(--accent); color:#0d0f12}
-  .skip{background:none; color:var(--dim); font-size:14px; padding:8px 0; text-decoration:underline}
-  .timer{position:fixed; left:0; right:0; bottom:0; background:var(--card2);
-    border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
-    display:none; align-items:center; justify-content:space-between}
+  .setrow .log{flex:1; padding:13px; font-weight:800; letter-spacing:.1em; text-transform:uppercase;
+    font-size:13px; background:var(--card2); color:var(--text); border:1px solid var(--line)}
+  .setrow.done .log{background:var(--chalk); color:var(--bg); border-color:var(--chalk)}
+  .skip{background:none; color:var(--dim); font-size:13px; padding:8px 0; text-decoration:underline}
+  .timer{position:fixed; left:0; right:0; bottom:56px; background:var(--card2);
+    border-top:2px solid var(--ox); padding:10px 16px; display:none; align-items:center; justify-content:space-between}
   .timer.on{display:flex}
-  .timer .t{font-size:30px; font-weight:700; font-variant-numeric:tabular-nums}
-  .timer button{background:var(--card); color:var(--dim); padding:10px 16px; border:1px solid var(--line)}
-  .scale{display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 14px}
-  .scale button{width:44px; height:44px; background:var(--card2); border:1px solid var(--line);
-    color:var(--text); font-size:16px; font-weight:600; border-radius:10px}
-  .scale button.sel{background:var(--accent); color:#0d0f12; border-color:var(--accent)}
-  textarea{width:100%; background:var(--card2); border:1px solid var(--line); border-radius:10px;
+  .timer .t{font-size:38px; font-variant-numeric:tabular-nums}
+  .timer button{background:none; color:var(--dim); padding:10px 14px; border:1px solid var(--line);
+    text-transform:uppercase; font-size:12px; font-weight:700; letter-spacing:.1em}
+  .scale{display:flex; gap:5px; flex-wrap:wrap; margin:8px 0 14px}
+  .scale button{width:42px; height:46px; background:var(--card2); border:1px solid var(--line);
+    color:var(--text); font-size:18px; border-radius:3px; font-family:"HelveticaNeue-CondensedBold","Arial Narrow",sans-serif}
+  .scale button.sel{background:var(--ox); color:var(--chalk); border-color:var(--ox)}
+  textarea{width:100%; background:var(--card2); border:1px solid var(--line); border-radius:3px;
     color:var(--text); font:inherit; padding:10px; min-height:60px}
-  .doneview{text-align:center; padding:30px 16px}
-  .doneview .big{margin-top:16px}
-  .ghost{background:none; border:1px solid var(--line); color:var(--dim); width:100%;
-    padding:12px; margin-top:10px}
-  .synced{color:var(--accent); font-size:13px; margin-top:8px}
-  .unsynced{color:var(--warn); font-size:13px; margin-top:8px}
-  .tabs{display:flex; gap:8px; margin-bottom:14px}
-  .tabs button{flex:1; padding:12px; font-weight:600; background:var(--card); color:var(--dim); border:1px solid var(--line)}
-  .tabs button.sel{background:var(--card2); color:var(--text); border-color:var(--accent)}
-  video{width:100%; border-radius:12px; margin-top:10px; background:#000}
-  .fb{background:#1a2a22; border:1px solid #2a4a3a; color:#a8d8bf; font-size:14px; border-radius:12px; padding:10px 12px; margin-top:10px; white-space:pre-wrap}
-  .fb.pending{background:var(--card2); border-color:var(--line); color:var(--dim)}
+  .doneview{text-align:center; padding:34px 16px}
+  .synced{color:var(--chalk); font-size:13px; margin-top:8px}
+  .unsynced{color:var(--ox); font-size:13px; margin-top:8px}
+  /* bottom tab bar */
+  .tabbar{position:fixed; left:0; right:0; bottom:0; display:flex; background:var(--bg);
+    border-top:1px solid var(--line); padding-bottom:env(safe-area-inset-bottom)}
+  .tabbar button{flex:1; padding:13px 0 11px; background:none; color:var(--dim); font-size:11px;
+    font-weight:800; letter-spacing:.14em; text-transform:uppercase; border-top:2px solid transparent; border-radius:0}
+  .tabbar button.sel{color:var(--chalk); border-top-color:var(--ox)}
+  video{width:100%; border-radius:3px; margin-top:10px; background:#000}
+  .fb{border-left:3px solid var(--ox); background:var(--card2); font-size:14px;
+    padding:10px 12px; margin-top:10px; white-space:pre-wrap}
+  .fb.pending{border-left-color:var(--line); color:var(--dim)}
+  /* fuel */
+  .bignum{font-size:76px; line-height:1; font-variant-numeric:tabular-nums}
+  .bignum small{font-size:24px; color:var(--dim)}
+  .bar{height:10px; background:var(--card2); border:1px solid var(--line); border-radius:2px; margin:12px 0 4px}
+  .bar i{display:block; height:100%; background:var(--ox); transition:width .3s}
+  .bar.hit i{background:var(--chalk)}
+  .chips{display:flex; flex-wrap:wrap; gap:8px; margin-top:12px}
+  .chips button{background:var(--card2); border:1px solid var(--line); color:var(--text);
+    padding:12px 14px; font-size:14px; font-weight:600; border-radius:3px}
+  .chips button b{color:var(--ox)}
+  .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line); font-size:15px}
+  .statrow .v{font-family:"HelveticaNeue-CondensedBold","Arial Narrow",sans-serif; font-size:22px}
 </style>
 </head>
 <body>
 <div class="wrap" id="app"></div>
 <div class="timer" id="timer">
-  <div><div style="font-size:12px;color:var(--dim)">REST</div><div class="t" id="tval">0:00</div></div>
-  <button onclick="stopTimer()">done resting</button>
+  <div><div style="font-size:11px;color:var(--dim);letter-spacing:.14em">REST</div><div class="t disp" id="tval">0:00</div></div>
+  <button onclick="stopTimer()">Done resting</button>
 </div>
+<div class="tabbar" id="tabbar"></div>
 <script>
 const $=id=>document.getElementById(id);
 const store={
@@ -82,92 +104,84 @@ const store={
   load(){try{return JSON.parse(localStorage.getItem(this.k))||{}}catch(e){return{}}},
   save(d){localStorage.setItem(this.k,JSON.stringify(d))}
 };
-let S=null, log=store.load(), sec=0, tint=null;
+let S=null, ALLSESS=[], log=store.load(), sec=0, tint=null, view='today';
+const DEFAULT_ENDPOINT='https://train-sync.byler-train.workers.dev';
 
-// one-time sync config via #cfg=endpoint|token (kept out of the public bundle)
 if(location.hash.startsWith('#cfg=')){
   localStorage.setItem('synccfg', location.hash.slice(5));
   history.replaceState(null,'',location.pathname);
 }
-
+function cfg(){const c=localStorage.getItem('synccfg');return c?c.split('|'):null}
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function j(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}}
+function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
 async function init(){
-  const r=await fetch('data/sessions.json?_='+Date.now());
-  const data=await r.json();
-  // next session = first not marked completed in log
-  S=data.sessions.find(s=>!(log[s.id]&&log[s.id].completed))||null;
-  render();
+  try{
+    const r=await fetch('data/sessions.json?_='+Date.now());
+    ALLSESS=(await r.json()).sessions;
+  }catch(e){ALLSESS=[]}
+  S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
+  route();
+}
+function tabbar(){
+  const t=[['today','Today'],['review','Review'],['progress','Progress'],['fuel','Fuel']];
+  $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
+}
+function route(){tabbar();({today:render,review:renderReview,progress:renderProgress,fuel:renderFuel})[view]()}
+
+function connectBanner(){
+  if(cfg())return '';
+  return `<div class="card" style="border-color:var(--ox)">
+    <div class="unsynced" style="margin:0 0 8px">NOT CONNECTED — logs stay on this phone; uploads won't work.</div>
+    <button class="ghost" onclick="connect()">Connect (paste setup key)</button></div>`;
+}
+function connect(){
+  let v=prompt('Paste your setup key (or the full link) from Claude');
+  if(!v)return;
+  v=v.replace(/["'\s]/g,'');
+  if(v.includes('#cfg='))v=v.split('#cfg=')[1];
+  let c;
+  if(v.includes('|'))c=v;
+  else{
+    const tok=(v.match(/[a-f0-9]{32,}/i)||[])[0];
+    if(!tok){alert('No key found in that paste — paste the long code Claude sent.');return}
+    c=DEFAULT_ENDPOINT+'|'+tok;
+  }
+  const [ep,tok]=c.split('|');
+  fetch(ep+'/pull',{headers:{'Authorization':'Bearer '+tok}}).then(r=>{
+    if(r.ok){localStorage.setItem('synccfg',c);alert('Connected ✓');route()}
+    else alert('That key was rejected by the server — it may be incomplete. Re-copy the whole code and try again.');
+  }).catch(()=>alert('Could not reach the sync server — check your connection and try again.'));
 }
 
-let view='today';
-function tabs(){
-  return `<div class="tabs">
-    <button class="${view==='today'?'sel':''}" onclick="view='today';render()">Today</button>
-    <button class="${view==='review'?'sel':''}" onclick="view='review';renderReview()">Review</button></div>`;
-}
-async function renderReview(){
-  view='review';
-  const app=$('app');
-  const cfg=localStorage.getItem('synccfg');
-  if(!cfg){app.innerHTML=tabs()+connectBanner();return}
-  app.innerHTML=tabs()+'<div class="sub">Loading clips…</div>';
-  const [endpoint,token]=cfg.split('|');
-  try{
-    const H={'Authorization':'Bearer '+token};
-    const [pull,fb]=await Promise.all([
-      fetch(endpoint+'/pull',{headers:H}).then(r=>r.json()).catch(()=>({media:[]})),
-      fetch(endpoint+'/feedback',{headers:H}).then(r=>r.json()).catch(()=>({}))
-    ]);
-    const media=(pull.media||[]).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
-    let h=tabs();
-    if(!media.length)h+='<div class="card sub">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
-    for(const m of media){
-      const f=fb[m.key];
-      const label=m.key.replace(/\//g,' · ').replace(/-\d+\.\w+$/,'');
-      const date=new Date(m.uploaded).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
-      h+=`<div class="card"><h3 style="margin:0">${label}</h3><div class="detail">${date} · ${(m.size/1048576).toFixed(1)} MB</div>
-        <button class="ghost" onclick="playClip('${m.key}',this)">▶ Watch</button>
-        <div class="fb ${f?'':'pending'}">${f?('🧠 Coach: '+f.notes):'Coach review pending — lands after the next sync.'}</div></div>`;
-    }
-    app.innerHTML=h;
-  }catch(e){app.innerHTML=tabs()+'<div class="card unsynced">Couldn\'t reach the server — check connection.</div>'}
-}
-async function playClip(key,btn){
-  btn.textContent='Loading…';
-  const [endpoint,token]=localStorage.getItem('synccfg').split('|');
-  try{
-    const r=await fetch(endpoint+'/media/'+encodeURIComponent(key),{headers:{'Authorization':'Bearer '+token}});
-    const blob=await r.blob();
-    const v=document.createElement('video');
-    v.src=URL.createObjectURL(blob);v.controls=true;v.playsInline=true;
-    btn.after(v);btn.remove();v.play();
-  }catch(e){btn.textContent='▶ Watch (failed — retry)'}
-}
+/* ---------- TODAY ---------- */
 function render(){
   const app=$('app');
-  if(!S){app.innerHTML='<div class="card locked"><div class="lock">🏁</div><h1>No session queued</h1><p class="sub">Claude programs the next one tonight.</p></div>';return}
+  if(!S){app.innerHTML=connectBanner()+`<div class="card locked"><div class="disp" style="font-size:30px">No session queued</div><p class="sub">Claude programs the next one tonight.</p></div>`;return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
-  if(L.completed){return renderDone()}
+  if(L.completed)return renderDone();
   if(!L.revealed && today()<S.date){
-    app.innerHTML=tabs()+`<div class="card locked"><div class="lock">🔒</div>
-      <h1>Sealed until ${S.date}</h1>
-      <p class="sub">${S.place} · ${S.time}</p>
+    app.innerHTML=connectBanner()+`<div class="card locked">
+      <div class="kicker">Sealed</div>
+      <div class="disp" style="font-size:40px">${S.date}</div>
+      <p class="sub" style="margin-top:8px">${S.place} · ${S.time}</p>
       <p class="sub">Show up. It'll be here.</p></div>`;
     return;
   }
   if(!L.revealed){
-    app.innerHTML=connectBanner()+`<div class="card locked"><div class="lock">🔒</div>
-      <h1>Today's session is ready</h1>
-      <p class="sub">${S.place} · ${S.time}</p>
+    app.innerHTML=connectBanner()+`<div class="card locked">
+      <div class="kicker">Today</div>
+      <div class="disp" style="font-size:34px">Session ready</div>
+      <p class="sub" style="margin:8px 0 18px">${S.place} · ${S.time}</p>
       <button class="big" onclick="reveal()">Reveal workout</button></div>`;
     return;
   }
-  let h=tabs()+connectBanner()+`<h1>${S.phase}</h1><div class="sub">${S.place} · ${S.date}</div>`;
-  if(S.formCue)h+=`<div class="cue">🎯 ${S.formCue}</div>`;
+  let h=connectBanner()+`<div class="kicker">${S.date} · ${S.place}</div><h1 class="disp">${S.phase}</h1>`;
+  if(S.formCue)h+=`<div class="cue"><b>FORM FOCUS</b>${S.formCue}</div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
-    h+=`<div class="card block"><h3>${b.name}${b.film?'<span class="filmchip">FILM · side-on</span>':''}</h3>
+    h+=`<div class="card block"><h3 class="disp">${b.name}${b.film?'<span class="filmchip">FILM · SIDE-ON</span>':''}</h3>
       <div class="detail">${b.detail}</div>`;
     if(bl.skipped){h+=`<div class="unsynced">Skipped — carries to next session.</div></div>`;continue}
     if(b.type==='timed'){
@@ -175,7 +189,7 @@ function render(){
       h+=`<div class="setrow ${d.done?'done':''}">
         <span class="lbl">time</span>
         <input id="t_${b.id}" inputmode="decimal" placeholder="min" value="${d.time??''}">
-        <button class="log" onclick="logTimed('${b.id}')">${d.done?'✓ logged':'Log'}</button></div>`;
+        <button class="log" onclick="logTimed('${b.id}')">${d.done?'✓ Logged':'Log'}</button></div>`;
     }else{
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
@@ -193,49 +207,25 @@ function render(){
         <button class="log" style="flex:1" onclick="film('${b.id}')">🎥 ${up.state==='done'?'Filmed ✓ (retake?)':up.state==='uploading'?'Uploading…':'Film this set'}</button>
         <input type="file" id="f_${b.id}" accept="video/*" capture="environment" style="display:none" onchange="gotClip('${b.id}',this)">
       </div>`;
-      if(up.state==='error')h+=`<div class="unsynced">Upload failed — clip NOT saved. Film with the Camera app instead, attach here after.</div>`;
+      if(up.state==='done')h+=`<div class="synced">Clip in — coach review lands in ~3 min (Review tab).</div>`;
+      if(up.state==='error')h+=`<div class="unsynced">Upload failed — clip NOT saved. Film with the Camera app, attach here after.</div>`;
     }
     h+=`<button class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</button></div>`;
   }
-  h+=`<div class="card"><h3>Wrap up</h3>
-    <div class="detail">RPE — how hard was that overall?</div><div class="scale" id="rpe">${scale('rpe',L.rpe)}</div>
-    <div class="detail">Feel — mood/energy today?</div><div class="scale" id="feel">${scale('feel',L.feel)}</div>
-    <div class="detail">Anything to tell your coach?</div>
+  h+=`<div class="card"><div class="kicker">Wrap up</div>
+    <div class="detail">RPE — how hard overall?</div><div class="scale">${scale('rpe',L.rpe)}</div>
+    <div class="detail">Feel — mood / energy today?</div><div class="scale">${scale('feel',L.feel)}</div>
+    <div class="detail">Anything for your coach?</div>
     <textarea id="notes" placeholder="niggles, wins, whatever">${L.notes||''}</textarea>
     <button class="big" style="margin-top:12px" onclick="finish()">Finish session</button></div>`;
   app.innerHTML=h;
-}
-function connectBanner(){
-  if(localStorage.getItem('synccfg'))return '';
-  return `<div class="card" style="border-color:#5a4a2a">
-    <div class="unsynced" style="margin:0 0 8px">Not connected to your coach — logs stay on this phone and video upload won't work.</div>
-    <button class="ghost" onclick="connect()">Connect (paste setup link)</button></div>`;
-}
-const DEFAULT_ENDPOINT='https://train-sync.byler-train.workers.dev';
-function connect(){
-  let v=prompt('Paste your setup key (or the full link) from Claude');
-  if(!v)return;
-  v=v.replace(/["'\s]/g,'');
-  if(v.includes('#cfg='))v=v.split('#cfg=')[1];
-  let cfg;
-  if(v.includes('|'))cfg=v;
-  else{
-    const tok=(v.match(/[a-f0-9]{32,}/i)||[])[0];
-    if(!tok){alert('No key found in that paste — paste the long code Claude sent.');return}
-    cfg=DEFAULT_ENDPOINT+'|'+tok;
-  }
-  const [ep,tok]=cfg.split('|');
-  fetch(ep+'/pull',{headers:{'Authorization':'Bearer '+tok}}).then(r=>{
-    if(r.ok){localStorage.setItem('synccfg',cfg);alert('Connected ✓');render()}
-    else alert('That key was rejected by the server — it may be incomplete. Re-copy the whole code and try again.');
-  }).catch(()=>alert('Could not reach the sync server — check your connection and try again.'));
 }
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
 function reveal(){log[S.id].revealed=true;log[S.id].revealedAt=new Date().toISOString();store.save(log);render()}
 function logSet(bid,i){
   const bl=log[S.id].blocks[bid];
-  bl.sets[i]={w:$( `w_${bid}_${i}`).value,r:$(`r_${bid}_${i}`).value,done:true,at:new Date().toISOString()};
+  bl.sets[i]={w:$(`w_${bid}_${i}`).value,r:$(`r_${bid}_${i}`).value,done:true,at:new Date().toISOString()};
   store.save(log);startTimer(90);render();
 }
 function logTimed(bid){
@@ -250,26 +240,14 @@ function skipBlock(bid){
 function startTimer(n){sec=n;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
 function tick(){if(sec<0)return stopTimer();$('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');sec--}
 function stopTimer(){clearInterval(tint);$('timer').classList.remove('on')}
-async function finish(){
-  const L=log[S.id];L.completed=true;L.completedAt=new Date().toISOString();store.save(log);
-  await sync();renderDone();
-}
-function renderDone(){
-  const L=log[S.id];
-  $('app').innerHTML=tabs()+`<div class="card doneview"><div style="font-size:44px">✅</div>
-    <h1>Session logged</h1>
-    <p class="sub">RPE ${L.rpe??'—'} · Feel ${L.feel??'—'}</p>
-    <div id="syncstate" class="${L.synced?'synced':'unsynced'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
-    <button class="ghost" onclick="exportLog()">Export log (share to Claude)</button></div>`;
-}
 function film(bid){$(`f_${bid}`).click()}
 async function gotClip(bid,input){
   const f=input.files[0];if(!f)return;
   const bl=log[S.id].blocks[bid];
   bl.upload={state:'uploading'};store.save(log);render();
-  const cfg=localStorage.getItem('synccfg');
-  if(!cfg){bl.upload={state:'error'};store.save(log);render();return}
-  const [endpoint,token]=cfg.split('|');
+  const c=cfg();
+  if(!c){bl.upload={state:'error'};store.save(log);render();return}
+  const [endpoint,token]=c;
   try{
     const key=`${S.id}/${bid}-${Date.now()}.${(f.name.split('.').pop()||'mov')}`;
     const buf=await f.arrayBuffer();
@@ -281,10 +259,22 @@ async function gotClip(bid,input){
   }catch(e){bl.upload={state:'error'}}
   store.save(log);render();
 }
+async function finish(){
+  const L=log[S.id];L.completed=true;L.completedAt=new Date().toISOString();
+  L.notes=$('notes')?$('notes').value:L.notes;
+  store.save(log);await sync();renderDone();
+}
+function renderDone(){
+  const L=log[S.id];
+  $('app').innerHTML=`<div class="card doneview"><div class="kicker">Logged</div>
+    <div class="disp" style="font-size:44px">Session done</div>
+    <p class="sub" style="margin-top:8px">RPE ${L.rpe??'—'} · Feel ${L.feel??'—'}</p>
+    <div class="${L.synced?'synced':'unsynced'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
+    <button class="ghost" onclick="exportLog()">Export log (share to Claude)</button></div>`;
+}
 async function sync(){
-  const cfg=localStorage.getItem('synccfg');
-  if(!cfg)return;
-  const [endpoint,token]=cfg.split('|');
+  const c=cfg();if(!c)return;
+  const [endpoint,token]=c;
   try{
     const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({type:'session-log',sessionId:S.id,log:log[S.id]})});
@@ -294,8 +284,166 @@ async function sync(){
 function exportLog(){
   const payload=JSON.stringify({sessionId:S.id,session:S.phase,log:log[S.id]},null,2);
   if(navigator.share){navigator.share({title:'Workout log '+S.id,text:payload})}
-  else{navigator.clipboard.writeText(payload);alert('Copied to clipboard — paste it to Claude.')}
+  else{navigator.clipboard.writeText(payload);alert('Copied — paste it to Claude.')}
 }
+
+/* ---------- REVIEW ---------- */
+async function renderReview(){
+  const app=$('app');
+  const c=cfg();
+  if(!c){app.innerHTML=connectBanner();return}
+  app.innerHTML='<div class="kicker">Film room</div><h1 class="disp">Review</h1><div class="sub">Loading clips…</div>';
+  const [endpoint,token]=c;
+  try{
+    const H={'Authorization':'Bearer '+token};
+    const [pull,fb]=await Promise.all([
+      fetch(endpoint+'/pull',{headers:H}).then(r=>r.json()).catch(()=>({media:[]})),
+      fetch(endpoint+'/feedback',{headers:H}).then(r=>r.json()).catch(()=>({}))
+    ]);
+    const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
+    let h='<div class="kicker">Film room</div><h1 class="disp">Review</h1>';
+    if(!media.length)h+='<div class="card sub" style="margin-top:12px">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
+    for(const m of media){
+      const f=fb[m.key];
+      const label=m.key.replace(/\//g,' · ').replace(/-\d+\.\w+$/,'');
+      const date=new Date(m.uploaded).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+      h+=`<div class="card"><h3 class="disp" style="margin:0">${label}</h3><div class="sub" style="margin-bottom:6px">${date} · ${(m.size/1048576).toFixed(1)} MB</div>
+        <button class="ghost" style="margin-top:4px" onclick="playClip('${m.key}',this)">▶ Watch</button>
+        <div class="fb ${f?'':'pending'}">${f?f.notes:'Coach review pending — lands ~3 min after upload.'}</div></div>`;
+    }
+    app.innerHTML=h;
+  }catch(e){app.innerHTML='<div class="card unsynced">Couldn\'t reach the server — check connection.</div>'}
+}
+async function playClip(key,btn){
+  btn.textContent='Loading…';
+  const [endpoint,token]=cfg();
+  try{
+    const r=await fetch(endpoint+'/media/'+encodeURIComponent(key),{headers:{'Authorization':'Bearer '+token}});
+    const blob=await r.blob();
+    const v=document.createElement('video');
+    v.src=URL.createObjectURL(blob);v.controls=true;v.playsInline=true;
+    btn.after(v);btn.remove();v.play();
+  }catch(e){btn.textContent='▶ Watch (failed — retry)'}
+}
+
+/* ---------- PROGRESS ---------- */
+function renderProgress(){
+  const weights=j('weights',[]);
+  const done=ALLSESS.filter(s=>log[s.id]&&log[s.id].completed).length;
+  // PRs: max logged weight per exercise across completed sessions
+  const prs={};
+  for(const s of ALLSESS){
+    const L=log[s.id];if(!L||!L.completed)continue;
+    for(const b of s.blocks){
+      const bl=L.blocks[b.id];if(!bl||!bl.sets)continue;
+      for(const st of bl.sets){
+        const w=parseFloat(st&&st.w);if(!w)continue;
+        if(!prs[b.name]||w>prs[b.name])prs[b.name]=w;
+      }
+    }
+  }
+  const lastW=weights.length?weights[weights.length-1]:null;
+  let h=`<div class="kicker">The record</div><h1 class="disp">Progress</h1>
+  <div class="card"><div class="kicker" style="margin-top:0">Bodyweight</div>
+    ${lastW?`<div class="bignum disp">${lastW.w}<small> LB</small></div><div class="sub">logged ${lastW.d}</div>`:'<div class="sub" style="font-size:16px;padding:10px 0">No entries yet — first weigh-in starts the line.</div>'}
+    ${sparkline(weights.map(x=>x.w))}
+    <div class="setrow" style="margin-top:12px">
+      <input id="bw" inputmode="decimal" placeholder="lb" style="flex:1">
+      <button class="log" style="flex:1" onclick="logWeight()">Log weight</button></div></div>
+  <div class="card"><div class="kicker" style="margin-top:0">Weekly photos</div>
+    <div class="sub">Same spot, same light. Front · side · back.</div>
+    <button class="ghost" onclick="$('photoIn').click()">📷 Take progress photo</button>
+    <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="gotPhoto(this)">
+    <div id="photoStatus"></div></div>
+  <div class="card"><div class="kicker" style="margin-top:0">Lifts — best logged</div>`;
+  const keys=Object.keys(prs);
+  h+=keys.length?keys.map(k=>`<div class="statrow"><span>${k}</span><span class="v">${prs[k]} lb</span></div>`).join(''):'<div class="sub">complete a session and your numbers land here</div>';
+  h+=`</div>
+  <div class="card"><div class="statrow"><span>Sessions completed</span><span class="v">${done}</span></div>
+    <div class="statrow" style="border:0"><span>This week vs 3/wk floor</span><span class="v">${weekCount()} / 3</span></div></div>`;
+  $('app').innerHTML=h;
+}
+function weekCount(){
+  const now=new Date(); const day=(now.getDay()+6)%7; // Mon=0
+  const mon=new Date(now); mon.setDate(now.getDate()-day); mon.setHours(0,0,0,0);
+  let n=0;
+  for(const s of ALLSESS){const L=log[s.id];if(L&&L.completed&&L.completedAt&&new Date(L.completedAt)>=mon)n++}
+  return n;
+}
+function sparkline(vals){
+  if(vals.length<2)return '';
+  const w=280,h=40,min=Math.min(...vals),max=Math.max(...vals),rng=(max-min)||1;
+  const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-4-((v-min)/rng)*(h-8)).toFixed(1)}`).join(' ');
+  return `<svg width="100%" viewBox="0 0 ${w} ${h}" style="margin-top:8px"><polyline points="${pts}" fill="none" stroke="#A64B3F" stroke-width="2"/></svg>`;
+}
+function logWeight(){
+  const v=parseFloat($('bw').value);if(!v)return;
+  const weights=j('weights',[]);weights.push({d:today(),w:v});sv('weights',weights);
+  postLog({type:'bodyweight',date:today(),lb:v});
+  renderProgress();
+}
+async function gotPhoto(input){
+  const f=input.files[0];if(!f)return;
+  const c=cfg();const el=$('photoStatus');
+  if(!c){el.innerHTML='<div class="unsynced">Connect first — photo not saved.</div>';return}
+  el.innerHTML='<div class="sub">Uploading…</div>';
+  const [endpoint,token]=c;
+  try{
+    const key=`photos/${today()}-${Date.now()}.jpg`;
+    const buf=await f.arrayBuffer();
+    const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+    const rj=res.ok?await res.json():null;
+    el.innerHTML=(rj&&rj.size>0)?'<div class="synced">Photo filed to the vault ✓</div>':'<div class="unsynced">Upload failed — try again.</div>';
+  }catch(e){el.innerHTML='<div class="unsynced">Upload failed — try again.</div>'}
+}
+async function postLog(obj){
+  const c=cfg();if(!c)return;
+  const [endpoint,token]=c;
+  try{await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({sessionId:obj.type,log:obj})})}catch(e){}
+}
+
+/* ---------- FUEL ---------- */
+const MEALS=[
+  ['Protein shake','45'],['RTD (Core Power)','42'],['CAVA double protein','50'],
+  ['Panera Cobb + chicken','40'],['Steak (6-8 oz)','50'],['Burger (double)','45'],
+  ['Sushi / poke','40'],['Chicken dinner','40'],['Greek yogurt','18'],['Eggs (3)','19']
+];
+function renderFuel(){
+  const key='fuel:'+today();
+  const f=j(key,{g:0,items:[]});
+  const pct=Math.min(100,Math.round(f.g/140*100));
+  let h=`<div class="kicker">One number</div><h1 class="disp">Protein</h1>
+  <div class="card">
+    <div class="bignum disp">${f.g}<small> / 140 G</small></div>
+    <div class="bar ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
+    <div class="sub">${f.g>=140?'Hit. That\'s the whole game — done for today.':f.g>=100?'Past the floor — push to 140.':'Floor is 100. Anchor meals below.'}</div>
+    <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <b>+${g}</b></button>`).join('')}
+      <button onclick="addCustom()">Custom <b>+?</b></button></div>
+    ${f.items.length?`<hr class="rule">`+f.items.map((it,i)=>`<div class="statrow"><span>${it.n}</span><span class="v">${it.g}g <a style="color:var(--dim);font-size:13px;margin-left:8px" onclick="rmFuel(${i})">✕</a></span></div>`).join(''):''}
+  </div>
+  <div class="card sub" style="font-size:13px">Rule from your plan: hit ~140 g protein, food mostly real, don't count calories. Breakfast shake is the anchor — never protein-free again.</div>`;
+  $('app').innerHTML=h;
+}
+function addFuel(n,g){
+  const key='fuel:'+today();const f=j(key,{g:0,items:[]});
+  f.items.push({n,g});f.g+=g;sv(key,f);
+  postLog({type:'nutrition',date:today(),protein_g:f.g,items:f.items});
+  renderFuel();
+}
+function addCustom(){
+  const g=parseInt(prompt('Protein grams?'));if(!g)return;
+  const n=prompt('What was it?')||'Custom';
+  addFuel(n,g);
+}
+function rmFuel(i){
+  const key='fuel:'+today();const f=j(key,{g:0,items:[]});
+  f.g-=f.items[i].g;f.items.splice(i,1);sv(key,f);
+  postLog({type:'nutrition',date:today(),protein_g:f.g,items:f.items});
+  renderFuel();
+}
+
 init();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
 </script>
