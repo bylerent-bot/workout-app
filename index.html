@@ -107,13 +107,13 @@ function render(){
     return;
   }
   if(!L.revealed){
-    app.innerHTML=`<div class="card locked"><div class="lock">🔒</div>
+    app.innerHTML=connectBanner()+`<div class="card locked"><div class="lock">🔒</div>
       <h1>Today's session is ready</h1>
       <p class="sub">${S.place} · ${S.time}</p>
       <button class="big" onclick="reveal()">Reveal workout</button></div>`;
     return;
   }
-  let h=`<h1>${S.phase}</h1><div class="sub">${S.place} · ${S.date}</div>`;
+  let h=connectBanner()+`<h1>${S.phase}</h1><div class="sub">${S.place} · ${S.date}</div>`;
   if(S.formCue)h+=`<div class="cue">🎯 ${S.formCue}</div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
@@ -154,6 +154,19 @@ function render(){
     <textarea id="notes" placeholder="niggles, wins, whatever">${L.notes||''}</textarea>
     <button class="big" style="margin-top:12px" onclick="finish()">Finish session</button></div>`;
   app.innerHTML=h;
+}
+function connectBanner(){
+  if(localStorage.getItem('synccfg'))return '';
+  return `<div class="card" style="border-color:#5a4a2a">
+    <div class="unsynced" style="margin:0 0 8px">Not connected to your coach — logs stay on this phone and video upload won't work.</div>
+    <button class="ghost" onclick="connect()">Connect (paste setup link)</button></div>`;
+}
+function connect(){
+  const v=prompt('Paste the setup link from Claude (the long one with #cfg=...)');
+  if(!v)return;
+  const m=v.includes('#cfg=')?v.split('#cfg=')[1]:v;
+  if(!m.includes('|')){alert('That doesn\'t look right — it needs the full link with the key after #cfg=.');return}
+  localStorage.setItem('synccfg',m.trim());alert('Connected ✓');render();
 }
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
