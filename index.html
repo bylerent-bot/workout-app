@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Train</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<style>
+  :root{
+    --bg:#0d0f12; --card:#171a1f; --card2:#1f242b; --line:#2a303a;
+    --text:#e8eaed; --dim:#8a919c; --accent:#4fc08d; --warn:#e0a04f; --red:#d06060;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0; background:var(--bg); color:var(--text);
+    font:17px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",sans-serif;
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  .wrap{max-width:520px; margin:0 auto; padding:16px}
+  h1{font-size:22px; margin:8px 0 2px}
+  .sub{color:var(--dim); font-size:14px; margin-bottom:16px}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:16px; padding:16px; margin-bottom:14px}
+  .locked{text-align:center; padding:40px 20px}
+  .locked .lock{font-size:44px; margin-bottom:10px}
+  button{font:inherit; border:none; border-radius:12px; cursor:pointer}
+  .big{display:block; width:100%; padding:16px; font-size:18px; font-weight:600;
+    background:var(--accent); color:#0d0f12}
+  .big:active{opacity:.8}
+  .block{margin-bottom:14px}
+  .block h3{margin:0 0 2px; font-size:17px}
+  .block .detail{color:var(--dim); font-size:14px; margin-bottom:10px}
+  .filmchip{display:inline-block; background:#3a2f1a; color:var(--warn); font-size:12px;
+    font-weight:700; padding:3px 8px; border-radius:8px; margin-left:6px; vertical-align:middle}
+  .cue{background:#1a2a22; border:1px solid #2a4a3a; color:#a8d8bf; font-size:14px;
+    border-radius:12px; padding:10px 12px; margin-bottom:14px}
+  .setrow{display:flex; align-items:center; gap:8px; margin-bottom:8px}
+  .setrow .lbl{width:44px; color:var(--dim); font-size:14px}
+  .setrow input{width:70px; padding:12px 8px; font-size:18px; text-align:center;
+    background:var(--card2); border:1px solid var(--line); border-radius:10px; color:var(--text)}
+  .setrow .x{color:var(--dim)}
+  .setrow .log{flex:1; padding:12px; font-weight:600; background:var(--card2);
+    color:var(--accent); border:1px solid var(--line)}
+  .setrow.done .log{background:var(--accent); color:#0d0f12}
+  .skip{background:none; color:var(--dim); font-size:14px; padding:8px 0; text-decoration:underline}
+  .timer{position:fixed; left:0; right:0; bottom:0; background:var(--card2);
+    border-top:1px solid var(--line); padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    display:none; align-items:center; justify-content:space-between}
+  .timer.on{display:flex}
+  .timer .t{font-size:30px; font-weight:700; font-variant-numeric:tabular-nums}
+  .timer button{background:var(--card); color:var(--dim); padding:10px 16px; border:1px solid var(--line)}
+  .scale{display:flex; gap:6px; flex-wrap:wrap; margin:8px 0 14px}
+  .scale button{width:44px; height:44px; background:var(--card2); border:1px solid var(--line);
+    color:var(--text); font-size:16px; font-weight:600; border-radius:10px}
+  .scale button.sel{background:var(--accent); color:#0d0f12; border-color:var(--accent)}
+  textarea{width:100%; background:var(--card2); border:1px solid var(--line); border-radius:10px;
+    color:var(--text); font:inherit; padding:10px; min-height:60px}
+  .doneview{text-align:center; padding:30px 16px}
+  .doneview .big{margin-top:16px}
+  .ghost{background:none; border:1px solid var(--line); color:var(--dim); width:100%;
+    padding:12px; margin-top:10px}
+  .synced{color:var(--accent); font-size:13px; margin-top:8px}
+  .unsynced{color:var(--warn); font-size:13px; margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="timer" id="timer">
+  <div><div style="font-size:12px;color:var(--dim)">REST</div><div class="t" id="tval">0:00</div></div>
+  <button onclick="stopTimer()">done resting</button>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const store={
+  get k(){return 'wlog'},
+  load(){try{return JSON.parse(localStorage.getItem(this.k))||{}}catch(e){return{}}},
+  save(d){localStorage.setItem(this.k,JSON.stringify(d))}
+};
+let S=null, log=store.load(), sec=0, tint=null;
+
+// one-time sync config via #cfg=endpoint|token (kept out of the public bundle)
+if(location.hash.startsWith('#cfg=')){
+  localStorage.setItem('synccfg', location.hash.slice(5));
+  history.replaceState(null,'',location.pathname);
+}
+
+function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+
+async function init(){
+  const r=await fetch('data/sessions.json?_='+Date.now());
+  const data=await r.json();
+  // next session = first not marked completed in log
+  S=data.sessions.find(s=>!(log[s.id]&&log[s.id].completed))||null;
+  render();
+}
+
+function render(){
+  const app=$('app');
+  if(!S){app.innerHTML='<div class="card locked"><div class="lock">🏁</div><h1>No session queued</h1><p class="sub">Claude programs the next one tonight.</p></div>';return}
+  const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
+  if(L.completed){return renderDone()}
+  if(!L.revealed && today()<S.date){
+    app.innerHTML=`<div class="card locked"><div class="lock">🔒</div>
+      <h1>Sealed until ${S.date}</h1>
+      <p class="sub">${S.place} · ${S.time}</p>
+      <p class="sub">Show up. It'll be here.</p></div>`;
+    return;
+  }
+  if(!L.revealed){
+    app.innerHTML=`<div class="card locked"><div class="lock">🔒</div>
+      <h1>Today's session is ready</h1>
+      <p class="sub">${S.place} · ${S.time}</p>
+      <button class="big" onclick="reveal()">Reveal workout</button></div>`;
+    return;
+  }
+  let h=`<h1>${S.phase}</h1><div class="sub">${S.place} · ${S.date}</div>`;
+  if(S.formCue)h+=`<div class="cue">🎯 ${S.formCue}</div>`;
+  for(const b of S.blocks){
+    const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
+    h+=`<div class="card block"><h3>${b.name}${b.film?'<span class="filmchip">FILM · side-on</span>':''}</h3>
+      <div class="detail">${b.detail}</div>`;
+    if(bl.skipped){h+=`<div class="unsynced">Skipped — carries to next session.</div></div>`;continue}
+    if(b.type==='timed'){
+      const d=bl.sets[0]||{};
+      h+=`<div class="setrow ${d.done?'done':''}">
+        <span class="lbl">time</span>
+        <input id="t_${b.id}" inputmode="decimal" placeholder="min" value="${d.time??''}">
+        <button class="log" onclick="logTimed('${b.id}')">${d.done?'✓ logged':'Log'}</button></div>`;
+    }else{
+      for(let i=0;i<b.sets;i++){
+        const d=bl.sets[i]||{};
+        h+=`<div class="setrow ${d.done?'done':''}">
+          <span class="lbl">set ${i+1}</span>
+          <input id="w_${b.id}_${i}" inputmode="decimal" placeholder="lb" value="${d.w??b.targetWeight??''}">
+          <span class="x">×</span>
+          <input id="r_${b.id}_${i}" inputmode="numeric" placeholder="reps" value="${d.r??b.targetReps??''}">
+          <button class="log" onclick="logSet('${b.id}',${i})">${d.done?'✓':'Log'}</button></div>`;
+      }
+    }
+    h+=`<button class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</button></div>`;
+  }
+  h+=`<div class="card"><h3>Wrap up</h3>
+    <div class="detail">RPE — how hard was that overall?</div><div class="scale" id="rpe">${scale('rpe',L.rpe)}</div>
+    <div class="detail">Feel — mood/energy today?</div><div class="scale" id="feel">${scale('feel',L.feel)}</div>
+    <div class="detail">Anything to tell your coach?</div>
+    <textarea id="notes" placeholder="niggles, wins, whatever">${L.notes||''}</textarea>
+    <button class="big" style="margin-top:12px" onclick="finish()">Finish session</button></div>`;
+  app.innerHTML=h;
+}
+function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
+function pick(k,v){log[S.id][k]=v;store.save(log);render()}
+function reveal(){log[S.id].revealed=true;log[S.id].revealedAt=new Date().toISOString();store.save(log);render()}
+function logSet(bid,i){
+  const bl=log[S.id].blocks[bid];
+  bl.sets[i]={w:$( `w_${bid}_${i}`).value,r:$(`r_${bid}_${i}`).value,done:true,at:new Date().toISOString()};
+  store.save(log);startTimer(90);render();
+}
+function logTimed(bid){
+  const bl=log[S.id].blocks[bid];
+  bl.sets[0]={time:$(`t_${bid}`).value,done:true,at:new Date().toISOString()};
+  store.save(log);render();
+}
+function skipBlock(bid){
+  if(!confirm('Skip this one? It carries forward — nothing gets lost.'))return;
+  log[S.id].blocks[bid].skipped=true;store.save(log);render();
+}
+function startTimer(n){sec=n;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
+function tick(){if(sec<0)return stopTimer();$('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');sec--}
+function stopTimer(){clearInterval(tint);$('timer').classList.remove('on')}
+async function finish(){
+  const L=log[S.id];L.completed=true;L.completedAt=new Date().toISOString();store.save(log);
+  await sync();renderDone();
+}
+function renderDone(){
+  const L=log[S.id];
+  $('app').innerHTML=`<div class="card doneview"><div style="font-size:44px">✅</div>
+    <h1>Session logged</h1>
+    <p class="sub">RPE ${L.rpe??'—'} · Feel ${L.feel??'—'}</p>
+    <div id="syncstate" class="${L.synced?'synced':'unsynced'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
+    <button class="ghost" onclick="exportLog()">Export log (share to Claude)</button></div>`;
+}
+async function sync(){
+  const cfg=localStorage.getItem('synccfg');
+  if(!cfg)return;
+  const [endpoint,token]=cfg.split('|');
+  try{
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({type:'session-log',sessionId:S.id,log:log[S.id]})});
+    if(res.ok){log[S.id].synced=true;store.save(log)}
+  }catch(e){}
+}
+function exportLog(){
+  const payload=JSON.stringify({sessionId:S.id,session:S.phase,log:log[S.id]},null,2);
+  if(navigator.share){navigator.share({title:'Workout log '+S.id,text:payload})}
+  else{navigator.clipboard.writeText(payload);alert('Copied to clipboard — paste it to Claude.')}
+}
+init();
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+</script>
+</body>
+</html>
