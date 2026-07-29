@@ -447,7 +447,7 @@ function renderFuel(){
     <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <b>+${g}</b></button>`).join('')}
       <button onclick="addCustom()">Custom <b>+?</b></button>
       <button onclick="$('mealIn').click()" style="border-color:var(--ox)">📷 Snap meal / menu</button></div>
-    <input type="file" id="mealIn" accept="image/*" capture="environment" style="display:none" onchange="gotMeal(this)">
+    <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
     ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="sub" style="margin-top:10px">📷 Analyzing your photo — protein lands here in ~2 min…</div>`).join('')}
     ${f.items.length?`<hr class="rule">`+f.items.map((it,i)=>`<div class="statrow"><span>${it.n}</span><span class="v">${it.g}g <a style="color:var(--dim);font-size:13px;margin-left:8px" onclick="rmFuel(${i})">✕</a></span></div>`).join(''):''}
   </div>
@@ -455,20 +455,30 @@ function renderFuel(){
   $('app').innerHTML=h;
 }
 async function gotMeal(input){
-  const f=input.files[0];if(!f)return;
+  const files=[...input.files];if(!files.length)return;
   const c=cfg();
   if(!c){alert('Connect first (Today tab) — photo can\'t upload.');return}
   const [endpoint,token]=c;
+  const note=prompt('What is it? (optional — helps me get it right)')||'';
+  const group=`meals/${today()}-${Date.now()}`;
   try{
-    const key=`meals/${today()}-${Date.now()}.jpg`;
-    const buf=await f.arrayBuffer();
-    const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
-    const rj=res.ok?await res.json():null;
-    if(rj&&rj.size>0){
-      const q=j('mealq',[]);q.push({key,date:today()});sv('mealq',q);
-      renderFuel();pollMeals();
-    }else alert('Upload failed — try again.');
+    let firstKey=null;
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      const key=`${group}/p${i+1}.jpg`;
+      const buf=await f.arrayBuffer();
+      const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+      const rj=res.ok?await res.json():null;
+      if(!(rj&&rj.size>0))throw new Error('upload failed');
+      if(!firstKey)firstKey=key;
+    }
+    if(note){
+      await fetch(endpoint+'/upload?key='+encodeURIComponent(group+'/note.txt'),{method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:note});
+    }
+    const q=j('mealq',[]);q.push({key:firstKey,date:today()});sv('mealq',q);
+    renderFuel();pollMeals();
   }catch(e){alert('Upload failed — try again.')}
 }
 let mealTimer=null;
