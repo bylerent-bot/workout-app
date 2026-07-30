@@ -13,6 +13,31 @@ const CORS = {
 };
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json', ...CORS } });
 
+// Free-tier KV allows only 1,000 list() calls/day — the 60s poller burned through
+// that (found 7/30, worker 500'd all day). So the hot read paths use INDEX KEYS
+// (plain gets, 100k/day) that the write paths append to. list() runs at most once
+// per UTC day, as a self-heal that picks up anything written outside the index.
+async function idxGet(env, name) {
+  try { return JSON.parse(await env.LOGS.get('idx:' + name)) || []; } catch (e) { return []; }
+}
+async function idxAdd(env, name, key) {
+  const a = await idxGet(env, name);
+  if (!a.includes(key)) { a.push(key); await env.LOGS.put('idx:' + name, JSON.stringify(a)); }
+}
+async function dailyReconcile(env) {
+  const day = new Date().toISOString().slice(0, 10);
+  if ((await env.LOGS.get('idx:day')) === day) return;
+  await env.LOGS.put('idx:day', day);            // claim first, so a failed list doesn't retry all day
+  try {
+    const logs = (await env.LOGS.list({ prefix: 'log:' })).keys.map(k => k.name);
+    const fbs  = (await env.LOGS.list({ prefix: 'fb:'  })).keys.map(k => k.name.slice(3));
+    const li = await idxGet(env, 'log'), fi = await idxGet(env, 'fb');
+    const lm = [...new Set([...li, ...logs])].sort(), fm = [...new Set([...fi, ...fbs])];
+    if (lm.length !== li.length) await env.LOGS.put('idx:log', JSON.stringify(lm));
+    if (fm.length !== fi.length) await env.LOGS.put('idx:fb', JSON.stringify(fm));
+  } catch (e) { /* list quota gone — try again next UTC day */ }
+}
+
 export default {
   async fetch(req, env) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
@@ -27,6 +52,7 @@ export default {
       // timestamp-first so key order == time order (the sync cursor relies on it)
       const key = `log:${Date.now()}:${body.sessionId || 'unknown'}`;
       await env.LOGS.put(key, JSON.stringify(body));
+      await idxAdd(env, 'log', key);
       return json({ ok: true, key });
     }
 
@@ -42,12 +68,13 @@ export default {
     }
 
     if (req.method === 'GET' && path === '/pull') {
+      await dailyReconcile(env);
       const after = url.searchParams.get('after') || '';
-      const list = await env.LOGS.list({ prefix: 'log:' });
       const out = [];
-      for (const k of list.keys) {
-        if (after && k.name <= after) continue;
-        out.push({ key: k.name, log: JSON.parse(await env.LOGS.get(k.name)) });
+      for (const name of await idxGet(env, 'log')) {
+        if (after && name <= after) continue;
+        const v = await env.LOGS.get(name);
+        if (v) out.push({ key: name, log: JSON.parse(v) });
       }
       const media = (await env.FOOTAGE.list()).objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded }));
       return json({ logs: out, media });
@@ -57,13 +84,17 @@ export default {
       const body = await req.json();
       if (!body.clipKey) return json({ error: 'clipKey required' }, 400);
       await env.LOGS.put('fb:' + body.clipKey, JSON.stringify({ notes: body.notes, at: Date.now() }));
+      await idxAdd(env, 'fb', body.clipKey);
       return json({ ok: true });
     }
 
     if (req.method === 'GET' && path === '/feedback') {
-      const list = await env.LOGS.list({ prefix: 'fb:' });
+      await dailyReconcile(env);
       const out = {};
-      for (const k of list.keys) out[k.name.slice(3)] = JSON.parse(await env.LOGS.get(k.name));
+      for (const key of await idxGet(env, 'fb')) {
+        const v = await env.LOGS.get('fb:' + key);
+        if (v) out[key] = JSON.parse(v);
+      }
       return json(out);
     }
 
