@@ -160,10 +160,36 @@ async function init(){
   route();
 }
 function tabbar(){
-  const t=[['today','Today'],['review','Review'],['progress','Progress'],['fuel','Fuel']];
+  const t=[['today','Today'],['review','Review'],['progress','Progress'],['fuel','Fuel'],['gear','Gear']];
   $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
 }
-function route(){tabbar();({today:render,review:renderReview,progress:renderProgress,fuel:renderFuel})[view]()}
+function route(){tabbar();({today:render,review:renderReview,progress:renderProgress,fuel:renderFuel,gear:renderGear})[view]()}
+
+/* ---------- UNITS ---------- */
+const KG2LB=2.20462;
+function unit(){return localStorage.getItem('unit')||'lb'}
+function toggleUnit(){localStorage.setItem('unit',unit()==='lb'?'kg':'lb');route()}
+function unitBtn(){return `<button class="skip" style="text-decoration:none;border:1px solid var(--line2);padding:6px 12px;font-family:var(--fhead);letter-spacing:.08em" onclick="toggleUnit()">UNITS: ${unit().toUpperCase()} ⇄</button>`}
+function setLbs(st){const w=parseFloat(st&&st.w);if(!w)return 0;return (st.u==='kg')?w*KG2LB:w}
+function both(lbs){if(!lbs)return '—';const kg=lbs/KG2LB;
+  return unit()==='kg'?`${Math.round(kg*10)/10} KG · ${Math.round(lbs)} LB`:`${Math.round(lbs)} LB · ${Math.round(kg*10)/10} KG`}
+function targetIn(lbs){if(lbs==null)return '';return unit()==='kg'?String(Math.round(lbs/KG2LB*2)/2):String(lbs)}
+
+/* ---------- FUEL STRIP (home) ---------- */
+function fuelStrip(){
+  const f=j('fuel:'+today(),{g:0,items:[]});
+  const pct=Math.min(100,Math.round(f.g/140*100));
+  return `<div class="card" style="padding:12px 16px;cursor:pointer" onclick="view='fuel';route()">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <span class="label lit">FUEL</span>
+      <span><span class="num" style="font-size:24px">${f.g}</span><span class="label">/140G</span></span></div>
+    <div class="track ${f.g>=140?'hit':''}" style="margin:8px 0 2px;height:8px"><i style="width:${pct}%"></i></div></div>`;
+}
+function howto(b){
+  const q=b.howto||('how to '+b.name.replace(/\(.*?\)/g,'').replace(/[—-].*$/,'').trim()+' exercise proper form');
+  const url=b.howto&&b.howto.startsWith('http')?b.howto:'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
+  return `<a href="${url}" target="_blank" rel="noopener" class="label" style="text-decoration:none;border:1px solid var(--line2);padding:4px 10px;font-size:11px;float:right">HOW ▸</a>`;
+}
 
 function connectBanner(){
   if(cfg())return '';
@@ -205,13 +231,13 @@ function sealCard(kicker,btn){
 }
 function render(){
   const app=$('app');
-  if(!S){app.innerHTML=connectBanner()+`<div class="sealwrap"><div class="seal"><div class="mon">No session queued</div><hr class="dotted"><div class="label">Claude programs the next one tonight.</div></div></div>`;return}
+  if(!S){app.innerHTML=connectBanner()+fuelStrip()+`<div class="sealwrap"><div class="seal"><div class="mon">No session queued</div><hr class="dotted"><div class="label">Claude programs the next one tonight.</div></div></div>`;return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
   const idx=ALLSESS.indexOf(S);
   const prev=idx>0?log[ALLSESS[idx-1].id]:null;
   if(prev&&prev.completedAt&&prev.completedAt.slice(0,10)===today()){
-    app.innerHTML=connectBanner()+`<div class="sealwrap">
+    app.innerHTML=connectBanner()+fuelStrip()+`<div class="sealwrap">
       <div class="poster num">DONE</div>
       <hr class="rule">
       <div class="head" style="color:#C8574A;font-size:20px">Recovery required</div>
@@ -219,46 +245,55 @@ function render(){
     return;
   }
   if(!L.revealed && today()<S.date){
-    app.innerHTML=connectBanner()+sealCard('Sealed','');
+    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Sealed','');
     return;
   }
   if(!L.revealed){
-    app.innerHTML=connectBanner()+sealCard('Today',`<button class="btn accent" onclick="reveal()">Break seal</button>`);
+    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Today',`<button class="btn accent" onclick="reveal()">Break seal</button>`);
     return;
   }
   const snum=String(idx+1).padStart(3,'0');
-  let h=connectBanner()+`<div class="label">Session ${snum} · ${S.place.toUpperCase()}</div><h1>${S.phase.replace(/^Phase \d+ · /,'')}</h1>`;
+  let h=connectBanner()+fuelStrip()+`<div style="display:flex;justify-content:space-between;align-items:center"><div class="label">Session ${snum} · ${S.place.toUpperCase()}</div>${unitBtn()}</div><h1>${S.phase.replace(/^Phase \d+ · /,'')}</h1>`;
   if(S.formCue)h+=`<div class="coach"><div class="label" style="color:#C8574A">Form focus</div><p>"${S.formCue}"</p></div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
-    h+=`<div class="card block"><div class="exname">${b.name}</div>
+    h+=`<div class="card block">${howto(b)}<div class="exname">${b.name}</div>
       <div class="label rx">${b.detail}</div>`;
     if(bl.skipped){h+=`<div class="warn">Skipped — carries to next session.</div></div>`;continue}
     if(b.type==='timed'){
       const d=bl.sets[0]||{};
+      const M={min:['0:00','TIME (MIN)'],cal:['—','CALORIES'],m:['—','METERS']}[b.metric||'min'];
       h+=`<div class="logrow ${d.done?'done':''}">
         <div class="sn">1</div>
-        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="decimal" placeholder="0:00" value="${d.time??''}"><span>TIME (MIN)</span></div></div>
+        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="decimal" placeholder="${M[0]}" value="${d.time??''}"><span>${M[1]}</span></div></div>
         <button class="go" onclick="logTimed('${b.id}')">${d.done?'DONE':'LOG'}</button></div>`;
+    }else if(b.type==='measure'){
+      const d=bl.sets[0]||{};
+      h+=(b.measures||[]).map(m=>`<div class="logrow">
+        <div class="sn" style="flex-basis:110px;font-size:12px">${m.label}</div>
+        <div class="grp"><div class="box"><input id="m_${b.id}_${m.id}" inputmode="decimal" placeholder="—" value="${d[m.id]??''}"><span>${m.unit||''}</span></div></div></div>`).join('')+
+        `<button class="go head" style="border:1px solid var(--line2);padding:12px 18px;margin-top:6px" onclick="logMeasure('${b.id}')">${d.done?'SAVED ✓':'SAVE MEASUREMENTS'}</button>`;
     }else{
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
+        const shown=d.w??((d.u&&d.u!==unit())?'':targetIn(b.targetWeight));
         h+=`<div class="logrow ${d.done?'done':''}">
           <div class="sn">${i+1}</div>
           <div class="grp">
-            <div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${d.w??b.targetWeight??''}"><span>LBS</span></div>
+            <div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${shown}"><span>${(d.u||unit()).toUpperCase()}</span></div>
             <div class="box"><input id="r_${b.id}_${i}" inputmode="numeric" placeholder="—" value="${d.r??b.targetReps??''}"><span>REPS</span></div>
           </div>
           <button class="go" onclick="logSet('${b.id}',${i})">${d.done?'DONE':'LOG'}</button></div>`;
       }
     }
-    if(b.film){
+    {
       const ups=bl.uploads||[];
       const busy=bl.uploading;
-      h+=`<button class="filmbadge" onclick="film('${b.id}')"><span class="dot"></span>${busy?'UPLOADING…':ups.length?`FILM ANOTHER ANGLE (${ups.length} IN)`:'FILM THIS SET'}</button>
-        <input type="file" id="f_${b.id}" accept="video/*" capture="environment" style="display:none" onchange="gotClip('${b.id}',this)">`;
-      if(ups.length&&!busy)h+=`<div class="good">${ups.length} clip${ups.length>1?'s':''} in — coach review lands in ~3 min (Review tab).</div>`;
-      if(bl.uploadError)h+=`<div class="warn">Last upload failed — clip NOT saved. Film with the Camera app, attach here after.</div>`;
+      const rx=!!b.film;
+      h+=`<button class="filmbadge" style="${rx?'':'border-color:var(--line2);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':'◉ '}${busy?'UPLOADING…':ups.length?`ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
+        <input type="file" id="f_${b.id}" accept="video/*,image/*" style="display:none" onchange="gotClip('${b.id}',this)">`;
+      if(ups.length&&!busy)h+=`<div class="good">${ups.length} in — coach review lands in ~3 min (Review tab).</div>`;
+      if(bl.uploadError)h+=`<div class="warn">Last upload failed — NOT saved. Shoot with the Camera app, attach here after.</div>`;
     }
     h+=`<br><span class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</span></div>`;
   }
@@ -299,13 +334,29 @@ function pick(k,v){log[S.id][k]=v;store.save(log);render()}
 function reveal(){log[S.id].revealed=true;log[S.id].revealedAt=new Date().toISOString();store.save(log);render()}
 function logSet(bid,i){
   const bl=log[S.id].blocks[bid];
-  bl.sets[i]={w:$(`w_${bid}_${i}`).value,r:$(`r_${bid}_${i}`).value,done:true,at:new Date().toISOString()};
-  store.save(log);startTimer(90);render();
+  bl.sets[i]={w:$(`w_${bid}_${i}`).value,u:unit(),r:$(`r_${bid}_${i}`).value,done:true,at:new Date().toISOString()};
+  store.save(log);autoSync();startTimer(90);render();
 }
 function logTimed(bid){
   const bl=log[S.id].blocks[bid];
-  bl.sets[0]={time:$(`t_${bid}`).value,done:true,at:new Date().toISOString()};
-  store.save(log);render();
+  const b=S.blocks.find(x=>x.id===bid);
+  bl.sets[0]={time:$(`t_${bid}`).value,metric:(b&&b.metric)||'min',done:true,at:new Date().toISOString()};
+  store.save(log);autoSync();render();
+}
+function logMeasure(bid){
+  const b=S.blocks.find(x=>x.id===bid);
+  const d={done:true,at:new Date().toISOString()};
+  for(const m of (b.measures||[]))d[m.id]=$(`m_${bid}_${m.id}`).value;
+  log[S.id].blocks[bid].sets[0]=d;
+  store.save(log);autoSync();render();
+}
+let autoT=null;
+function autoSync(){ /* auto-save to the vault pipe ~90s after the last logged set — no button needed */
+  clearTimeout(autoT);
+  autoT=setTimeout(()=>{const c=cfg();if(!c||!S)return;const [endpoint,token]=c;
+    fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({type:'session-log',sessionId:S.id,log:{...log[S.id],partial:!log[S.id].completed}})}).catch(()=>{});
+  },90000);
 }
 function skipBlock(bid){
   if(!confirm('Skip this one? It carries forward — nothing gets lost.'))return;
@@ -329,11 +380,12 @@ async function gotClip(bid,input){
   const [endpoint,token]=c;
   try{
     const n=(bl.uploads||[]).length+1;
-    const key=`${S.id}/${bid}-clip${n}-${Date.now()}.${(f.name.split('.').pop()||'mov')}`;
+    const isImg=(f.type||'').startsWith('image');
+    const key=`${S.id}/${bid}-clip${n}-${Date.now()}.${(f.name.split('.').pop()||(isImg?'jpg':'mov'))}`;
     const buf=await f.arrayBuffer();
     if(!buf.byteLength)throw new Error('empty file');
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'video/quicktime'},body:buf});
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||(isImg?'image/jpeg':'video/quicktime')},body:buf});
     const rj=res.ok?await res.json():null;
     if(rj&&rj.size>0){(bl.uploads=bl.uploads||[]).push(key)}
     else bl.uploadError=true;
@@ -348,7 +400,7 @@ async function finish(){
 function sessionStats(L){
   let vol=0;
   for(const bid in L.blocks)for(const st of (L.blocks[bid].sets||[])){
-    const w=parseFloat(st&&st.w),r=parseFloat(st&&st.r);
+    const w=setLbs(st),r=parseFloat(st&&st.r);
     if(w&&r)vol+=w*r;
   }
   let dur=null;
@@ -362,7 +414,7 @@ function renderDone(){
     <div class="poster num">DONE</div>
     <hr class="rule">
     ${dur?`<div style="display:flex;justify-content:space-between" class="label lit"><span>DURATION</span><span class="num" style="font-size:18px">${dur} MIN</span></div><hr class="dotted" style="margin:10px 0">`:''}
-    ${vol?`<div style="display:flex;justify-content:space-between" class="label lit"><span>VOLUME</span><span class="num" style="font-size:18px">${vol.toLocaleString()} LBS</span></div><hr class="rule">`:''}
+    ${vol?`<div style="display:flex;justify-content:space-between" class="label lit"><span>VOLUME</span><span class="num" style="font-size:18px">${both(vol)}</span></div><hr class="rule">`:''}
     <div class="label lit" style="margin-top:8px">RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div>
     <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
     <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button></div>`;
@@ -432,17 +484,17 @@ function renderProgress(){
     for(const b of s.blocks){
       const bl=L.blocks[b.id];if(!bl||!bl.sets)continue;
       for(const st of bl.sets){
-        const w=parseFloat(st&&st.w);if(!w)continue;
+        const w=setLbs(st);if(!w)continue;
         if(!prs[b.name]||w>prs[b.name])prs[b.name]=w;
       }
     }
   }
   const lastW=weights.length?weights[weights.length-1]:null;
   const wk=weekCount();
-  let h=`<div class="label" style="margin-top:8px">Current bodyweight</div>`;
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><div class="label">Current bodyweight</div>${unitBtn()}</div>`;
   h+=lastW
     ?`<div style="display:flex;align-items:baseline;gap:10px"><div class="poster num">${lastW.w}</div><span class="poster small" style="font-size:22px;font-family:var(--fhead);color:var(--dim)">LBS</span></div>
-      <div class="label" style="font-size:11px">LOGGED ${lastW.d}</div>`
+      <div class="label" style="font-size:11px">LOGGED ${lastW.d} · ${both(lastW.w)}</div>`
     :`<div class="label lit" style="padding:14px 0">No entries yet — first weigh-in starts the line.</div>`;
   h+=sparkline(weights.map(x=>x.w));
   h+=`<div style="display:flex;gap:10px;margin:14px 0 26px">
@@ -455,7 +507,7 @@ function renderProgress(){
   <h1 style="font-size:24px">Best logged</h1>
   <div class="card">`;
   const keys=Object.keys(prs);
-  h+=keys.length?keys.map(k=>`<div class="lb-row"><span>${k}</span><span class="lb-dots"></span><span class="lb-val num">${prs[k]} LB</span></div>`).join(''):'<div class="label">Complete a session and your numbers land here</div>';
+  h+=keys.length?keys.map(k=>`<div class="lb-row"><span>${k}</span><span class="lb-dots"></span><span class="lb-val num" style="font-size:16px">${both(prs[k])}</span></div>`).join(''):'<div class="label">Complete a session and your numbers land here</div>';
   h+=`</div>
   <h1 style="font-size:24px">Consistency</h1>
   <div class="card">
@@ -507,6 +559,70 @@ async function postLog(obj){
   const [endpoint,token]=c;
   try{await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
     body:JSON.stringify({sessionId:obj.type,log:obj})})}catch(e){}
+}
+
+/* ---------- GEAR ---------- */
+async function renderGear(){
+  const app=$('app');
+  app.innerHTML='<h1 style="margin-top:8px">Gear</h1><div class="label">Loading…</div>';
+  let eq=null;
+  try{eq=await fetch('data/equipment.json?_='+Date.now()).then(r=>r.json())}catch(e){}
+  const notes=j('gearnotes',[]);
+  let h=`<h1 style="margin-top:8px">Gear</h1>
+  <div class="label" style="margin-bottom:14px">What I'm programming around${eq&&eq.updated?` · AS OF ${eq.updated}`:''}</div>
+  <button class="btn accent" onclick="$('gearIn').click()">＋ Snap new gear</button>
+  <input type="file" id="gearIn" accept="image/*" multiple style="display:none" onchange="gotGear(this)">
+  <div id="gearStatus">${j('gearq',[]).length?'<div class="label" style="margin-top:10px">📷 IN — CLAUDE CATALOGS IT AND STARTS PROGRAMMING WITH IT.</div>':''}</div>
+  <div class="card" style="border-style:dotted;background:transparent;margin-top:14px">
+    <div class="label" style="margin-bottom:10px">Corrections · new gym · travel spot</div>
+    <div style="display:flex;gap:10px">
+      <input id="gnote" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font:15px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. joined Iron Asylum · no 60s, they're 55s">
+      <button class="go head" style="border:1px solid var(--line2);padding:0 18px" onclick="gearNote()">Send</button></div>
+    ${notes.map(n=>`<div class="statrow"><span>${n.t}</span><span class="label" style="font-size:11px">${n.d}${n.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
+  if(eq&&eq.categories)for(const c of eq.categories){
+    h+=`<div class="card"><div class="exname" style="font-size:16px">${c.name}</div>`+
+      c.items.map(it=>`<div class="statrow" style="border-bottom:1px solid var(--line)"><span>${it}</span></div>`).join('')+`</div>`;
+  }
+  else h+='<div class="card warn">Equipment list didn\'t load — pull to refresh.</div>';
+  app.innerHTML=h;
+}
+async function gotGear(input){
+  const files=[...input.files];if(!files.length)return;
+  const c=cfg();
+  if(!c){alert('Connect first (Today tab).');return}
+  const [endpoint,token]=c;
+  const note=prompt('What is it / where does it live? (optional)')||'';
+  const group=`gear/${today()}-${Date.now()}`;
+  $('gearStatus').innerHTML='<div class="label" style="margin-top:10px">UPLOADING…</div>';
+  try{
+    for(let i=0;i<files.length;i++){
+      const f=files[i];
+      const buf=await f.arrayBuffer();
+      const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(`${group}/p${i+1}.jpg`),{method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+      const rj=res.ok?await res.json():null;
+      if(!(rj&&rj.size>0))throw new Error('fail');
+    }
+    if(note)await fetch(endpoint+'/upload?key='+encodeURIComponent(group+'/note.txt'),{method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:note});
+    const q=j('gearq',[]);q.push({key:group,date:today()});sv('gearq',q);
+    renderGear();
+  }catch(e){$('gearStatus').innerHTML='<div class="warn">Upload failed — try again.</div>'}
+}
+async function gearNote(){
+  const t=$('gnote').value.trim();if(!t)return;
+  const notes=j('gearnotes',[]);
+  const n={t,d:today(),synced:false};notes.push(n);sv('gearnotes',notes);
+  const c=cfg();
+  if(c){
+    const [endpoint,token]=c;
+    try{
+      const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        body:JSON.stringify({sessionId:'gear-note',log:{type:'gear-note',date:today(),note:t}})});
+      if(res.ok)n.synced=true;
+    }catch(e){}
+  }
+  sv('gearnotes',notes);renderGear();
 }
 
 /* ---------- FUEL ---------- */

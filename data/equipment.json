@@ -1,0 +1,35 @@
+{
+ "updated": "2026-07-30",
+ "source": "vault Fitness — Equipment & Locations",
+ "categories": [
+  {"name": "Bars & plates", "items": [
+   "Olympic barbells ×2 (coated + bare steel)",
+   "Trap/hex bar (chrome)",
+   "Vulcan KG bumpers: 5 / 10 / 15 / 20 / 25 kg (multiple pairs)",
+   "Spin-lock DB handles + standard plates",
+   "Collars, lifting belts ×2"
+  ]},
+  {"name": "Dumbbells & kettlebells", "items": [
+   "Rubber hex DBs on rack — 20 lb and 60 lb confirmed; mid-range pairs unconfirmed (snap the rack and I'll log them)",
+   "Cast-iron KB pair (~16 kg)"
+  ]},
+  {"name": "Rigs & machines", "items": [
+   "Adjustable squat stand + FID bench",
+   "Freak Athlete Hyper Pro (belt squat + leg developer)",
+   "Concept2 RowERG",
+   "Pilates reformer · vibration plate"
+  ]},
+  {"name": "Bodyweight & conditioning", "items": [
+   "Wall-mounted multi-grip pull-up bar",
+   "TRX suspension trainer",
+   "Parallettes / dip bars (pec-gated for now)",
+   "Bands: red / green / yellow / orange + loops",
+   "Plyo boxes (30/24/20 soft + 2 red soft)"
+  ]},
+  {"name": "Locations", "items": [
+   "Bray Rd home gym (primary)",
+   "Westin gym (travel/quick)",
+   "CrossFit box (membership in reserve)"
+  ]}
+ ]
+}
