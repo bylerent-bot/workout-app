@@ -24,6 +24,22 @@ async function idxAdd(env, name, key) {
   const a = await idxGet(env, name);
   if (!a.includes(key)) { a.push(key); await env.LOGS.put('idx:' + name, JSON.stringify(a)); }
 }
+// All feedback lives in ONE blob key (fb-all: {clipKey: {notes,at}}). Per-clip fb:*
+// keys nearly sank the free tier a second way: the 60s poller re-read every
+// accumulated key every poll (1,440 x total keys/day), crossing 100k reads/day
+// once enough clips existed. One blob = 1 read per poll, and writes stay rare.
+async function fbAll(env) {
+  const blob = await env.LOGS.get('fb-all');
+  if (blob !== null) { try { return JSON.parse(blob) || {}; } catch (e) { return {}; } }
+  // one-time migration from the legacy per-clip keys
+  const out = {};
+  for (const key of await idxGet(env, 'fb')) {
+    const v = await env.LOGS.get('fb:' + key);
+    if (v) { try { out[key] = JSON.parse(v); } catch (e) {} }
+  }
+  await env.LOGS.put('fb-all', JSON.stringify(out));
+  return out;
+}
 async function dailyReconcile(env) {
   const day = new Date().toISOString().slice(0, 10);
   if ((await env.LOGS.get('idx:day')) === day) return;
@@ -31,10 +47,17 @@ async function dailyReconcile(env) {
   try {
     const logs = (await env.LOGS.list({ prefix: 'log:' })).keys.map(k => k.name);
     const fbs  = (await env.LOGS.list({ prefix: 'fb:'  })).keys.map(k => k.name.slice(3));
-    const li = await idxGet(env, 'log'), fi = await idxGet(env, 'fb');
-    const lm = [...new Set([...li, ...logs])].sort(), fm = [...new Set([...fi, ...fbs])];
+    const li = await idxGet(env, 'log');
+    const lm = [...new Set([...li, ...logs])].sort();
     if (lm.length !== li.length) await env.LOGS.put('idx:log', JSON.stringify(lm));
-    if (fm.length !== fi.length) await env.LOGS.put('idx:fb', JSON.stringify(fm));
+    if (fbs.length) {                              // sweep stragglers into the blob
+      const all = await fbAll(env);
+      let changed = false;
+      for (const k of fbs) {
+        if (!(k in all)) { const v = await env.LOGS.get('fb:' + k); if (v) { try { all[k] = JSON.parse(v); changed = true; } catch (e) {} } }
+      }
+      if (changed) await env.LOGS.put('fb-all', JSON.stringify(all));
+    }
   } catch (e) { /* list quota gone — try again next UTC day */ }
 }
 
@@ -83,19 +106,15 @@ export default {
     if (req.method === 'POST' && path === '/feedback') {
       const body = await req.json();
       if (!body.clipKey) return json({ error: 'clipKey required' }, 400);
-      await env.LOGS.put('fb:' + body.clipKey, JSON.stringify({ notes: body.notes, at: Date.now() }));
-      await idxAdd(env, 'fb', body.clipKey);
+      const all = await fbAll(env);
+      all[body.clipKey] = { notes: body.notes, at: Date.now() };
+      await env.LOGS.put('fb-all', JSON.stringify(all));
       return json({ ok: true });
     }
 
     if (req.method === 'GET' && path === '/feedback') {
       await dailyReconcile(env);
-      const out = {};
-      for (const key of await idxGet(env, 'fb')) {
-        const v = await env.LOGS.get('fb:' + key);
-        if (v) out[key] = JSON.parse(v);
-      }
-      return json(out);
+      return json(await fbAll(env));
     }
 
     if (path.startsWith('/media/')) {
