@@ -15,8 +15,8 @@
     /* v6 palette (7/30, "push it harder") — FULL FLIP: bone-paper ground, black ink,
        oxblood stamps. Vintage gym bill. Var names keep their roles: --black = ground,
        --bone = ink/foreground, so every component inverts for free. */
-    --black:#E8E2D5; --card:#F1ECE1; --bone:#191410; --dim:#6E6458;
-    --ox:#8C1B14; --oxbright:#A64B3F; --line:#C9BFAE; --line2:#A69B88;
+    --black:#E8E2D5; --card:#F1ECE1; --bone:#191410; --dim:#5C5348;
+    --ox:#8C1B14; --oxbright:#A64B3F; --line:#BCAE97; --line2:#8E8069; --pine:#31543F;
     --fnum:'Anton',sans-serif; --fhead:'Oswald',sans-serif; --fbody:'Inter',sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -48,10 +48,10 @@
   .seal::before,.seal::after{content:''; position:absolute; width:18px; height:18px; background:var(--black);
     border:4px solid var(--line); border-radius:50%; top:50%; transform:translateY(-50%)}
   .seal::before{left:-13px} .seal::after{right:-13px}
-  .seal .day{font-family:var(--fnum); font-size:96px; line-height:.95; margin:0}
+  .seal .day{font-family:var(--fnum); font-size:96px; line-height:.95; margin:0; color:var(--ox)}
   .seal .mon{font-family:var(--fhead); font-size:26px; text-transform:uppercase; letter-spacing:.08em; margin:2px 0 0}
   /* coach banner */
-  .coach{border-left:4px solid var(--ox); background:var(--card); padding:12px 16px; margin:0 0 20px}
+  .coach{border-left:4px solid var(--ox); background:rgba(140,27,20,.07); padding:12px 16px; margin:0 0 20px}
   .coach .label{margin-bottom:4px}
   .coach p{margin:0; font-style:italic; color:var(--dim); font-size:14px}
   /* exercise blocks */
@@ -72,14 +72,14 @@
   .logrow.done input{color:var(--black)}
   .logrow.done .go{color:var(--black); font-weight:700; border-left:2px solid var(--black)}
   .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-size:14px;
-    text-transform:uppercase; letter-spacing:.06em; color:#9A2A20; border:1px solid var(--ox); padding:10px 16px; margin-top:12px}
-  .filmbadge .dot{width:10px; height:10px; background:var(--ox); border-radius:50%}
+    text-transform:uppercase; letter-spacing:.06em; color:#F1ECE1; background:var(--ox); border:1px solid var(--ox); padding:10px 16px; margin-top:12px}
+  .filmbadge .dot{width:10px; height:10px; background:#F1ECE1; border-radius:50%}
   .skip{color:var(--dim); font-size:13px; text-decoration:underline; padding:10px 0; display:inline-block}
   /* scales */
   .scales{display:flex; gap:8px; overflow-x:auto; padding:8px 0 10px; scrollbar-width:none}
   .scales::-webkit-scrollbar{display:none}
   .scales button{flex:0 0 56px; height:56px; border:2px solid var(--line); font-family:var(--fnum); font-size:22px}
-  .scales button.sel{background:var(--bone); color:var(--black); border-color:var(--bone)}
+  .scales button.sel{background:var(--ox); color:#F1ECE1; border-color:var(--ox)}
   textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--line);
     color:var(--bone); font:14px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
   /* rest timer */
@@ -99,12 +99,12 @@
   .spark{width:100%; height:56px; border-bottom:2px solid var(--line); margin:18px 0}
   .lb-row{display:flex; align-items:baseline; margin-bottom:12px; font-family:var(--fhead); font-size:17px; text-transform:uppercase}
   .lb-dots{flex:1; border-bottom:2px dotted var(--line); margin:0 8px; position:relative; top:-4px}
-  .lb-val{font-family:var(--fnum); font-size:22px}
+  .lb-val{font-family:var(--fnum); font-size:22px; color:var(--ox)}
   .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px}
   /* fuel */
   .track{width:100%; height:14px; background:var(--line); margin:14px 0 8px}
   .track i{display:block; height:100%; background:var(--ox); transition:width .3s}
-  .track.hit i{background:var(--bone)}
+  .track.hit i{background:var(--pine)}
   .chips{display:flex; gap:10px; overflow-x:auto; padding:6px 0 12px; scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chips button{flex:0 0 auto; border:2px solid var(--line); padding:12px 18px;
@@ -117,10 +117,10 @@
   .tabbar{position:fixed; left:0; right:0; bottom:0; height:calc(72px + env(safe-area-inset-bottom)); display:flex;
     background:var(--black); border-top:2px solid var(--line); padding-bottom:env(safe-area-inset-bottom); z-index:20}
   .tabbar button{flex:1; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); position:relative}
-  .tabbar button.sel{color:var(--bone)}
+  .tabbar button.sel{color:var(--ox)}
   .tabbar button.sel::after{content:''; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--ox)}
   .warn{color:#9A2A20; font-size:13px; margin-top:8px}
-  .good{color:var(--bone); font-size:13px; margin-top:8px}
+  .good{color:var(--pine); font-size:13px; margin-top:8px}
   .cuebox{border-left:3px solid var(--ox); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
   .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:#9A2A20; margin-bottom:6px}
 </style>
@@ -293,7 +293,7 @@ function render(){
       const ups=bl.uploads||[];
       const busy=bl.uploading;
       const rx=!!b.film;
-      h+=`<button class="filmbadge" style="${rx?'':'border-color:var(--line2);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':'◉ '}${busy?'UPLOADING…':ups.length?`ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
+      h+=`<button class="filmbadge" style="${rx?'':'background:none;border-color:var(--line2);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':'◉ '}${busy?'UPLOADING…':ups.length?`ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
         <input type="file" id="f_${b.id}" accept="video/*,image/*" style="display:none" onchange="gotClip('${b.id}',this)">`;
       if(ups.length&&!busy)h+=`<div class="good">${ups.length} in — coach review lands in ~3 min (Review tab).</div>`;
       if(bl.uploadError)h+=`<div class="warn">Last upload failed — NOT saved. Shoot with the Camera app, attach here after.</div>`;
@@ -685,7 +685,7 @@ function renderFuel(){
   ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="label" style="margin-top:12px">📷 ANALYZING — PROTEIN LANDS IN ~2 MIN…</div>`).join('')}
   <div id="suggestBox">${suggestBox()}</div>
   <div class="label" style="margin:22px 0 6px">Quick add</div>
-  <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <span style="color:#9A2A20">+${g}G</span></button>`).join('')}
+  <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <span style="color:var(--pine);font-weight:700">+${g}G</span></button>`).join('')}
     <button onclick="addCustom()">Custom +?</button></div>`;
   if(f.items.length){
     h+=`<h1 style="font-size:24px;margin-top:22px">Today's log</h1>`+
