@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Train</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
@@ -12,9 +12,11 @@
 <style>
   /* IRON & CHALK v3 — design language from the 7/29 Gemini pass, functionality intact. */
   :root{
-    /* v5 palette (7/30, Patrick: "too much black") — warm espresso ground, chalk-lit cards */
-    --black:#1B1511; --card:#26201A; --bone:#EAE6DF; --dim:#A39A8E;
-    --ox:#8C1B14; --oxbright:#A64B3F; --line:#3D342B; --line2:#544A3F;
+    /* v6 palette (7/30, "push it harder") — FULL FLIP: bone-paper ground, black ink,
+       oxblood stamps. Vintage gym bill. Var names keep their roles: --black = ground,
+       --bone = ink/foreground, so every component inverts for free. */
+    --black:#E8E2D5; --card:#F1ECE1; --bone:#191410; --dim:#6E6458;
+    --ox:#8C1B14; --oxbright:#A64B3F; --line:#C9BFAE; --line2:#A69B88;
     --fnum:'Anton',sans-serif; --fhead:'Oswald',sans-serif; --fbody:'Inter',sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -35,7 +37,7 @@
     border:2px solid var(--bone); font-family:var(--fhead); font-size:18px; text-transform:uppercase; letter-spacing:.06em}
   .btn:active{background:var(--bone); color:var(--black)}
   .btn.primary{background:var(--bone); color:var(--black)}
-  .btn.primary:active{background:#CCC}
+  .btn.primary:active{background:#3A322A}
   .btn.accent{background:var(--ox); border-color:var(--ox)}
   .btn.accent:active{background:#5E0D0D}
   .btn.small{height:48px; font-size:15px; border:1px solid var(--line2); color:var(--dim)}
@@ -70,7 +72,7 @@
   .logrow.done input{color:var(--black)}
   .logrow.done .go{color:var(--black); font-weight:700; border-left:2px solid var(--black)}
   .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-size:14px;
-    text-transform:uppercase; letter-spacing:.06em; color:#C8574A; border:1px solid var(--ox); padding:10px 16px; margin-top:12px}
+    text-transform:uppercase; letter-spacing:.06em; color:#9A2A20; border:1px solid var(--ox); padding:10px 16px; margin-top:12px}
   .filmbadge .dot{width:10px; height:10px; background:var(--ox); border-radius:50%}
   .skip{color:var(--dim); font-size:13px; text-decoration:underline; padding:10px 0; display:inline-block}
   /* scales */
@@ -89,7 +91,7 @@
   .timer .stop{border:1px solid var(--line2); color:var(--dim); padding:12px 16px; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.08em}
   /* review */
   .fb{border-left:2px solid var(--dim); padding-left:14px; margin-top:12px; font-size:14px; color:var(--dim); white-space:pre-wrap}
-  .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:#C8574A; margin-top:12px}
+  .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:#9A2A20; margin-top:12px}
   video{width:100%; margin-top:10px; background:#000; border:2px solid var(--line)}
   /* progress */
   .poster{font-family:var(--fnum); font-size:92px; line-height:.95; margin:0}
@@ -117,10 +119,10 @@
   .tabbar button{flex:1; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); position:relative}
   .tabbar button.sel{color:var(--bone)}
   .tabbar button.sel::after{content:''; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--ox)}
-  .warn{color:#C8574A; font-size:13px; margin-top:8px}
+  .warn{color:#9A2A20; font-size:13px; margin-top:8px}
   .good{color:var(--bone); font-size:13px; margin-top:8px}
   .cuebox{border-left:3px solid var(--ox); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
-  .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:#C8574A; margin-bottom:6px}
+  .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:#9A2A20; margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -241,7 +243,7 @@ function render(){
     app.innerHTML=connectBanner()+fuelStrip()+`<div class="sealwrap">
       <div class="poster num">DONE</div>
       <hr class="rule">
-      <div class="head" style="color:#C8574A;font-size:20px">Recovery required</div>
+      <div class="head" style="color:#9A2A20;font-size:20px">Recovery required</div>
       <p style="color:var(--dim)">Next session unlocks tomorrow. Protein and sleep are the workout now.</p></div>`+requestsCard();
     return;
   }
@@ -255,7 +257,7 @@ function render(){
   }
   const snum=String(idx+1).padStart(3,'0');
   let h=connectBanner()+fuelStrip()+`<div style="display:flex;justify-content:space-between;align-items:center"><div class="label">Session ${snum} · ${S.place.toUpperCase()}</div>${unitBtn()}</div><h1>${S.phase.replace(/^Phase \d+ · /,'')}</h1>`;
-  if(S.formCue)h+=`<div class="coach"><div class="label" style="color:#C8574A">Form focus</div><p>"${S.formCue}"</p></div>`;
+  if(S.formCue)h+=`<div class="coach"><div class="label" style="color:#9A2A20">Form focus</div><p>"${S.formCue}"</p></div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
     h+=`<div class="card block">${howto(b)}<div class="exname">${b.name}</div>
@@ -531,8 +533,8 @@ function sparkline(vals){
   const w=280,h=50,min=Math.min(...vals),max=Math.max(...vals),rng=(max-min)||1;
   const pts=vals.map((v,i)=>`${(i/(vals.length-1)*w).toFixed(1)},${(h-4-((v-min)/rng)*(h-8)).toFixed(1)}`).join(' ');
   return `<div class="spark"><svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="overflow:visible">
-    <polyline points="${pts}" fill="none" stroke="#7D1111" stroke-width="4" opacity=".4" transform="translate(0,2)"/>
-    <polyline points="${pts}" fill="none" stroke="#7D1111" stroke-width="2"/></svg></div>`;
+    <polyline points="${pts}" fill="none" stroke="#8C1B14" stroke-width="4" opacity=".4" transform="translate(0,2)"/>
+    <polyline points="${pts}" fill="none" stroke="#8C1B14" stroke-width="2"/></svg></div>`;
 }
 function logWeight(){
   const v=parseFloat($('bw').value);if(!v)return;
@@ -639,7 +641,7 @@ function suggestBox(){
   if(pending)h+=`<div class="label" style="margin-top:12px">🧭 SCOUTING NEARBY PROTEIN — PICKS LAND IN ~3 MIN…</div>`;
   if(s&&s.date===today()){
     h+=`<div class="cuebox"><b>NEAR ${(s.where||'YOU').toUpperCase()}</b>`+
-      s.picks.map(p=>`<div style="margin-top:10px"><span class="head" style="font-size:15px">${p.spot}</span> — ${p.order} <span class="num" style="color:#C8574A">~${p.protein_g}G</span></div>`).join('')+`</div>`;
+      s.picks.map(p=>`<div style="margin-top:10px"><span class="head" style="font-size:15px">${p.spot}</span> — ${p.order} <span class="num" style="color:#9A2A20">~${p.protein_g}G</span></div>`).join('')+`</div>`;
   }
   return h;
 }
@@ -683,7 +685,7 @@ function renderFuel(){
   ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="label" style="margin-top:12px">📷 ANALYZING — PROTEIN LANDS IN ~2 MIN…</div>`).join('')}
   <div id="suggestBox">${suggestBox()}</div>
   <div class="label" style="margin:22px 0 6px">Quick add</div>
-  <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <span style="color:#C8574A">+${g}G</span></button>`).join('')}
+  <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <span style="color:#9A2A20">+${g}G</span></button>`).join('')}
     <button onclick="addCustom()">Custom +?</button></div>`;
   if(f.items.length){
     h+=`<h1 style="font-size:24px;margin-top:22px">Today's log</h1>`+
