@@ -1,4 +1,4 @@
-const CACHE = 'train-v19';
+const CACHE = 'train-v20';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
