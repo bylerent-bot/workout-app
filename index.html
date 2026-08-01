@@ -18,7 +18,8 @@
        oxblood stamps. Vintage gym bill. Var names keep their roles: --black = ground,
        --bone = ink/foreground, so every component inverts for free. */
     --black:#E8E2D5; --card:#F1ECE1; --bone:#191410; --dim:#5C5348;
-    --ox:#8C1B14; --oxbright:#A64B3F; --line:#BCAE97; --line2:#8E8069; --pine:#31543F;
+    --ox:#8C1B14; --line:#BCAE97; --line2:#8E8069; --ctrl:#6E6250; --pine:#31543F;
+    /* --line/--line2 = decorative rules only; --ctrl = interactive-control boundaries (>=3:1 on ground) */
     --fnum:'Anton',sans-serif; --fhead:'Oswald',sans-serif; --fbody:'Inter',sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
@@ -42,7 +43,9 @@
   .btn.primary:active{background:#3A322A}
   .btn.accent{background:var(--ox); border-color:var(--ox); color:#F1ECE1}
   .btn.accent:active{background:#5E0D0D; color:#F1ECE1}
-  .btn.small{height:48px; font-size:15px; border:1px solid var(--line2); color:var(--dim)}
+  .btn.small{height:48px; font-size:15px; border:2px solid var(--ctrl); color:var(--dim)}
+  input:focus-visible,textarea:focus-visible{border-bottom-color:var(--ox) !important}
+  button:focus-visible,a:focus-visible{outline:2px solid var(--ox); outline-offset:2px}
   .btn+.btn{margin-top:12px}
   /* sealed ticket */
   .sealwrap{text-align:center; padding:26px 0}
@@ -65,35 +68,35 @@
   .logrow .box{flex:1; position:relative; display:flex; flex-direction:column; justify-content:center}
   .logrow .box+.box{border-left:2px solid var(--line)}
   .logrow .box span{position:absolute; bottom:3px; left:0; width:100%; text-align:center;
-    font-family:var(--fhead); font-size:9px; letter-spacing:.1em; color:var(--dim)}
+    font-family:var(--fhead); font-size:10px; letter-spacing:.1em; color:var(--dim)}
   .logrow input{background:transparent; border:none; outline:none; color:var(--bone); width:100%;
     font-family:var(--fhead); font-size:22px; text-align:center; padding-bottom:8px}
   .logrow .go{flex:0 0 76px; font-family:var(--fhead); font-size:16px; letter-spacing:.06em; text-transform:uppercase}
-  .logrow.done{background:var(--bone)}
+  .logrow.done{background:var(--bone); height:44px}
   .logrow.done .sn,.logrow.done .box span{color:var(--black)}
-  .logrow.done input{color:var(--black)}
+  .logrow.done input{color:var(--black); font-size:18px; padding-bottom:10px}
   .logrow.done .go{color:var(--black); font-weight:700; border-left:2px solid var(--black)}
   .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-size:14px;
-    text-transform:uppercase; letter-spacing:.06em; color:#F1ECE1; background:var(--ox); border:1px solid var(--ox); padding:10px 16px; margin-top:12px}
+    text-transform:uppercase; letter-spacing:.06em; color:#F1ECE1; background:var(--ox); border:2px solid var(--ox); padding:13px 16px; margin-top:12px}
   .filmbadge .dot{width:10px; height:10px; background:#F1ECE1; border-radius:50%}
-  .skip{color:var(--dim); font-size:13px; text-decoration:underline; padding:10px 0; display:inline-block}
+  .skip{color:var(--dim); font-size:13px; text-decoration:underline; padding:14px 0; display:inline-block}
   /* scales */
   .scales{display:flex; gap:8px; overflow-x:auto; padding:8px 0 10px; scrollbar-width:none}
   .scales::-webkit-scrollbar{display:none}
-  .scales button{flex:0 0 56px; height:56px; border:2px solid var(--line); font-family:var(--fnum); font-size:22px}
+  .scales button{flex:0 0 56px; height:56px; border:2px solid var(--ctrl); font-family:var(--fnum); font-size:22px}
   .scales button.sel{background:var(--ox); color:#F1ECE1; border-color:var(--ox)}
-  textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--line);
-    color:var(--bone); font:14px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
+  textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--ctrl);
+    color:var(--bone); font:16px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
   /* rest timer */
   .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom)); background:var(--black);
     border-top:2px solid var(--ox); padding:10px 20px; display:none; align-items:center; justify-content:space-between; z-index:10; overflow:hidden}
   .timer.on{display:flex}
-  .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(125,17,17,.22); transition:width 1s linear; pointer-events:none}
+  .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(140,27,20,.18); transition:width 1s linear; pointer-events:none}
   .timer .t{font-family:var(--fnum); font-size:40px}
-  .timer .stop{border:1px solid var(--line2); color:var(--dim); padding:12px 16px; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.08em}
+  .timer .stop{border:2px solid var(--ctrl); color:var(--dim); padding:12px 16px; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.08em}
   /* review */
   .fb{border-left:2px solid var(--dim); padding-left:14px; margin-top:12px; font-size:14px; color:var(--dim); white-space:pre-wrap}
-  .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:#9A2A20; margin-top:12px}
+  .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--ox); margin-top:12px}
   video{width:100%; margin-top:10px; background:#000; border:2px solid var(--line)}
   /* progress */
   .poster{font-family:var(--fnum); font-size:92px; line-height:.95; margin:0}
@@ -109,7 +112,7 @@
   .track.hit i{background:var(--pine)}
   .chips{display:flex; gap:10px; overflow-x:auto; padding:6px 0 12px; scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chips button{flex:0 0 auto; border:2px solid var(--line); padding:12px 18px;
+  .chips button{flex:0 0 auto; border:2px solid var(--ctrl); padding:12px 18px;
     font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em}
   .chips button:active{background:var(--bone); color:var(--black)}
   .mealrow{display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid var(--line); padding:12px 0;
@@ -121,10 +124,10 @@
   .tabbar button{flex:1; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); position:relative}
   .tabbar button.sel{color:var(--ox)}
   .tabbar button.sel::after{content:''; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--ox)}
-  .warn{color:#9A2A20; font-size:13px; margin-top:8px}
+  .warn{color:var(--ox); font-size:13px; margin-top:8px}
   .good{color:var(--pine); font-size:13px; margin-top:8px}
   .cuebox{border-left:3px solid var(--ox); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
-  .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:#9A2A20; margin-bottom:6px}
+  .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:var(--ox); margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -138,6 +141,9 @@
 <div class="tabbar" id="tabbar"></div>
 <script>
 const $=id=>document.getElementById(id);
+// escape anything dynamic that rides innerHTML — server/model/user strings are data, not markup
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const safeUrl=u=>{try{const x=new URL(u);return x.protocol==='https:'?x.href:null}catch(e){return null}};
 const MONTHS=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 const store={
   get k(){return 'wlog'},
@@ -177,7 +183,7 @@ function route(){tabbar();({today:render,review:renderReview,progress:renderProg
 const KG2LB=2.20462;
 function unit(){return localStorage.getItem('unit')||'lb'}
 function toggleUnit(){localStorage.setItem('unit',unit()==='lb'?'kg':'lb');route()}
-function unitBtn(){return `<button class="skip" style="text-decoration:none;border:1px solid var(--line2);padding:6px 12px;font-family:var(--fhead);letter-spacing:.08em" onclick="toggleUnit()">UNITS: ${unit().toUpperCase()} ⇄</button>`}
+function unitBtn(){return `<button class="skip" style="text-decoration:none;border:2px solid var(--ctrl);padding:12px 14px;font-family:var(--fhead);letter-spacing:.08em" onclick="toggleUnit()">UNITS: ${unit().toUpperCase()} ⇄</button>`}
 function setLbs(st){const w=parseFloat(st&&st.w);if(!w)return 0;return (st.u==='kg')?w*KG2LB:w}
 function both(lbs){if(!lbs)return '—';const kg=lbs/KG2LB;
   return unit()==='kg'?`${Math.round(kg*10)/10} KG · ${Math.round(lbs)} LB`:`${Math.round(lbs)} LB · ${Math.round(kg*10)/10} KG`}
@@ -195,8 +201,8 @@ function fuelStrip(){
 }
 function howto(b){
   const q=b.howto||('how to '+b.name.replace(/\(.*?\)/g,'').replace(/[—-].*$/,'').trim()+' exercise proper form');
-  const url=b.howto&&b.howto.startsWith('http')?b.howto:'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
-  return `<a href="${url}" target="_blank" rel="noopener" class="label" style="text-decoration:none;border:1px solid var(--line2);padding:4px 10px;font-size:11px;float:right">HOW ▸</a>`;
+  const url=(b.howto&&safeUrl(b.howto))||'https://www.youtube.com/results?search_query='+encodeURIComponent(q);
+  return `<a href="${esc(url)}" target="_blank" rel="noopener" class="label" style="text-decoration:none;border:2px solid var(--ctrl);padding:12px 14px;font-size:11px;float:right">HOW ▸</a>`;
 }
 
 function connectBanner(){
@@ -250,7 +256,7 @@ function render(){
     app.innerHTML=connectBanner()+fuelStrip()+`<div class="sealwrap">
       <div class="poster num">DONE</div>
       <hr class="rule">
-      <div class="head" style="color:#9A2A20;font-size:20px">Recovery required</div>
+      <div class="head" style="color:var(--ox);font-size:20px">Recovery required</div>
       <p style="color:var(--dim)">Next session unlocks tomorrow. Protein and sleep are the workout now.</p></div>`+requestsCard();
     return;
   }
@@ -263,35 +269,39 @@ function render(){
     return;
   }
   const snum=String(idx+1).padStart(3,'0');
-  let h=connectBanner()+fuelStrip()+`<div style="display:flex;justify-content:space-between;align-items:center"><div class="label">Session ${snum} · ${S.place.toUpperCase()}</div>${unitBtn()}</div><h1>${S.phase.replace(/^Phase \d+ · /,'')}</h1>`;
-  if(S.formCue)h+=`<div class="coach"><div class="label" style="color:#9A2A20">Form focus</div><p>"${S.formCue}"</p></div>`;
+  let h=connectBanner()+fuelStrip()+`<div style="display:flex;justify-content:space-between;align-items:center"><div class="label">Session ${snum} · ${esc(S.place.toUpperCase())}</div>${unitBtn()}</div><h1>${esc(S.phase.replace(/^Phase \d+ · /,''))}</h1>`;
+  if(S.formCue)h+=`<div class="coach"><div class="label" style="color:var(--ox)">Form focus</div><p>"${esc(S.formCue)}"</p></div>`;
   for(const b of S.blocks){
     const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
-    h+=`<div class="card block">${howto(b)}<div class="exname">${b.name}</div>
-      <div class="label rx">${b.detail}</div>`;
-    if(bl.skipped){h+=`<div class="warn">Skipped — carries to next session.</div></div>`;continue}
+    h+=`<div class="card block">${howto(b)}<div class="exname">${esc(b.name)}</div>
+      <div class="label rx">${esc(b.detail)}</div>`;
+    if(bl.skipped){h+=`<div class="warn">Skipped — coach sees it and reprograms.</div></div>`;continue}
     if(b.type==='timed'){
       const d=bl.sets[0]||{};
       const M={min:['0:00','TIME (MIN)'],cal:['—','CALORIES'],m:['—','METERS']}[b.metric||'min'];
       h+=`<div class="logrow ${d.done?'done':''}">
         <div class="sn">1</div>
-        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="decimal" placeholder="${M[0]}" value="${d.time??''}"><span>${M[1]}</span></div></div>
+        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="decimal" placeholder="${M[0]}" value="${esc(DRAFTS[`t_${b.id}`]??d.time??'')}" oninput="draft(this)"><span>${M[1]}</span></div></div>
         <button class="go" onclick="logTimed('${b.id}')">${d.done?'DONE':'LOG'}</button></div>`;
     }else if(b.type==='measure'){
       const d=bl.sets[0]||{};
       h+=(b.measures||[]).map(m=>`<div class="logrow">
-        <div class="sn" style="flex-basis:110px;font-size:12px">${m.label}</div>
-        <div class="grp"><div class="box"><input id="m_${b.id}_${m.id}" inputmode="decimal" placeholder="—" value="${d[m.id]??''}"><span>${m.unit||''}</span></div></div></div>`).join('')+
-        `<button class="go head" style="border:1px solid var(--line2);padding:12px 18px;margin-top:6px" onclick="logMeasure('${b.id}')">${d.done?'SAVED ✓':'SAVE MEASUREMENTS'}</button>`;
+        <div class="sn" style="flex-basis:110px;font-size:12px">${esc(m.label)}</div>
+        <div class="grp"><div class="box"><input id="m_${b.id}_${m.id}" inputmode="decimal" placeholder="—" value="${esc(DRAFTS[`m_${b.id}_${m.id}`]??d[m.id]??'')}" oninput="draft(this)"><span>${esc(m.unit||'')}</span></div></div></div>`).join('')+
+        `<button class="go head" style="border:2px solid var(--ctrl);padding:12px 18px;margin-top:6px" onclick="logMeasure('${b.id}')">${d.done?'SAVED ✓':'SAVE MEASUREMENTS'}</button>`;
     }else{
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
-        const shown=d.w??((d.u&&d.u!==unit())?'':targetIn(b.targetWeight));
+        // prefill priority: draft typed but not logged > this set's logged value > previous set's weight > Rx target
+        const prevSet=i>0?bl.sets[i-1]:null;
+        const prevW=(prevSet&&prevSet.done&&(!prevSet.u||prevSet.u===unit()))?prevSet.w:null;
+        const shown=DRAFTS[`w_${b.id}_${i}`]??d.w??((d.u&&d.u!==unit())?'':(prevW??targetIn(b.targetWeight)));
+        const shownR=DRAFTS[`r_${b.id}_${i}`]??d.r??(prevSet&&prevSet.done?prevSet.r:null)??b.targetReps??'';
         h+=`<div class="logrow ${d.done?'done':''}">
           <div class="sn">${i+1}</div>
           <div class="grp">
-            <div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${shown}"><span>${(d.u||unit()).toUpperCase()}</span></div>
-            <div class="box"><input id="r_${b.id}_${i}" inputmode="numeric" placeholder="—" value="${d.r??b.targetReps??''}"><span>REPS</span></div>
+            <div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${esc(shown)}" oninput="draft(this)"><span>${esc((d.u||unit()).toUpperCase())}</span></div>
+            <div class="box"><input id="r_${b.id}_${i}" inputmode="numeric" placeholder="—" value="${esc(shownR)}" oninput="draft(this)"><span>REPS</span></div>
           </div>
           <button class="go" onclick="logSet('${b.id}',${i})">${d.done?'DONE':'LOG'}</button></div>`;
       }
@@ -300,18 +310,18 @@ function render(){
       const ups=bl.uploads||[];
       const busy=bl.uploading;
       const rx=!!b.film;
-      h+=`<button class="filmbadge" style="${rx?'':'background:none;border-color:var(--line2);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':'◉ '}${busy?'UPLOADING…':ups.length?`ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
+      h+=`<button class="filmbadge" style="${rx?'':'background:none;border-color:var(--ctrl);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':'◉ '}${busy?'UPLOADING…':ups.length?`ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
         <input type="file" id="f_${b.id}" accept="video/*,image/*" style="display:none" onchange="gotClip('${b.id}',this)">`;
       if(ups.length&&!busy)h+=`<div class="good">${ups.length} in — coach review lands in ~3 min (Review tab).</div>`;
       if(bl.uploadError)h+=`<div class="warn">Last upload failed — NOT saved. Shoot with the Camera app, attach here after.</div>`;
     }
-    h+=`<br><span class="skip" onclick="skipBlock('${b.id}')">skip — carry to next session</span></div>`;
+    h+=`<br><span class="skip" onclick="skipBlock('${b.id}')">skip — coach reprograms it</span></div>`;
   }
   h+=`<div class="card"><div class="exname">Session wrap-up</div>
     <div class="label">RPE — how hard overall</div><div class="scales">${scale('rpe',L.rpe)}</div>
     <div class="label">Feel — mood / energy</div><div class="scales">${scale('feel',L.feel)}</div>
     <div class="label">Notes</div>
-    <textarea id="notes" placeholder="Pain points or breakthroughs?">${L.notes||''}</textarea>
+    <textarea id="notes" placeholder="Pain points or breakthroughs?">${esc(L.notes||'')}</textarea>
     <button class="btn primary" style="margin-top:16px" onclick="finish()">Finish session</button></div>`;
   app.innerHTML=h+requestsCard();
 }
@@ -320,9 +330,9 @@ function requestsCard(){
   return `<div class="card" style="border-style:dotted;background:transparent">
     <div class="label" style="margin-bottom:10px">+ Request a movement</div>
     <div style="display:flex;gap:10px">
-      <input id="mreq" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font:15px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. farmer carries, sled pushes">
-      <button class="go head" style="border:1px solid var(--line2);padding:0 18px" onclick="sendReq()">Send</button></div>
-    ${reqs.map(r=>`<div class="statrow"><span>${r.t}</span><span class="label" style="font-size:11px">${r.d}${r.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
+      <input id="mreq" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font:16px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. farmer carries, sled pushes">
+      <button class="go head" style="border:2px solid var(--ctrl);padding:0 18px;min-height:48px" onclick="sendReq()">Send</button></div>
+    ${reqs.map(r=>`<div class="statrow"><span>${esc(r.t)}</span><span class="label" style="font-size:11px">${esc(r.d)}${r.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
 }
 async function sendReq(){
   const t=$('mreq').value.trim();if(!t)return;
@@ -334,15 +344,23 @@ async function sendReq(){
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
 function reveal(){log[S.id].revealed=true;log[S.id].revealedAt=new Date().toISOString();store.save(log);render()}
+const DRAFTS={}; // typed-but-not-logged values survive rerenders (film uploads, unit toggles)
+function draft(el){DRAFTS[el.id]=el.value}
 function logSet(bid,i){
   const bl=log[S.id].blocks[bid];
-  bl.sets[i]={w:$(`w_${bid}_${i}`).value,u:unit(),r:$(`r_${bid}_${i}`).value,done:true,at:new Date().toISOString()};
+  const r=$(`r_${bid}_${i}`).value.trim();
+  if(!r){$(`r_${bid}_${i}`).focus();return} // no reps = not a set; weight may be blank (bodyweight moves)
+  bl.sets[i]={w:$(`w_${bid}_${i}`).value.trim(),u:unit(),r,done:true,at:new Date().toISOString()};
+  delete DRAFTS[`w_${bid}_${i}`];delete DRAFTS[`r_${bid}_${i}`];
   store.save(log);autoSync();startTimer(90);render();
 }
 function logTimed(bid){
   const bl=log[S.id].blocks[bid];
   const b=S.blocks.find(x=>x.id===bid);
-  bl.sets[0]={time:$(`t_${bid}`).value,metric:(b&&b.metric)||'min',done:true,at:new Date().toISOString()};
+  const t=$(`t_${bid}`).value.trim();
+  if(!t){$(`t_${bid}`).focus();return}
+  bl.sets[0]={time:t,metric:(b&&b.metric)||'min',done:true,at:new Date().toISOString()};
+  delete DRAFTS[`t_${bid}`];
   store.save(log);autoSync();render();
 }
 function logMeasure(bid){
@@ -395,8 +413,10 @@ function autoSync(){ /* auto-save to the vault pipe ~90s after the last logged s
   },90000);
 }
 function skipBlock(bid){
-  if(!confirm('Skip this one? It carries forward — nothing gets lost.'))return;
-  log[S.id].blocks[bid].skipped=true;store.save(log);render();
+  if(!confirm('Mark this one skipped? The coach sees it in the log and reprograms it.'))return;
+  log[S.id].blocks[bid].skipped=true;store.save(log);
+  autoSync(); // skips matter to programming — get them on the wire like any set
+  render();
 }
 let tEnd=0; // wall-clock deadline — survives iOS suspending the PWA mid-rest
 function startTimer(n){tTotal=n;tEnd=Date.now()+n*1000;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
@@ -408,6 +428,11 @@ function tick(){
 }
 function stopTimer(){clearInterval(tint);$('timer').classList.remove('on')}
 function film(bid){$(`f_${bid}`).click()}
+function fileExt(f,fallback){
+  const byType={'image/jpeg':'jpg','image/png':'png','image/heic':'heic','image/heif':'heif','image/webp':'webp','video/quicktime':'mov','video/mp4':'mp4'}[f.type];
+  const byName=(f.name&&f.name.includes('.'))?f.name.split('.').pop().toLowerCase():null;
+  return byType||byName||fallback;
+}
 async function gotClip(bid,input){
   const f=input.files[0];if(!f)return;
   const bl=log[S.id].blocks[bid];
@@ -418,22 +443,29 @@ async function gotClip(bid,input){
   try{
     const n=(bl.uploads||[]).length+1;
     const isImg=(f.type||'').startsWith('image');
-    const key=`${S.id}/${bid}-clip${n}-${Date.now()}.${(f.name.split('.').pop()||(isImg?'jpg':'mov'))}`;
-    const buf=await f.arrayBuffer();
-    if(!buf.byteLength)throw new Error('empty file');
+    if(!f.size)throw new Error('empty file');
+    const key=`${S.id}/${bid}-clip${n}-${Date.now()}.${fileExt(f,isImg?'jpg':'mov')}`;
+    // File streams as the request body — no ArrayBuffer copy (a 4K clip would double in memory and can kill the PWA)
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||(isImg?'image/jpeg':'video/quicktime')},body:buf});
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||(isImg?'image/jpeg':'video/quicktime')},body:f});
     const rj=res.ok?await res.json():null;
-    if(rj&&rj.size>0){(bl.uploads=bl.uploads||[]).push(key)}
+    if(rj&&rj.size===f.size){(bl.uploads=bl.uploads||[]).push(key)}
     else bl.uploadError=true;
   }catch(e){bl.uploadError=true}
   bl.uploading=false;store.save(log);render();
 }
 async function finish(){
+  const L=log[S.id];
+  const anyDone=Object.values(L.blocks).some(bl=>(bl.sets||[]).some(s=>s&&s.done));
+  if(!anyDone&&!confirm('Nothing logged yet — finish anyway?'))return;
   clearTimeout(autoT); // delayed partial autosave must not fire after the final log
-  const L=log[S.id];L.completed=true;L.completedAt=new Date().toISOString();
+  L.completed=true;L.completedAt=new Date().toISOString();
   L.notes=$('notes')?$('notes').value:L.notes;
   store.save(log);await sync();renderDone();
+}
+function unfinish(){ // 10-min undo window for a fat-fingered FINISH
+  const L=log[S.id];L.completed=false;delete L.completedAt;L.synced=false;
+  store.save(log);render();
 }
 function sessionStats(L){
   let vol=0;
@@ -456,7 +488,8 @@ function renderDone(){
     <div class="label lit" style="margin-top:8px">RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div>
     <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — queued, retries automatically when you have signal. Export below if you want it out now.'}</div>
     ${L.synced?'':'<button class="btn small" style="margin-top:12px" onclick="flushOutbox().then(()=>renderDone())">Retry sync now</button>'}
-    <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button></div>`;
+    <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button>
+    ${(L.completedAt&&Date.now()-new Date(L.completedAt)<600000)?'<br><span class="skip" onclick="unfinish()">undo — reopen this session</span>':''}</div>`;
 }
 async function sync(){
   await queuePost('session',{type:'session-log',sessionId:S.id,log:log[S.id]});
@@ -488,10 +521,10 @@ async function renderReview(){
       const f=fb[m.key];
       const d=new Date(m.uploaded);
       const label=`${MONTHS[d.getMonth()].slice(0,3)} ${d.getDate()} // ${m.key.split('/').pop().replace(/-clip\d+-\d+\.\w+$/,'').replace(/-\d+\.\w+$/,'').toUpperCase()}`;
-      h+=`<div class="card"><div class="label lit">${label}</div>
+      h+=`<div class="card"><div class="label lit">${esc(label)}</div>
         <div class="label" style="font-size:11px;margin-top:2px">${(m.size/1048576).toFixed(1)} MB</div>
-        <button class="btn small" style="margin-top:12px" onclick="playClip('${m.key}',this)">▶ Watch</button>
-        ${f?`<div class="fb">${f.notes}</div>`:`<div class="pending">Review pending…</div>`}</div>`;
+        <button class="btn small" style="margin-top:12px" onclick="playClip('${esc(m.key)}',this)">▶ Watch</button>
+        ${f?`<div class="fb">${esc(f.notes)}</div>`:`<div class="pending">Review pending…</div>`}</div>`;
     }
     app.innerHTML=h;
   }catch(e){app.innerHTML=`<h1 style="margin-top:8px">Film room</h1><div class="card warn">Couldn't load clips (${e.message||'network'}) — not the same as "no clips."</div><button class="btn small" onclick="renderReview()">Retry</button>`}
@@ -534,7 +567,7 @@ function renderProgress(){
   h+=sparkline(weights.map(x=>x.w));
   h+=`<div style="display:flex;gap:10px;margin:14px 0 26px">
     <input id="bw" inputmode="decimal" placeholder="LB" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font-family:var(--fhead);font-size:22px;text-align:center;outline:none">
-    <button class="go head" style="border:2px solid var(--line2);padding:0 22px;height:52px" onclick="logWeight()">Log weight</button></div>
+    <button class="go head" style="border:2px solid var(--ctrl);padding:0 22px;height:52px" onclick="logWeight()">Log weight</button></div>
   <button class="btn" onclick="$('photoIn').click()">◯ Log physique</button>
   <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="gotPhoto(this)">
   <div id="photoStatus"></div>
@@ -581,12 +614,11 @@ async function gotPhoto(input){
   el.innerHTML='<div class="label">Uploading…</div>';
   const [endpoint,token]=c;
   try{
-    const key=`photos/${today()}-${Date.now()}.jpg`;
-    const buf=await f.arrayBuffer();
+    const key=`photos/${today()}-${Date.now()}.${fileExt(f,'jpg')}`;
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+      headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:f});
     const rj=res.ok?await res.json():null;
-    el.innerHTML=(rj&&rj.size>0)?'<div class="good">Photo filed to the vault ✓</div>':'<div class="warn">Upload failed — try again.</div>';
+    el.innerHTML=(rj&&rj.size===f.size)?'<div class="good">Photo filed to the vault ✓</div>':'<div class="warn">Upload failed — try again.</div>';
   }catch(e){el.innerHTML='<div class="warn">Upload failed — try again.</div>'}
 }
 async function postLog(obj){
@@ -601,19 +633,19 @@ async function renderGear(){
   try{eq=await fetch('data/equipment.json?_='+Date.now()).then(r=>r.json())}catch(e){}
   const notes=j('gearnotes',[]);
   let h=`<h1 style="margin-top:8px">Gear</h1>
-  <div class="label" style="margin-bottom:14px">What I'm programming around${eq&&eq.updated?` · AS OF ${eq.updated}`:''}</div>
+  <div class="label" style="margin-bottom:14px">What I'm programming around${eq&&eq.updated?` · AS OF ${esc(eq.updated)}`:''}</div>
   <button class="btn accent" onclick="$('gearIn').click()">＋ Snap new gear</button>
   <input type="file" id="gearIn" accept="image/*" multiple style="display:none" onchange="gotGear(this)">
   <div id="gearStatus">${j('gearq',[]).length?'<div class="label" style="margin-top:10px">📷 IN — CLAUDE CATALOGS IT AND STARTS PROGRAMMING WITH IT.</div>':''}</div>
   <div class="card" style="border-style:dotted;background:transparent;margin-top:14px">
     <div class="label" style="margin-bottom:10px">Corrections · new gym · travel spot</div>
     <div style="display:flex;gap:10px">
-      <input id="gnote" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font:15px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. joined Iron Asylum · no 60s, they're 55s">
-      <button class="go head" style="border:1px solid var(--line2);padding:0 18px" onclick="gearNote()">Send</button></div>
-    ${notes.map(n=>`<div class="statrow"><span>${n.t}</span><span class="label" style="font-size:11px">${n.d}${n.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
+      <input id="gnote" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font:16px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. joined Iron Asylum · no 60s, they're 55s">
+      <button class="go head" style="border:2px solid var(--ctrl);padding:0 18px;min-height:48px" onclick="gearNote()">Send</button></div>
+    ${notes.map(n=>`<div class="statrow"><span>${esc(n.t)}</span><span class="label" style="font-size:11px">${esc(n.d)}${n.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
   if(eq&&eq.categories)for(const c of eq.categories){
-    h+=`<div class="card"><div class="exname" style="font-size:16px">${c.name}</div>`+
-      c.items.map(it=>`<div class="statrow" style="border-bottom:1px solid var(--line)"><span>${it}</span></div>`).join('')+`</div>`;
+    h+=`<div class="card"><div class="exname" style="font-size:16px">${esc(c.name)}</div>`+
+      c.items.map(it=>`<div class="statrow" style="border-bottom:1px solid var(--line)"><span>${esc(it)}</span></div>`).join('')+`</div>`;
   }
   else h+='<div class="card warn">Equipment list didn\'t load — pull to refresh.</div>';
   app.innerHTML=h;
@@ -629,11 +661,10 @@ async function gotGear(input){
   try{
     for(let i=0;i<files.length;i++){
       const f=files[i];
-      const buf=await f.arrayBuffer();
-      const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(`${group}/p${i+1}.jpg`),{method:'POST',
-        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+      const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(`${group}/p${i+1}.${fileExt(f,'jpg')}`),{method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:f});
       const rj=res.ok?await res.json():null;
-      if(!(rj&&rj.size>0))throw new Error('fail');
+      if(!(rj&&rj.size===f.size))throw new Error('fail');
     }
     if(note)await fetch(endpoint+'/upload?key='+encodeURIComponent(group+'/note.txt'),{method:'POST',
       headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:note});
@@ -644,17 +675,9 @@ async function gotGear(input){
 async function gearNote(){
   const t=$('gnote').value.trim();if(!t)return;
   const notes=j('gearnotes',[]);
-  const n={t,d:today(),synced:false};notes.push(n);sv('gearnotes',notes);
-  const c=cfg();
-  if(c){
-    const [endpoint,token]=c;
-    try{
-      const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-        body:JSON.stringify({sessionId:'gear-note',log:{type:'gear-note',date:today(),note:t}})});
-      if(res.ok)n.synced=true;
-    }catch(e){}
-  }
-  sv('gearnotes',notes);renderGear();
+  notes.push({t,d:today(),synced:true});sv('gearnotes',notes);
+  await queuePost('gearnote',{sessionId:'gear-note',log:{type:'gear-note',date:today(),note:t}});
+  renderGear();
 }
 
 /* ---------- FUEL ---------- */
@@ -669,8 +692,8 @@ function suggestBox(){
   let h='';
   if(pending)h+=`<div class="label" style="margin-top:12px">🧭 SCOUTING NEARBY PROTEIN — PICKS LAND IN ~3 MIN…</div>`;
   if(s&&s.date===today()){
-    h+=`<div class="cuebox"><b>NEAR ${(s.where||'YOU').toUpperCase()}</b>`+
-      s.picks.map(p=>`<div style="margin-top:10px"><span class="head" style="font-size:15px">${p.spot}</span> — ${p.order} <span class="num" style="color:#9A2A20">~${p.protein_g}G</span></div>`).join('')+`</div>`;
+    h+=`<div class="cuebox"><b>NEAR ${esc((s.where||'YOU').toUpperCase())}</b>`+
+      (s.picks||[]).map(p=>`<div style="margin-top:10px"><span class="head" style="font-size:15px">${esc(p.spot)}</span> — ${esc(p.order)} <span class="num" style="color:var(--ox)">~${esc(p.protein_g)}G</span></div>`).join('')+`</div>`;
   }
   return h;
 }
@@ -718,7 +741,7 @@ function renderFuel(){
     <button onclick="addCustom()">Custom +?</button></div>`;
   if(f.items.length){
     h+=`<h1 style="font-size:24px;margin-top:22px">Today's log</h1>`+
-      f.items.map((it,i)=>`<div class="mealrow"><span>${it.n}</span><span class="g">${it.g}G <a style="color:var(--dim);font-family:var(--fbody);margin-left:6px" onclick="rmFuel(${i})">✕</a></span></div>`).join('');
+      f.items.map((it,i)=>`<div class="mealrow"><span>${esc(it.n)}</span><span class="g">${esc(it.g)}G <button style="color:var(--dim);font-family:var(--fbody);padding:14px;margin:-14px -8px -14px 0" onclick="rmFuel(${i})">✕</button></span></div>`).join('');
   }
   $('app').innerHTML=h;
 }
@@ -733,12 +756,11 @@ async function gotMeal(input){
     let firstKey=null;
     for(let i=0;i<files.length;i++){
       const f=files[i];
-      const key=`${group}/p${i+1}.jpg`;
-      const buf=await f.arrayBuffer();
+      const key=`${group}/p${i+1}.${fileExt(f,'jpg')}`;
       const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
-        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:buf});
+        headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:f});
       const rj=res.ok?await res.json():null;
-      if(!(rj&&rj.size>0))throw new Error('upload failed');
+      if(!(rj&&rj.size===f.size))throw new Error('upload failed');
       if(!firstKey)firstKey=key;
     }
     if(note){

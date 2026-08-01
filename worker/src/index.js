@@ -45,8 +45,18 @@ async function dailyReconcile(env) {
   if ((await env.LOGS.get('idx:day')) === day) return;
   await env.LOGS.put('idx:day', day);            // claim first, so a failed list doesn't retry all day
   try {
-    const logs = (await env.LOGS.list({ prefix: 'log:' })).keys.map(k => k.name);
-    const fbs  = (await env.LOGS.list({ prefix: 'fb:'  })).keys.map(k => k.name.slice(3));
+    const listAll = async prefix => { // KV list caps at 1000 keys/page — paginate
+      const names = [];
+      let cursor;
+      do {
+        const r = await env.LOGS.list({ prefix, cursor });
+        names.push(...r.keys.map(k => k.name));
+        cursor = r.list_complete ? null : r.cursor;
+      } while (cursor);
+      return names;
+    };
+    const logs = await listAll('log:');
+    const fbs  = (await listAll('fb:')).map(n => n.slice(3));
     const li = await idxGet(env, 'log');
     const lm = [...new Set([...li, ...logs])].sort();
     if (lm.length !== li.length) await env.LOGS.put('idx:log', JSON.stringify(lm));
@@ -99,15 +109,25 @@ export default {
         const v = await env.LOGS.get(name);
         if (v) out.push({ key: name, log: JSON.parse(v) });
       }
-      const media = (await env.FOOTAGE.list()).objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded }));
+      const media = [];
+      let mcur;
+      do { // R2 list pages at 1000 objects
+        const r = await env.FOOTAGE.list(mcur ? { cursor: mcur } : {});
+        media.push(...r.objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded })));
+        mcur = r.truncated ? r.cursor : null;
+      } while (mcur);
       return json({ logs: out, media });
     }
 
     if (req.method === 'POST' && path === '/feedback') {
       const body = await req.json();
       if (!body.clipKey) return json({ error: 'clipKey required' }, 400);
+      const entry = { notes: body.notes, at: Date.now() };
+      // per-clip key first = the durable record; the blob is just the hot-read cache.
+      // If two writers race on the blob, the daily reconcile sweeps fb:* back in — nothing lost.
+      await env.LOGS.put('fb:' + body.clipKey, JSON.stringify(entry));
       const all = await fbAll(env);
-      all[body.clipKey] = { notes: body.notes, at: Date.now() };
+      all[body.clipKey] = entry;
       await env.LOGS.put('fb-all', JSON.stringify(all));
       return json({ ok: true });
     }
