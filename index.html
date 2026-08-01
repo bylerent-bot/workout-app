@@ -576,125 +576,192 @@ async function sync(){
 }
 /* ---------- THE ZOO — total volume, measured in cute animals ---------- */
 const ZOO=[
-  ['squirrels',1.5],['rabbits',4],['housecats',10],['cockapoos',20],['beavers',50],
-  ['goats',130],['pandas',250],['sea turtles',300],['ponies',600],['moose',1200],['cows',1400],['hippos',3300]
+  ['squirrels',1.5],['guinea pigs',2.5],['rabbits',4],['housecats',10],['pugs',18],['cockapoos',20],
+  ['raccoons',25],['corgis',27],['beavers',50],['golden retrievers',65],['capybaras',110],['goats',130],
+  ['st bernards',160],['pandas',250],['sea turtles',300],['pigs',500],['ponies',600],['grizzly bears',700],
+  ['polar bears',990],['moose',1200],['cows',1400],['walruses',2000],['hippos',3300],['elephants',12000]
 ];
 function zooHash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
 function animalSVG(name){
-  const K='#191410',W='#F8F5EE',OX='#8C1B14',P='#31543F',TAN='#D8B384',BRN='#B08657',DK='#8A6A45';
-  const S2=`stroke="${K}" stroke-width="2" stroke-linejoin="round"`;
-  const S1=`stroke="${K}" stroke-width="1.6" stroke-linejoin="round"`;
-  // front-facing kawaii head on a side-view body. hx,hy = head center.
-  const face=(hx,hy,mouth)=>`<circle cx="${hx-4.5}" cy="${hy-1.5}" r="1.7" fill="${K}"/><circle cx="${hx+4.5}" cy="${hy-1.5}" r="1.7" fill="${K}"/><circle cx="${hx-7.5}" cy="${hy+3.5}" r="2" fill="${OX}" opacity=".35"/><circle cx="${hx+7.5}" cy="${hy+3.5}" r="2" fill="${OX}" opacity=".35"/>${mouth||`<path d="M${hx-2} ${hy+4} q2 2 4 0" stroke="${K}" stroke-width="1.5" stroke-linecap="round" fill="none"/>`}`;
-  const legs=(y,xs,fill)=>xs.map(x=>`<path d="M${x} ${y} v6 q0 2 2 2 h1" stroke="${K}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`).join('');
+  const K='#191410',W='#F8F5EE',OX='#8C1B14',P='#31543F';
+  const TAN='#D8B384',BRN='#B08657',DK='#8A6A45',OAT='#E4C89A',GRY='#BDB6AA',PNK='#E8B2A6',CHOC='#6B4A2F';
+  const S=`stroke="${K}" stroke-width="2.2" stroke-linejoin="round"`;
+  const s1=`stroke="${K}" stroke-width="1.6" stroke-linejoin="round"`;
+  const eye=(x,y)=>`<circle cx="${x}" cy="${y}" r="1.8" fill="${K}"/>`;
+  const blush=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.1" fill="${OX}" opacity=".32"/>`;
+  const smile=(x,y)=>`<path d="M${x-2} ${y} q2 2.2 4 0" stroke="${K}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
+  const face=(x,y,mouth)=>eye(x-4.8,y)+eye(x+4.8,y)+blush(x-8.2,y+5)+blush(x+8.2,y+5)+(mouth||smile(x,y+4.5));
+  // hoofed muzzle
+  const muz=(x,y,fill)=>`<ellipse cx="${x}" cy="${y}" rx="7.4" ry="4.8" fill="${fill}" ${s1}/><circle cx="${x-2.8}" cy="${y-.4}" r="1.15" fill="${K}"/><circle cx="${x+2.8}" cy="${y-.4}" r="1.15" fill="${K}"/>`;
+  const teeth=(x,y)=>`<path d="M${x-2.4} ${y} h4.8 v3.4 h-4.8 z" fill="${W}" stroke="${K}" stroke-width="1.2"/><path d="M${x} ${y} v3.4" stroke="${K}" stroke-width="1.1"/>`;
+  const tongue=(x,y)=>`<circle cx="${x}" cy="${y}" r="1.5" fill="${K}"/><path d="M${x} ${y+1.4} q0 2.4 2.4 2.4" stroke="${K}" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M${x+1.8} ${y+3} q1 3.2 -.8 3.2 q-1.7 0 -.8 -2.6" fill="${OX}" opacity=".85"/>`;
+  const leg=(x,c,y=43,h=12)=>`<rect x="${x}" y="${y}" width="6.4" height="${h}" rx="3.2" fill="${c}" stroke="${K}" stroke-width="2"/>`;
+  const legs4=(c,y,h)=>leg(14,c,y,h)+leg(24,c,y,h)+leg(36,c,y,h)+leg(46,c,y,h);
+  const body=(c,rx=20,ry=12.5,cx=30,cy=37)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" ${S}/>`;
+  const head=(c,r=13,cx=48,cy=19)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" ${S}/>`;
+  const wrap=x=>`<svg viewBox="0 0 72 60" fill="none">${x}</svg>`;
+  const earsRound=(c,r=3.8)=>`<circle cx="39" cy="8.5" r="${r}" fill="${c}" ${s1}/><circle cx="57" cy="8.5" r="${r}" fill="${c}" ${s1}/>`;
+  const earsPoint=c=>`<path d="M39 10 l-1.5 -8.5 l8 5 M57 10 l1.5 -8.5 l-8 5" fill="${c}" ${S}/>`;
+  const earsFlop=c=>`<path d="M37 9 q-6.5 1.5 -6 12 q.5 6.5 5.5 5 M59 9 q6.5 1.5 6 12 q-.5 6.5 -5.5 5" fill="${c}" ${S}/>`;
   switch(name){
-    case 'squirrels':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M14 40 q-13 -4 -10 -20 q2 -13 14 -14 q-7 9 -2 19 q2 5 6 7" fill="${BRN}" ${S2}/>
-      <ellipse cx="26" cy="40" rx="12" ry="8.5" fill="${TAN}" ${S2}/>
-      <circle cx="31" cy="12.5" r="3.4" fill="${TAN}" ${S1}/><circle cx="47" cy="12.5" r="3.4" fill="${TAN}" ${S1}/>
-      <circle cx="39" cy="23" r="11.5" fill="${TAN}" ${S2}/>
-      ${face(39,22,`<path d="M36.6 26.5 h4.8 M39 26.5 v3.4" stroke="${K}" stroke-width="1.2"/><path d="M36.8 26.5 h4.4 v3.2 h-4.4 z" fill="${W}" stroke="${K}" stroke-width="1.2"/>`)}
-      <path d="M30 44 q2 3 5 3 M40 42 q1 4 4 4" stroke="${K}" stroke-width="2.2" stroke-linecap="round"/></svg>`;
-    case 'rabbits':return `<svg viewBox="0 0 64 52" fill="none">
-      <circle cx="16" cy="38" r="4.5" fill="${W}" ${S1}/>
-      <ellipse cx="28" cy="39" rx="14" ry="9.5" fill="${W}" ${S2}/>
-      <path d="M36 12 q-2 -11 3 -11 q4 0 3 11 M46 12 q2 -11 -3 -11 q-4 0 -3 11" fill="${W}" ${S2}/>
-      <circle cx="41" cy="23" r="11.5" fill="${W}" ${S2}/>
-      ${face(41,22,`<path d="M41 25 v2.6 M39 30 q2 1.8 4 0 M41 27.6 l-1.8 -1.2 M41 27.6 l1.8 -1.2" stroke="${K}" stroke-width="1.3" stroke-linecap="round" fill="none"/>`)}
-      ${legs(46,[22,32],'')}</svg>`;
-    case 'housecats':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M12 44 q-8 -2 -5 -9 q3 -6 10 -2" fill="${W}" ${S2}/>
-      <ellipse cx="27" cy="38" rx="14" ry="10" fill="${W}" ${S2}/>
-      <path d="M31 13 l-1 -8 l7 4.5 M51 13 l1 -8 l-7 4.5" fill="${W}" ${S2}/>
-      <circle cx="41" cy="23" r="11.5" fill="${W}" ${S2}/>
-      ${face(41,22)}
-      <path d="M28 22 h-7 M28 25 h-6 M54 22 h7 M54 25 h6" stroke="${K}" stroke-width="1.1" stroke-linecap="round"/>
-      ${legs(46,[22,32],'')}</svg>`;
-    case 'cockapoos':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M12 30 q-6 -3 -4 -8 q4 2 7 5" fill="#C89B6B" ${S2}/>
-      <ellipse cx="26" cy="38" rx="15" ry="10" fill="#E4C89A" ${S2}/>
-      <path d="M30 18 q-6 1 -6 11 q0 6 5 5 M52 18 q6 1 6 11 q0 6 -5 5" fill="#C89B6B" ${S2}/>
-      <circle cx="41" cy="22" r="11.5" fill="#E4C89A" ${S2}/>
-      <path d="M33 14 q3 -5 8 -4 q6 -1 8 4 q-4 -1.6 -8 -1 q-4 -.6 -8 1" fill="#C89B6B" ${S1}/>
-      ${face(41,22,`<circle cx="41" cy="25" r="1.5" fill="${K}"/><path d="M41 26.5 q0 2.6 2.6 2.6" stroke="${K}" stroke-width="1.3" stroke-linecap="round" fill="none"/><path d="M43 28.4 q1 3.4 -.8 3.4 q-1.8 0 -.9 -2.8" fill="${OX}" opacity=".85"/>`)}
-      ${legs(46,[20,31],'')}</svg>`;
-    case 'beavers':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M6 42 q-4 -8 4 -11 q7 -2 9 4 l-3 9 q-7 3 -10 -2" fill="${DK}" ${S2}/>
-      <path d="M8 36 l8 3 M7 40 l9 1" stroke="${K}" stroke-width="1.1"/>
-      <ellipse cx="28" cy="37" rx="14" ry="11" fill="${BRN}" ${S2}/>
-      <circle cx="33" cy="13" r="3.2" fill="${BRN}" ${S1}/><circle cx="49" cy="13" r="3.2" fill="${BRN}" ${S1}/>
-      <circle cx="41" cy="23" r="11.5" fill="${BRN}" ${S2}/>
-      ${face(41,22,`<path d="M38.6 26 h4.8 v3.6 h-4.8 z" fill="${W}" stroke="${K}" stroke-width="1.2"/><path d="M41 26 v3.6" stroke="${K}" stroke-width="1.1"/>`)}
-      ${legs(46,[23,33],'')}</svg>`;
-    case 'goats':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M12 32 q-3 -4 1 -6" stroke="${K}" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <ellipse cx="27" cy="36" rx="15" ry="9.5" fill="${W}" ${S2}/>
-      <path d="M35 12 q-2 -8 -7 -8 q0 6 4 9 M47 12 q2 -8 7 -8 q0 6 -4 9" fill="#D8CDBB" ${S2}/>
-      <path d="M30 20 q-6 0 -6 5 q4 2 8 -2 M52 20 q6 0 6 5 q-4 2 -8 -2" fill="${W}" ${S1}/>
-      <circle cx="41" cy="22" r="11.5" fill="${W}" ${S2}/>
-      ${face(41,21)}
-      <path d="M41 33 q-1.5 3 0 5 q1.5 -2 0 -5" fill="#D8CDBB" ${S1}/>
-      ${legs(44,[19,25,31,37],'')}</svg>`;
-    case 'pandas':return `<svg viewBox="0 0 64 52" fill="none">
-      <ellipse cx="26" cy="38" rx="15" ry="10.5" fill="${W}" ${S2}/>
-      <path d="M14 34 q-5 4 -2 9 q3 4 7 1" fill="${K}"/><path d="M34 42 q1 7 7 6" stroke="${K}" stroke-width="5" stroke-linecap="round"/>
-      <circle cx="32" cy="13" r="4.2" fill="${K}"/><circle cx="50" cy="13" r="4.2" fill="${K}"/>
-      <circle cx="41" cy="23" r="11.5" fill="${W}" ${S2}/>
-      <ellipse cx="36.5" cy="21.5" rx="3.4" ry="4.2" fill="${K}"/><ellipse cx="45.5" cy="21.5" rx="3.4" ry="4.2" fill="${K}"/>
-      <circle cx="36.5" cy="21.5" r="1.3" fill="${W}"/><circle cx="45.5" cy="21.5" r="1.3" fill="${W}"/>
-      <circle cx="33.5" cy="26.5" r="2" fill="${OX}" opacity=".35"/><circle cx="48.5" cy="26.5" r="2" fill="${OX}" opacity=".35"/>
-      <path d="M39 27 q2 2 4 0" stroke="${K}" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>`;
-    case 'sea turtles':return `<svg viewBox="0 0 64 52" fill="none">
-      <ellipse cx="27" cy="28" rx="17" ry="13" fill="${P}" ${S2}/>
-      <path d="M18 21 l6 3.5 l-1.5 7 l-7 1 z M31 19 l6 4.5 l-2.5 7 l-7 -2.5 z" fill="#4A7561" stroke="${K}" stroke-width="1.2" stroke-linejoin="round"/>
-      <circle cx="48" cy="20" r="8" fill="#B9D2A9" ${S2}/>
-      <circle cx="45.5" cy="18.5" r="1.6" fill="${K}"/><circle cx="51.5" cy="18.5" r="1.6" fill="${K}"/>
-      <circle cx="43.5" cy="23" r="1.9" fill="${OX}" opacity=".35"/><circle cx="53" cy="23" r="1.9" fill="${OX}" opacity=".35"/>
-      <path d="M46.5 23.5 q1.8 1.8 3.6 0" stroke="${K}" stroke-width="1.4" stroke-linecap="round" fill="none"/>
-      <path d="M14 38 q-4 5 1 6 M31 41 q0 6 5 5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/></svg>`;
-    case 'ponies':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M10 30 q-5 6 -2 12 q2 3 5 1" fill="${DK}" ${S1}/>
-      <ellipse cx="27" cy="34" rx="15" ry="9.5" fill="${TAN}" ${S2}/>
-      <path d="M35 13 l0 -7 l6 4.5 M51 13 l0 -7 l-6 4.5" fill="${TAN}" ${S2}/>
-      <path d="M43 8 q-3 5 0 9 q3 -4 6 -4 q-2 -5 -6 -5" fill="${DK}" ${S1}/>
-      <circle cx="43" cy="21" r="11" fill="${TAN}" ${S2}/>
-      <circle cx="38.8" cy="18.5" r="1.7" fill="${K}"/><circle cx="47.2" cy="18.5" r="1.7" fill="${K}"/>
-      <circle cx="35.8" cy="23" r="2" fill="${OX}" opacity=".35"/><circle cx="50.2" cy="23" r="2" fill="${OX}" opacity=".35"/>
-      <ellipse cx="43" cy="27.5" rx="6.5" ry="4.2" fill="#EAD9C2" stroke="${K}" stroke-width="1.3"/>
-      <path d="M40.4 27 q0 1.3 .9 1.3 M45.6 27 q0 1.3 -.9 1.3" stroke="${K}" stroke-width="1.2" stroke-linecap="round"/>
-      ${legs(42,[17,23,31,37],'')}</svg>`;
-    case 'moose':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M11 32 q-3 3 -1 6" stroke="${K}" stroke-width="2" stroke-linecap="round" fill="none"/>
-      <ellipse cx="26" cy="35" rx="16" ry="10" fill="${BRN}" ${S2}/>
-      <path d="M33 12 q-9 -1 -9 -8 q4.5 -1 6.5 2 q0 -3 3 -3.5 q2.5 3.5 2.5 9 M51 12 q9 -1 9 -8 q-4.5 -1 -6.5 2 q0 -3 -3 -3.5 q-2.5 3.5 -2.5 9" fill="${DK}" stroke="${K}" stroke-width="1.7" stroke-linejoin="round"/>
-      <circle cx="42" cy="21" r="11" fill="${BRN}" ${S2}/>
-      <circle cx="37.8" cy="18.5" r="1.7" fill="${K}"/><circle cx="46.2" cy="18.5" r="1.7" fill="${K}"/>
-      <circle cx="34.8" cy="23" r="2" fill="${OX}" opacity=".35"/><circle cx="49.2" cy="23" r="2" fill="${OX}" opacity=".35"/>
-      <ellipse cx="42" cy="28" rx="7" ry="4.6" fill="#C89B6B" stroke="${K}" stroke-width="1.3"/>
-      <circle cx="39.4" cy="27.6" r="1.1" fill="${K}"/><circle cx="44.6" cy="27.6" r="1.1" fill="${K}"/>
-      ${legs(43,[16,23,31,38],'')}</svg>`;
-    case 'cows':return `<svg viewBox="0 0 64 52" fill="none">
-      <path d="M10 30 q-4 4 -1 8 M9 38 l-2 2 M9 38 l3 1" stroke="${K}" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-      <ellipse cx="26" cy="35" rx="16" ry="10" fill="${W}" ${S2}/>
-      <path d="M16 30 q6 -3 9 1 q-1 6 -7 5 q-4 -2 -2 -6 z M28 40 q5 -2 7 1 q0 4 -5 4 q-4 -1 -2 -5 z" fill="${K}" opacity=".85"/>
-      <path d="M32 15 q-7 0 -7 -5 q4 -2 8 1 M52 15 q7 0 7 -5 q-4 -2 -8 1" fill="#D8CDBB" stroke="${K}" stroke-width="1.7" stroke-linejoin="round"/>
-      <circle cx="42" cy="21" r="11" fill="${W}" ${S2}/>
-      <path d="M45 12 q5 -1 7 3 q-4 2 -8 -.5 z" fill="${K}" opacity=".85"/>
-      <circle cx="37.8" cy="18.5" r="1.7" fill="${K}"/><circle cx="46.2" cy="18.5" r="1.7" fill="${K}"/>
-      <ellipse cx="42" cy="27.5" rx="7" ry="4.4" fill="#EAC9C1" stroke="${K}" stroke-width="1.3"/>
-      <circle cx="39.4" cy="27.5" r="1.1" fill="${K}"/><circle cx="44.6" cy="27.5" r="1.1" fill="${K}"/>
-      ${legs(43,[16,23,31,38],'')}</svg>`;
-    case 'hippos':return `<svg viewBox="0 0 64 52" fill="none">
-      <ellipse cx="25" cy="34" rx="17" ry="11.5" fill="#AFA3B8" ${S2}/>
-      <path d="M9 40 q-2 2 0 4" stroke="${K}" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-      <circle cx="34" cy="12.5" r="3" fill="#AFA3B8" ${S1}/><circle cx="50" cy="12.5" r="3" fill="#AFA3B8" ${S1}/>
-      <circle cx="42" cy="21" r="11" fill="#AFA3B8" ${S2}/>
-      <circle cx="37.8" cy="18" r="1.7" fill="${K}"/><circle cx="46.2" cy="18" r="1.7" fill="${K}"/>
-      <ellipse cx="42" cy="27.5" rx="8.5" ry="5.4" fill="#C4BACB" stroke="${K}" stroke-width="1.4"/>
-      <circle cx="38.5" cy="26" r="1.3" fill="${K}"/><circle cx="45.5" cy="26" r="1.3" fill="${K}"/>
-      <path d="M38.5 30.5 v1.6 M45.5 30.5 v1.6" stroke="${K}" stroke-width="1.5" stroke-linecap="round"/>
-      ${legs(44,[16,24,32,40],'')}</svg>`;
-    default:return `<svg viewBox="0 0 64 52"></svg>`;
+    case 'squirrels':return wrap(
+      `<path d="M12 42 q-14 -5 -10 -22 q3 -14 16 -15 q-8 10 -3 21 q2.5 5.5 7 8" fill="${BRN}" ${S}/>`+
+      body(TAN,17,11.5,28,39)+leg(20,TAN,45,10)+leg(33,TAN,45,10)+
+      earsRound(TAN)+head(TAN)+face(48,18,teeth(48,23.5)));
+    case 'guinea pigs':return wrap(
+      `<path d="M9 38 q-1 -19 21 -19 h14 q19 0 19 15 q0 16 -19 16 h-16 q-18 0 -19 -12 z" fill="${OAT}" ${S}/>`+
+      `<path d="M12 24 q9 -4 14 2 q3 8 -3 13 q-9 2 -12 -5 q-1 -6 1 -10 z" fill="${BRN}" opacity=".85"/>`+
+      `<circle cx="52" cy="12.5" r="3.4" fill="${OAT}" ${s1}/><circle cx="40" cy="12.5" r="3.2" fill="${BRN}" ${s1}/>`+
+      face(46,24,teeth(46,29.5))+
+      `<rect x="20" y="48" width="5.4" height="6" rx="2.7" fill="${OAT}" stroke="${K}" stroke-width="1.8"/><rect x="42" y="48" width="5.4" height="6" rx="2.7" fill="${OAT}" stroke="${K}" stroke-width="1.8"/>`);
+    case 'rabbits':return wrap(
+      `<circle cx="10" cy="36" r="5" fill="${W}" ${s1}/>`+
+      body(W,19,12)+legs4(W)+
+      `<path d="M42 12 q-5 -12 .5 -12 q5 0 5.5 12 M54 12 q5 -12 -.5 -12 q-5 0 -5.5 12" fill="${W}" ${S}/>`+
+      `<path d="M43.6 10 q-2.8 -7.5 .2 -8 M52.4 10 q2.8 -7.5 -.2 -8" stroke="${PNK}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".7"/>`+
+      head(W,12.5,48,21)+face(48,20,`<path d="M48 23 v2.6 M46 28 q2 1.8 4 0 M48 25.6 l-1.9 -1.3 M48 25.6 l1.9 -1.3" stroke="${K}" stroke-width="1.3" stroke-linecap="round" fill="none"/>`));
+    case 'housecats':return wrap(
+      `<path d="M10 44 q-9 -2 -6 -10 q2.5 -6 9 -3" fill="${GRY}" ${S}/>`+
+      body(GRY,19,12)+legs4(GRY)+earsPoint(GRY)+head(GRY)+
+      `<path d="M34 17 h-8 M34 20.5 h-7 M62 17 h8 M62 20.5 h7" stroke="${K}" stroke-width="1.1" stroke-linecap="round"/>`+
+      face(48,18));
+    case 'pugs':return wrap(
+      `<path d="M12 33 q-5 -1 -4 -6 q3.5 -1 6 2 z" fill="${OAT}" ${s1}/>`+
+      `<circle cx="11" cy="35" r="4.4" fill="${OAT}" ${s1}/>`+
+      body(OAT,19,12)+legs4(OAT)+
+      `<path d="M38 9 q-4 -2 -4 4 l3 4 M58 9 q4 -2 4 4 l-3 4" fill="${DK}" ${S}/>`+
+      head(OAT)+
+      `<ellipse cx="48" cy="24" rx="7.8" ry="6" fill="${DK}" opacity=".85"/>`+
+      eye(43.2,18)+eye(52.8,18)+blush(39.8,23)+blush(56.2,23)+
+      `<circle cx="48" cy="22.5" r="1.7" fill="${K}"/><path d="M48 24 q0 2.4 2.4 2.4 M48 24 q0 2.4 -2.4 2.4" stroke="${K}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`);
+    case 'cockapoos':return wrap(
+      `<path d="M10 32 q-6 -3 -4 -8 q4.5 1.5 7 5" fill="#C89B6B" ${S}/>`+
+      body(OAT,19,12)+legs4(OAT)+earsFlop('#C89B6B')+head(OAT)+
+      `<path d="M38 11 q3.5 -6 10 -5 q7 -1 10 5 q-5 -2 -10 -1.2 q-5 -.8 -10 1.2" fill="#C89B6B" ${s1}/>`+
+      face(48,19,tongue(48,23.5)));
+    case 'raccoons':return wrap(
+      `<path d="M13 45 q-11 1 -10 -8 q1 -7 9 -6 l4 6 z" fill="${GRY}" ${S}/>`+
+      `<path d="M6 34 l8 2 M4.5 39 l9 1" stroke="${K}" stroke-width="1.8"/>`+
+      body(GRY,19,12)+legs4('#9A937F')+earsPoint(GRY)+head(GRY)+
+      `<path d="M36.5 15 q5 -3.5 11.5 -3.5 q6.5 0 11.5 3.5 q-1 6 -6 6.5 q-3.5 .5 -5.5 -2 q-2 2.5 -5.5 2 q-5 -.5 -6 -6.5 z" fill="${CHOC}" opacity=".88"/>`+
+      `<circle cx="43" cy="17.5" r="1.9" fill="${W}"/><circle cx="53" cy="17.5" r="1.9" fill="${W}"/>`+
+      eye(43,17.5)+eye(53,17.5)+blush(39.8,24)+blush(56.2,24)+
+      `<circle cx="48" cy="23" r="1.5" fill="${K}"/>`+smile(48,24.5));
+    case 'corgis':return wrap(
+      `<circle cx="11" cy="34" r="4.6" fill="${W}" ${s1}/>`+
+      body(TAN,19,12)+
+      `<path d="M14 41 a17 9 0 0 0 32 3 q-16 6 -32 -3 z" fill="${W}" stroke="none"/>`+
+      leg(16,W,44,9)+leg(26,W,44,9)+leg(36,W,44,9)+leg(45,W,44,9)+
+      `<path d="M38 11 l-3 -10 l10 6 M58 11 l3 -10 l-10 6" fill="${TAN}" ${S}/>`+
+      head(TAN)+
+      `<ellipse cx="48" cy="24" rx="6.2" ry="4.6" fill="${W}" stroke="none"/>`+
+      face(48,17.5,`<circle cx="48" cy="22.5" r="1.6" fill="${K}"/>`+smile(48,24.2)));
+    case 'beavers':return wrap(
+      `<path d="M4 44 q-3.5 -9 5 -12 q8 -2.5 10 4.5 l-3.5 10 q-8 3.5 -11.5 -2.5" fill="${DK}" ${S}/>`+
+      `<path d="M6 37 l9 3 M5 41 l10 1.5" stroke="${K}" stroke-width="1.2"/>`+
+      body(BRN,18,12.5,29,37)+legs4(BRN)+earsRound(BRN,3.4)+head(BRN)+face(48,18,teeth(48,23.5)));
+    case 'golden retrievers':return wrap(
+      `<path d="M11 30 q-8 -1 -7 8 q.5 6 6 5 l4 -9 z" fill="${OAT}" ${S}/>`+
+      body(OAT,19.5,12)+legs4(OAT)+earsFlop('#D8B384')+head(OAT)+
+      face(48,18,tongue(48,23)));
+    case 'capybaras':return wrap(
+      `<path d="M9 34 q0 -15 20 -15 h18 q16 0 16 13 q0 14 -16 14 h-18 q-20 0 -20 -12 z" fill="${BRN}" ${S}/>`+
+      `<circle cx="52" cy="14.5" r="3" fill="${BRN}" ${s1}/><circle cx="40" cy="14" r="2.7" fill="${BRN}" ${s1}/>`+
+      eye(44,24)+eye(53,24)+blush(40,29.5)+blush(57.5,29.5)+
+      `<ellipse cx="48.5" cy="31" rx="6.4" ry="4.2" fill="${DK}" opacity=".55"/>`+
+      `<circle cx="48.5" cy="29.8" r="1.4" fill="${K}"/><path d="M48.5 31.2 v2" stroke="${K}" stroke-width="1.2" stroke-linecap="round"/>`+
+      legs4(BRN,44,10));
+    case 'goats':return wrap(
+      `<path d="M11 30 q-3.5 -4 1 -6.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
+      body(W,19,11.5,30,36)+legs4(W)+
+      `<path d="M42 8 q-2.5 -8 -7.5 -8 q0 6.5 4.5 9.5 M54 8 q2.5 -8 7.5 -8 q0 6.5 -4.5 9.5" fill="#D8CDBB" ${S}/>`+
+      `<path d="M37 16 q-6.5 0 -6.5 5.5 q4.5 2 8.5 -2.5 M59 16 q6.5 0 6.5 5.5 q-4.5 2 -8.5 -2.5" fill="${W}" ${s1}/>`+
+      head(W,12.5)+face(48,17)+
+      `<path d="M48 30 q-1.6 3.2 0 5.5 q1.6 -2.3 0 -5.5" fill="#D8CDBB" ${s1}/>`);
+    case 'st bernards':return wrap(
+      `<circle cx="10" cy="33" r="4.8" fill="${W}" ${s1}/>`+
+      body(W,20.5,13,30,37)+
+      `<path d="M15 29 q8 -5 14 1 q3 7 -3 12 q-9 2 -13 -5 z" fill="${BRN}" opacity=".9"/>`+
+      legs4(W)+earsFlop(BRN)+head(W,13.5)+
+      `<path d="M40 8.5 q8 -5 16 0 l-2.5 8 q-5.5 -3 -11 0 z" fill="${BRN}" opacity=".9"/>`+
+      face(48,19,`<circle cx="48" cy="23" r="1.7" fill="${K}"/>`+smile(48,24.8)));
+    case 'pandas':return wrap(
+      body(W,19,12.5,29,37)+
+      `<path d="M12 32 q-6 4 -3 10 q3 5 8 2 z" fill="${K}"/><path d="M38 43 q1 8 8 7" stroke="${K}" stroke-width="6" stroke-linecap="round"/>`+
+      leg(16,K,44,10)+leg(38,K,44,10)+
+      `<circle cx="39" cy="8.5" r="4.6" fill="${K}"/><circle cx="57" cy="8.5" r="4.6" fill="${K}"/>`+
+      head(W)+
+      `<ellipse cx="43.4" cy="17.5" rx="3.6" ry="4.5" fill="${K}"/><ellipse cx="52.6" cy="17.5" rx="3.6" ry="4.5" fill="${K}"/>`+
+      `<circle cx="43.4" cy="17.5" r="1.4" fill="${W}"/><circle cx="52.6" cy="17.5" r="1.4" fill="${W}"/>`+
+      blush(39.5,23.5)+blush(56.5,23.5)+smile(48,23));
+    case 'sea turtles':return wrap(
+      `<ellipse cx="29" cy="32" rx="20" ry="15" fill="${P}" ${S}/>`+
+      `<path d="M19 24 l7 4 l-2 8 l-8 1 z M34 21.5 l7 5 l-3 8 l-8 -3 z M24 38 l6 2 l-1.5 6 l-7 -1 z" fill="#4A7561" stroke="${K}" stroke-width="1.3" stroke-linejoin="round"/>`+
+      `<circle cx="54" cy="21" r="9.5" fill="#B9D2A9" ${S}/>`+
+      eye(51,19.5)+eye(57.5,19.5)+blush(48.5,24.5)+blush(60,24.5)+smile(54,24.5)+
+      `<path d="M13 44 q-5 6 1.5 7.5 M35 47 q0 7 6.5 6" stroke="${K}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`);
+    case 'pigs':return wrap(
+      `<path d="M10 33 q-5 -1 -4 -4 q3 -2 5 1 q2 -3 4 0 q0 3.5 -5 3" fill="${PNK}" ${s1}/>`+
+      body(PNK,19.5,12.5)+legs4(PNK)+
+      `<path d="M39 10 l-2 -8.5 l8.5 4.5 M57 10 l2 -8.5 l-8.5 4.5" fill="${PNK}" ${S}/>`+
+      head(PNK)+
+      `<ellipse cx="48" cy="22.5" rx="6" ry="4.4" fill="#DE9E8F" ${s1}/><circle cx="45.8" cy="22.5" r="1.15" fill="${K}"/><circle cx="50.2" cy="22.5" r="1.15" fill="${K}"/>`+
+      eye(42.5,17)+eye(53.5,17)+blush(39.5,22.5)+blush(56.5,22.5));
+    case 'ponies':return wrap(
+      `<path d="M9 30 q-6 7 -2.5 14 q2.5 3.5 6 1" fill="${DK}" ${s1}/>`+
+      body(TAN,19,11.5,30,36)+legs4(TAN)+
+      `<path d="M41 9 l0 -8 l7 5 M57 9 l0 -8 l-7 5" fill="${TAN}" ${S}/>`+
+      `<path d="M49 4 q-3.5 6 0 11 q3.5 -4.5 7 -4.5 q-2.5 -6.5 -7 -6.5" fill="${DK}" ${s1}/>`+
+      head(TAN,12.5)+eye(43.5,15.5)+eye(52.5,15.5)+blush(40,20.5)+blush(56,20.5)+muz(48,24.5,'#EAD9C2'));
+    case 'grizzly bears':return wrap(
+      `<circle cx="11" cy="33" r="4" fill="${BRN}" ${s1}/>`+
+      body(BRN,20.5,13,30,37)+legs4(BRN)+earsRound(BRN,4.2)+head(BRN)+
+      eye(43.5,17)+eye(52.5,17)+blush(40,22.5)+blush(56,22.5)+
+      `<ellipse cx="48" cy="23" rx="6" ry="4.4" fill="${TAN}" ${s1}/><circle cx="48" cy="21.8" r="1.7" fill="${K}"/>`+smile(48,23.8));
+    case 'polar bears':return wrap(
+      `<circle cx="11" cy="33" r="4" fill="${W}" ${s1}/>`+
+      body(W,20.5,13,30,37)+legs4(W)+earsRound(W,4)+head(W)+
+      eye(43.5,17)+eye(52.5,17)+blush(40,22.5)+blush(56,22.5)+
+      `<circle cx="48" cy="21.5" r="1.9" fill="${K}"/>`+smile(48,23.5));
+    case 'moose':return wrap(
+      `<path d="M10 31 q-3 3.5 -1 6.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
+      body(BRN,20,12,30,36)+legs4(BRN)+
+      `<path d="M39 9 q-10 -1 -10 -8.5 q5 -1.2 7.5 2.2 q0 -3.4 3.4 -4 q3.1 4 3.1 10.3 M57 9 q10 -1 10 -8.5 q-5 -1.2 -7.5 2.2 q0 -3.4 -3.4 -4 q-3.1 4 -3.1 10.3" fill="${DK}" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`+
+      head(BRN,12.5)+eye(43.5,15)+eye(52.5,15)+blush(40,20)+blush(56,20)+
+      `<ellipse cx="48" cy="24" rx="7.6" ry="5" fill="#C89B6B" ${s1}/><circle cx="45.2" cy="23.6" r="1.15" fill="${K}"/><circle cx="50.8" cy="23.6" r="1.15" fill="${K}"/>`);
+    case 'cows':return wrap(
+      `<path d="M9 29 q-4.5 4.5 -1 9 M8 37.5 l-2.5 2.5 M8 37.5 l3.5 1" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
+      body(W,20,12,30,36)+
+      `<path d="M17 29 q7 -3.5 10.5 1 q-1 7 -8 6 q-4.5 -2.5 -2.5 -7 z M31 40 q6 -2.5 8.5 1 q0 4.5 -6 4.5 q-4.5 -1 -2.5 -5.5 z" fill="${K}" opacity=".85"/>`+
+      legs4(W)+
+      `<path d="M38 12 q-8 0 -8 -5.5 q4.5 -2.2 9 1.2 M58 12 q8 0 8 -5.5 q-4.5 -2.2 -9 1.2" fill="#D8CDBB" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`+
+      head(W,12.5)+
+      `<path d="M52 7 q5.5 -1 8 3.5 q-4.5 2.2 -9 -.6 z" fill="${K}" opacity=".85"/>`+
+      eye(43.5,15.5)+eye(52.5,15.5)+muz(48,24,'#EAC9C1'));
+    case 'walruses':return wrap(
+      `<path d="M6 38 q0 -18 24 -18 q25 0 27 14 q1 11 -10 12 l-25 0 q-15 0 -16 -8 z" fill="#B08D7A" ${S}/>`+
+      `<path d="M14 45 q-4 5 1 6 q4 1 5 -4 M40 46 q0 6 5.5 5.5 q4 -1 2 -5.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
+      eye(41,27)+eye(51,27)+blush(36.5,32)+blush(56,32)+
+      `<ellipse cx="46" cy="34" rx="8.6" ry="5.2" fill="#C4A28E" ${s1}/>`+
+      `<circle cx="46" cy="32.4" r="1.5" fill="${K}"/>`+
+      `<path d="M42.5 37.5 q-.5 5.5 -2 7 M49.5 37.5 q.5 5.5 2 7" stroke="${W}" stroke-width="3.2" stroke-linecap="round" fill="none"/>`+
+      `<path d="M39 33 h-4.5 M39.5 35.5 h-4 M53 33 h4.5 M52.5 35.5 h4" stroke="${K}" stroke-width="1.1" stroke-linecap="round"/>`);
+    case 'hippos':return wrap(
+      body('#AFA3B8',20.5,13,29,37)+
+      `<path d="M8.5 41 q-2 2 0 4" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
+      legs4('#AFA3B8')+earsRound('#AFA3B8',3.2)+head('#AFA3B8')+
+      eye(43.5,16)+eye(52.5,16)+
+      `<ellipse cx="48" cy="24" rx="9" ry="5.8" fill="#C4BACB" ${s1}/><circle cx="44.5" cy="22.5" r="1.35" fill="${K}"/><circle cx="51.5" cy="22.5" r="1.35" fill="${K}"/><path d="M44.5 27 v1.7 M51.5 27 v1.7" stroke="${K}" stroke-width="1.5" stroke-linecap="round"/>`+
+      blush(38.5,21.5)+blush(57.5,21.5));
+    case 'elephants':return wrap(
+      `<path d="M9 36 q-3 4 0 6 l2 -1" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
+      body(GRY,20,13,29,36)+legs4(GRY)+
+      `<path d="M40 8 q-14 -3 -16 9 q-1.5 10 8 11 q-1 -11 8 -14 z" fill="#A8A195" ${S}/>`+
+      head(GRY,13,49,19)+
+      eye(45,16)+eye(53.5,16)+blush(41.5,21.5)+blush(58,21.5)+
+      `<path d="M49 24 q1 8 -3 12 q-2.5 2.5 -5 1" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>`+
+      `<path d="M49 24 q1 8 -3 12 q-2.5 2.5 -5 1 q-1 -2.5 1.5 -3 q3.5 -1 2.5 -10 z" fill="${GRY}" stroke="none"/>`);
+    default:return wrap('');
   }
 }
 // deterministic PRNG so the herd doesn't reshuffle on every render
