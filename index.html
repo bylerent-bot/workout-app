@@ -27,6 +27,7 @@
     font:15px/1.5 var(--fbody);
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
   .wrap{max-width:520px; margin:0 auto; padding:20px 20px 110px}
+  body.resting .wrap{padding-bottom:300px} /* room to scroll past the open rest sheet */
   .num{font-family:var(--fnum); letter-spacing:.02em}
   .head{font-family:var(--fhead); text-transform:uppercase; letter-spacing:.03em}
   h1{font-family:var(--fhead); font-size:30px; text-transform:uppercase; letter-spacing:.02em; margin:4px 0 16px; line-height:1.1}
@@ -70,7 +71,7 @@
     border:2px solid var(--line); padding:15px 16px; margin-bottom:8px;
     font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim)}
   .receipt.done{background:var(--bone); border-color:var(--bone); color:var(--black)}
-  .receipt.done .st{color:var(--pine)}
+  .receipt.done .st{color:#7FBF9A}
   .receipt .st{font-size:12px; white-space:nowrap}
   .logrow{display:flex; height:68px; border-bottom:2px solid var(--line); margin-bottom:8px; background:transparent}
   .logrow .sn{flex:0 0 40px; display:flex; align-items:center; font-family:var(--fhead); font-size:17px; color:var(--dim)}
@@ -302,9 +303,10 @@ function render(){
   const exN=S.blocks.length, exI=Math.max(1,S.blocks.findIndex(b=>b.id===activeId)+1);
   const setsLeft=S.blocks.reduce((n,b)=>n+(L.blocks[b.id].skipped?0:btotal(b)-bdone(b,L.blocks[b.id])),0);
   const obq=outbox().length;
+  const [syncTxt,syncCls]=!cfg()?['LOCAL ONLY','q']:obq?['QUEUED','q']:['SYNCED','ok'];
   let h=connectBanner()+`<div class="whead">
     <span>SESSION ${snum} · EX ${exI}/${exN} · ${setsLeft} SET${setsLeft===1?'':'S'} LEFT</span>
-    <span><span id="whElapsed">${elapsedMin(L)}</span> · <span class="sync ${obq?'q':'ok'}">${obq?'QUEUED':'SYNCED'}</span></span></div>`;
+    <span><span id="whElapsed">${elapsedMin(L)}</span> · <span class="sync ${syncCls}">${syncTxt}</span></span></div>`;
   h+=`<div style="display:flex;justify-content:space-between;align-items:center"><h1 style="margin:0">${esc(S.phase.replace(/^Phase \d+ · /,''))}</h1>${unitBtn()}</div>`;
   if(S.formCue)h+=`<div class="coach" style="margin-top:12px"><div class="label" style="color:var(--ox)">Form focus</div><p>"${esc(S.formCue)}"</p></div>`;
   for(const b of S.blocks){
@@ -395,9 +397,9 @@ function requestsCard(){
 async function sendReq(){
   const t=$('mreq').value.trim();if(!t)return;
   const reqs=j('movereqs',[]);
-  const r={t,d:today(),synced:true};reqs.push(r);sv('movereqs',reqs);
-  await queuePost('movereq',{sessionId:'movement-request',log:{type:'movement-request',date:today(),request:t}});
+  reqs.push({t,d:today(),synced:false});sv('movereqs',reqs);
   render();
+  await queuePost('movereq',{sessionId:'movement-request',log:{type:'movement-request',date:today(),request:t}},{store:'movereqs',t});
 }
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
@@ -444,20 +446,28 @@ function logMeasure(bid){
 }
 /* ---------- OUTBOX (every write survives a dead zone; retried until 2xx) ---------- */
 function outbox(){return j('outbox',[])}
-function queuePost(kind,body){
+let obSeq=0;
+function queuePost(kind,body,mark){
   const ob=outbox();
   // one queued entry per session log — newer snapshot replaces older
   const eid=kind==='session'?'s:'+body.sessionId:kind+':'+Date.now()+':'+Math.random().toString(36).slice(2,7);
   const i=ob.findIndex(e=>e.id===eid);
-  const entry={id:eid,body,at:Date.now()};
+  const entry={id:eid,body,v:Date.now()+(++obSeq/1000),mark};
   if(i>=0)ob[i]=entry;else ob.push(entry);
   sv('outbox',ob);
   return flushOutbox();
 }
+function markSynced(mark){ // flip the local record's QUEUED tag only after the server said 2xx
+  if(!mark)return;
+  const list=j(mark.store,[]);
+  const it=list.find(x=>x.t===mark.t&&!x.synced);
+  if(it){it.synced=true;sv(mark.store,list);if((mark.store==='movereqs'&&view==='today')||(mark.store==='gearnotes'&&view==='gear'))route()}
+}
 let flushing=false;
-async function flushOutbox(){
+async function flushOutbox(depth=0){
   if(flushing)return;const c=cfg();if(!c)return;
   flushing=true;
+  const passStart=Date.now();
   const [endpoint,token]=c;
   try{
     for(const e of outbox()){
@@ -465,7 +475,9 @@ async function flushOutbox(){
         const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
           body:JSON.stringify(e.body)});
         if(!res.ok)continue;
-        sv('outbox',outbox().filter(x=>x.id!==e.id));
+        // remove ONLY the exact version we sent — if Finish replaced this entry mid-flight, the newer snapshot survives
+        sv('outbox',outbox().filter(x=>!(x.id===e.id&&x.v===e.v)));
+        markSynced(e.mark);
         if(e.body.sessionId&&e.body.log&&e.body.log.completed&&log[e.body.sessionId]){
           log[e.body.sessionId].synced=true;store.save(log);
           if(view==='today')route();
@@ -473,6 +485,8 @@ async function flushOutbox(){
       }catch(err){/* still offline — keep it queued */}
     }
   }finally{flushing=false}
+  // work that arrived during the pass gets one immediate follow-up flush
+  if(depth<1&&outbox().some(x=>x.v>=passStart))await flushOutbox(depth+1);
 }
 addEventListener('online',flushOutbox);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushOutbox()});
@@ -491,7 +505,7 @@ function skipBlock(bid){
   render();
 }
 let tEnd=0; // wall-clock deadline — survives iOS suspending the PWA mid-rest
-function startTimer(n){tTotal=n;tEnd=Date.now()+n*1000;const T=$('timer');T.classList.add('on');T.classList.remove('fin');tick();clearInterval(tint);tint=setInterval(tick,1000)}
+function startTimer(n){tTotal=n;tEnd=Date.now()+n*1000;const T=$('timer');T.classList.add('on');T.classList.remove('fin');document.body.classList.add('resting');tick();clearInterval(tint);tint=setInterval(tick,1000)}
 function bump30(){tEnd+=30000;tTotal+=30;$('timer').classList.remove('fin');tick()}
 function tick(){
   const sec=Math.round((tEnd-Date.now())/1000);
@@ -505,7 +519,7 @@ function tick(){
   $('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
   $('tdrain').style.width=(100*(1-sec/tTotal))+'%';
 }
-function stopTimer(){clearInterval(tint);$('timer').classList.remove('on')}
+function stopTimer(){clearInterval(tint);$('timer').classList.remove('on');document.body.classList.remove('resting')}
 function film(bid){$(`f_${bid}`).click()}
 function fileExt(f,fallback){
   const byType={'image/jpeg':'jpg','image/png':'png','image/heic':'heic','image/heif':'heif','image/webp':'webp','video/quicktime':'mov','video/mp4':'mp4'}[f.type];
@@ -584,11 +598,11 @@ const ZOO=[
 function zooHash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
 function animalSVG(name){
   const K='#191410',W='#F8F5EE',OX='#8C1B14',P='#31543F';
-  const TAN='#D8B384',BRN='#B08657',DK='#8A6A45',OAT='#E4C89A',GRY='#BDB6AA',PNK='#E8B2A6',CHOC='#6B4A2F';
+  const TAN='#CBA97E',BRN='#A67F54',DK='#82684A',OAT='#D6BE93',GRY='#B3AC9E',PNK='#D3A090',CHOC='#65472F';
   const S=`stroke="${K}" stroke-width="2.2" stroke-linejoin="round"`;
   const s1=`stroke="${K}" stroke-width="1.6" stroke-linejoin="round"`;
   const eye=(x,y)=>`<circle cx="${x}" cy="${y}" r="1.8" fill="${K}"/>`;
-  const blush=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.1" fill="${OX}" opacity=".32"/>`;
+  const blush=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.1" fill="${OX}" opacity=".22"/>`;
   const smile=(x,y)=>`<path d="M${x-2} ${y} q2 2.2 4 0" stroke="${K}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
   const face=(x,y,mouth)=>eye(x-4.8,y)+eye(x+4.8,y)+blush(x-8.2,y+5)+blush(x+8.2,y+5)+(mouth||smile(x,y+4.5));
   // hoofed muzzle
@@ -696,8 +710,8 @@ function animalSVG(name){
       blush(39.5,23.5)+blush(56.5,23.5)+smile(48,23));
     case 'sea turtles':return wrap(
       `<ellipse cx="29" cy="32" rx="20" ry="15" fill="${P}" ${S}/>`+
-      `<path d="M19 24 l7 4 l-2 8 l-8 1 z M34 21.5 l7 5 l-3 8 l-8 -3 z M24 38 l6 2 l-1.5 6 l-7 -1 z" fill="#4A7561" stroke="${K}" stroke-width="1.3" stroke-linejoin="round"/>`+
-      `<circle cx="54" cy="21" r="9.5" fill="#B9D2A9" ${S}/>`+
+      `<path d="M19 24 l7 4 l-2 8 l-8 1 z M34 21.5 l7 5 l-3 8 l-8 -3 z M24 38 l6 2 l-1.5 6 l-7 -1 z" fill="#43654F" stroke="${K}" stroke-width="1.3" stroke-linejoin="round"/>`+
+      `<circle cx="54" cy="21" r="9.5" fill="#A8BF97" ${S}/>`+
       eye(51,19.5)+eye(57.5,19.5)+blush(48.5,24.5)+blush(60,24.5)+smile(54,24.5)+
       `<path d="M13 44 q-5 6 1.5 7.5 M35 47 q0 7 6.5 6" stroke="${K}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`);
     case 'pigs':return wrap(
@@ -705,14 +719,14 @@ function animalSVG(name){
       body(PNK,19.5,12.5)+legs4(PNK)+
       `<path d="M39 10 l-2 -8.5 l8.5 4.5 M57 10 l2 -8.5 l-8.5 4.5" fill="${PNK}" ${S}/>`+
       head(PNK)+
-      `<ellipse cx="48" cy="22.5" rx="6" ry="4.4" fill="#DE9E8F" ${s1}/><circle cx="45.8" cy="22.5" r="1.15" fill="${K}"/><circle cx="50.2" cy="22.5" r="1.15" fill="${K}"/>`+
+      `<ellipse cx="48" cy="22.5" rx="6" ry="4.4" fill="#C98F7F" ${s1}/><circle cx="45.8" cy="22.5" r="1.15" fill="${K}"/><circle cx="50.2" cy="22.5" r="1.15" fill="${K}"/>`+
       eye(42.5,17)+eye(53.5,17)+blush(39.5,22.5)+blush(56.5,22.5));
     case 'ponies':return wrap(
       `<path d="M9 30 q-6 7 -2.5 14 q2.5 3.5 6 1" fill="${DK}" ${s1}/>`+
       body(TAN,19,11.5,30,36)+legs4(TAN)+
       `<path d="M41 9 l0 -8 l7 5 M57 9 l0 -8 l-7 5" fill="${TAN}" ${S}/>`+
       `<path d="M49 4 q-3.5 6 0 11 q3.5 -4.5 7 -4.5 q-2.5 -6.5 -7 -6.5" fill="${DK}" ${s1}/>`+
-      head(TAN,12.5)+eye(43.5,15.5)+eye(52.5,15.5)+blush(40,20.5)+blush(56,20.5)+muz(48,24.5,'#EAD9C2'));
+      head(TAN,12.5)+eye(43.5,15.5)+eye(52.5,15.5)+blush(40,20.5)+blush(56,20.5)+muz(48,24.5,'#DECDB0'));
     case 'grizzly bears':return wrap(
       `<circle cx="11" cy="33" r="4" fill="${BRN}" ${s1}/>`+
       body(BRN,20.5,13,30,37)+legs4(BRN)+earsRound(BRN,4.2)+head(BRN)+
@@ -737,26 +751,26 @@ function animalSVG(name){
       `<path d="M38 12 q-8 0 -8 -5.5 q4.5 -2.2 9 1.2 M58 12 q8 0 8 -5.5 q-4.5 -2.2 -9 1.2" fill="#D8CDBB" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`+
       head(W,12.5)+
       `<path d="M52 7 q5.5 -1 8 3.5 q-4.5 2.2 -9 -.6 z" fill="${K}" opacity=".85"/>`+
-      eye(43.5,15.5)+eye(52.5,15.5)+muz(48,24,'#EAC9C1'));
+      eye(43.5,15.5)+eye(52.5,15.5)+muz(48,24,'#DDBCAF'));
     case 'walruses':return wrap(
-      `<path d="M6 38 q0 -18 24 -18 q25 0 27 14 q1 11 -10 12 l-25 0 q-15 0 -16 -8 z" fill="#B08D7A" ${S}/>`+
+      `<path d="M6 38 q0 -18 24 -18 q25 0 27 14 q1 11 -10 12 l-25 0 q-15 0 -16 -8 z" fill="#A5876F" ${S}/>`+
       `<path d="M14 45 q-4 5 1 6 q4 1 5 -4 M40 46 q0 6 5.5 5.5 q4 -1 2 -5.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
       eye(41,27)+eye(51,27)+blush(36.5,32)+blush(56,32)+
-      `<ellipse cx="46" cy="34" rx="8.6" ry="5.2" fill="#C4A28E" ${s1}/>`+
+      `<ellipse cx="46" cy="34" rx="8.6" ry="5.2" fill="#B69B82" ${s1}/>`+
       `<circle cx="46" cy="32.4" r="1.5" fill="${K}"/>`+
       `<path d="M42.5 37.5 q-.5 5.5 -2 7 M49.5 37.5 q.5 5.5 2 7" stroke="${W}" stroke-width="3.2" stroke-linecap="round" fill="none"/>`+
       `<path d="M39 33 h-4.5 M39.5 35.5 h-4 M53 33 h4.5 M52.5 35.5 h4" stroke="${K}" stroke-width="1.1" stroke-linecap="round"/>`);
     case 'hippos':return wrap(
-      body('#AFA3B8',20.5,13,29,37)+
+      body('#A79DA9',20.5,13,29,37)+
       `<path d="M8.5 41 q-2 2 0 4" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
-      legs4('#AFA3B8')+earsRound('#AFA3B8',3.2)+head('#AFA3B8')+
+      legs4('#A79DA9')+earsRound('#A79DA9',3.2)+head('#A79DA9')+
       eye(43.5,16)+eye(52.5,16)+
-      `<ellipse cx="48" cy="24" rx="9" ry="5.8" fill="#C4BACB" ${s1}/><circle cx="44.5" cy="22.5" r="1.35" fill="${K}"/><circle cx="51.5" cy="22.5" r="1.35" fill="${K}"/><path d="M44.5 27 v1.7 M51.5 27 v1.7" stroke="${K}" stroke-width="1.5" stroke-linecap="round"/>`+
+      `<ellipse cx="48" cy="24" rx="9" ry="5.8" fill="#B7AEB9" ${s1}/><circle cx="44.5" cy="22.5" r="1.35" fill="${K}"/><circle cx="51.5" cy="22.5" r="1.35" fill="${K}"/><path d="M44.5 27 v1.7 M51.5 27 v1.7" stroke="${K}" stroke-width="1.5" stroke-linecap="round"/>`+
       blush(38.5,21.5)+blush(57.5,21.5));
     case 'elephants':return wrap(
       `<path d="M9 36 q-3 4 0 6 l2 -1" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
       body(GRY,20,13,29,36)+legs4(GRY)+
-      `<path d="M40 8 q-14 -3 -16 9 q-1.5 10 8 11 q-1 -11 8 -14 z" fill="#A8A195" ${S}/>`+
+      `<path d="M40 8 q-14 -3 -16 9 q-1.5 10 8 11 q-1 -11 8 -14 z" fill="#9E978B" ${S}/>`+
       head(GRY,13,49,19)+
       eye(45,16)+eye(53.5,16)+blush(41.5,21.5)+blush(58,21.5)+
       `<path d="M49 24 q1 8 -3 12 q-2.5 2.5 -5 1" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>`+
@@ -773,19 +787,20 @@ function zooStamp(vol,seed){
   if(!cands.length)cands=[vol<ZOO[0][1]*2?ZOO[0]:ZOO[ZOO.length-1]];
   const [name,w]=cands[h%cands.length];
   const count=Math.max(1,Math.round(vol/w));
-  const shown=Math.min(count,36);
+  const shown=Math.min(count,14); // a stamp, not a stampede — overflow becomes the x-N mark
   const rng=zooRng(h);
-  const H=Math.max(120,60+Math.ceil(shown/5)*44); // field grows with the herd
+  const H=Math.max(110,50+Math.ceil(shown/5)*46);
   let herd='';
   for(let i=0;i<shown;i++){
-    const sz=44+rng()*26, x=rng()*82, y=rng()*(H-sz*0.8), rot=(rng()*24-12).toFixed(1), flip=rng()<0.5;
+    const sz=42+rng()*22, x=rng()*80, y=rng()*(H-sz*0.75), rot=(rng()*20-10).toFixed(1), flip=rng()<0.5;
     herd+=`<span style="position:absolute;left:${x.toFixed(1)}%;top:${y.toFixed(1)}px;width:${sz.toFixed(0)}px;transform:rotate(${rot}deg)${flip?' scaleX(-1)':''}">${animalSVG(name)}</span>`;
   }
   return `<hr class="dotted" style="margin:14px 0 10px">
     <div class="label">TOTAL IRON MOVED</div>
     <div style="display:flex;align-items:baseline;justify-content:center;gap:8px"><span class="num" style="font-size:44px;color:var(--ox)">${count}</span><span class="head" style="font-size:16px">${esc(name.toUpperCase())}</span></div>
-    <div style="position:relative;height:${H}px;margin:10px 0 4px;overflow:hidden">${herd}</div>
-    ${count>shown?`<div class="label" style="font-size:12px">+ ${count-shown} more ${esc(name)}</div>`:''}
+    <div style="position:relative;height:${H}px;margin:10px 0 4px;overflow:hidden">${herd}
+      ${count>shown?`<span class="num" style="position:absolute;right:2%;bottom:4px;font-size:34px;color:var(--ox);transform:rotate(-6deg)">× ${count}</span>`:''}
+    </div>
     <div class="label" style="font-size:12px;margin-top:2px">${both(vol)} — that's ~${count} ${esc(name)}</div>`;
 }
 function exportLog(){
@@ -983,9 +998,9 @@ async function gotGear(input){
 async function gearNote(){
   const t=$('gnote').value.trim();if(!t)return;
   const notes=j('gearnotes',[]);
-  notes.push({t,d:today(),synced:true});sv('gearnotes',notes);
-  await queuePost('gearnote',{sessionId:'gear-note',log:{type:'gear-note',date:today(),note:t}});
+  notes.push({t,d:today(),synced:false});sv('gearnotes',notes);
   renderGear();
+  await queuePost('gearnote',{sessionId:'gear-note',log:{type:'gear-note',date:today(),note:t}},{store:'gearnotes',t});
 }
 
 /* ---------- FUEL ---------- */
