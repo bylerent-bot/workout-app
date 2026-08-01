@@ -1,2 +1,8 @@
 worker/node_modules/
 .wrangler/
+
+# private — never in the public repo
+_STATE — resume here.md
+*_prompt.md
+sync_agent.sh
+check_new.sh
