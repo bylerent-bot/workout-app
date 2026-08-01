@@ -1,4 +1,4 @@
-const CACHE = 'train-v27';
+const CACHE = 'train-v28';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.png',
   'data/sessions.json', 'data/equipment.json'];
 self.addEventListener('install', e => {
