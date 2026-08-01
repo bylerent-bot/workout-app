@@ -48,8 +48,8 @@
   button:focus-visible,a:focus-visible{outline:2px solid var(--ox); outline-offset:2px}
   .btn+.btn{margin-top:12px}
   /* sealed ticket */
-  .sealwrap{text-align:center; padding:26px 0}
-  .seal{border:4px solid var(--line); padding:36px 18px; position:relative; margin:18px 0}
+  .sealwrap{text-align:center; padding:12px 0}
+  .seal{border:4px solid var(--line); padding:24px 18px; position:relative; margin:18px 0}
   .seal::before,.seal::after{content:''; position:absolute; width:18px; height:18px; background:var(--black);
     border:4px solid var(--line); border-radius:50%; top:50%; transform:translateY(-50%)}
   .seal::before{left:-13px} .seal::after{right:-13px}
@@ -59,23 +59,33 @@
   .coach{border-left:4px solid var(--ox); background:rgba(140,27,20,.07); padding:12px 16px; margin:0 0 20px}
   .coach .label{margin-bottom:4px}
   .coach p{margin:0; font-style:italic; color:var(--dim); font-size:14px}
-  /* exercise blocks */
-  .block .exname{font-family:var(--fhead); font-size:19px; text-transform:uppercase; color:var(--bone); margin:0 0 4px}
-  .block .rx{margin-bottom:14px}
-  .logrow{display:flex; height:60px; border-bottom:2px solid var(--line); margin-bottom:8px; background:transparent}
-  .logrow .sn{flex:0 0 44px; display:flex; align-items:center; font-family:var(--fhead); font-size:17px; color:var(--dim)}
+  /* exercise blocks — workout mode: one dominant card, the rest collapse to receipt lines */
+  .block .exname{font-family:var(--fhead); font-weight:700; font-size:21px; text-transform:uppercase; color:var(--bone); margin:0 0 4px}
+  .block .rx{font:14px/1.45 var(--fbody); color:var(--dim); text-transform:none; letter-spacing:0; margin-bottom:14px}
+  .whead{position:sticky; top:0; z-index:15; background:var(--black); border-bottom:2px solid var(--bone);
+    display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:12px 0; margin:-20px 0 14px;
+    font-family:var(--fhead); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+  .whead .sync.ok{color:var(--pine)} .whead .sync.q{color:var(--ox)}
+  .receipt{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left;
+    border:2px solid var(--line); padding:15px 16px; margin-bottom:8px;
+    font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim)}
+  .receipt.done{background:var(--bone); border-color:var(--bone); color:var(--black)}
+  .receipt.done .st{color:var(--pine)}
+  .receipt .st{font-size:12px; white-space:nowrap}
+  .logrow{display:flex; height:68px; border-bottom:2px solid var(--line); margin-bottom:8px; background:transparent}
+  .logrow .sn{flex:0 0 40px; display:flex; align-items:center; font-family:var(--fhead); font-size:17px; color:var(--dim)}
   .logrow .grp{flex:1; display:flex; border-left:2px solid var(--line); border-right:2px solid var(--line)}
   .logrow .box{flex:1; position:relative; display:flex; flex-direction:column; justify-content:center}
   .logrow .box+.box{border-left:2px solid var(--line)}
-  .logrow .box span{position:absolute; bottom:3px; left:0; width:100%; text-align:center;
-    font-family:var(--fhead); font-size:10px; letter-spacing:.1em; color:var(--dim)}
+  .logrow .box span{position:absolute; bottom:4px; left:0; width:100%; text-align:center;
+    font-family:var(--fhead); font-size:11px; letter-spacing:.1em; color:var(--dim)}
   .logrow input{background:transparent; border:none; outline:none; color:var(--bone); width:100%;
-    font-family:var(--fhead); font-size:22px; text-align:center; padding-bottom:8px}
-  .logrow .go{flex:0 0 76px; font-family:var(--fhead); font-size:16px; letter-spacing:.06em; text-transform:uppercase}
+    font-family:var(--fhead); font-size:26px; text-align:center; padding-bottom:10px}
+  .logrow .go{flex:0 0 64px; font-family:var(--fhead); font-size:24px; border-left:2px solid var(--ox); color:var(--ox)}
   .logrow.done{background:var(--bone); height:44px}
   .logrow.done .sn,.logrow.done .box span{color:var(--black)}
   .logrow.done input{color:var(--black); font-size:18px; padding-bottom:10px}
-  .logrow.done .go{color:var(--black); font-weight:700; border-left:2px solid var(--black)}
+  .logrow.done .go{color:#7FBF9A; font-weight:700; border-left:2px solid var(--black); font-size:18px}
   .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-size:14px;
     text-transform:uppercase; letter-spacing:.06em; color:#F1ECE1; background:var(--ox); border:2px solid var(--ox); padding:13px 16px; margin-top:12px}
   .filmbadge .dot{width:10px; height:10px; background:#F1ECE1; border-radius:50%}
@@ -87,15 +97,25 @@
   .scales button.sel{background:var(--ox); color:#F1ECE1; border-color:var(--ox)}
   textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--ctrl);
     color:var(--bone); font:16px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
-  /* rest timer */
+  /* rest timer — a deliberate bottom sheet, not a sliver */
   .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom)); background:var(--black);
-    border-top:2px solid var(--ox); padding:10px 20px; display:none; align-items:center; justify-content:space-between; z-index:10; overflow:hidden}
+    border-top:2px solid var(--ox); padding:16px 20px 18px; display:none; align-items:center; justify-content:space-between; gap:12px; z-index:10; overflow:hidden}
   .timer.on{display:flex}
+  .timer.fin{background:var(--pine); border-top-color:var(--pine)}
+  .timer.fin .t,.timer.fin .label{color:#F1ECE1}
+  .timer.fin .drain{display:none}
   .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(140,27,20,.18); transition:width 1s linear; pointer-events:none}
-  .timer .t{font-family:var(--fnum); font-size:40px}
-  .timer .stop{border:2px solid var(--ctrl); color:var(--dim); padding:12px 16px; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.08em}
+  .timer .t{font-family:var(--fnum); font-size:64px; line-height:1}
+  .timer .tbtn{border:2px solid var(--ctrl); color:var(--dim); padding:14px 16px; font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.08em; position:relative; z-index:1}
   /* review */
   .fb{border-left:2px solid var(--dim); padding-left:14px; margin-top:12px; font-size:14px; color:var(--dim); white-space:pre-wrap}
+  .fbsec{margin-top:12px; border-left:3px solid var(--ox); padding-left:12px}
+  .fbsec.keep{border-left-color:var(--pine)}
+  .fbsec b{display:block; font-family:var(--fhead); font-size:12px; letter-spacing:.12em; color:var(--ox); margin-bottom:4px}
+  .fbsec.keep b{color:var(--pine)}
+  .fbsec p{margin:0; font-size:14px; color:var(--bone); white-space:pre-wrap}
+  .zoo{display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin:14px 0 4px}
+  .zoo svg{width:42px; height:42px}
   .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--ox); margin-top:12px}
   video{width:100%; margin-top:10px; background:#000; border:2px solid var(--line)}
   /* progress */
@@ -105,7 +125,7 @@
   .lb-row{display:flex; align-items:baseline; margin-bottom:12px; font-family:var(--fhead); font-size:17px; text-transform:uppercase}
   .lb-dots{flex:1; border-bottom:2px dotted var(--line); margin:0 8px; position:relative; top:-4px}
   .lb-val{font-family:var(--fnum); font-size:22px; color:var(--ox)}
-  .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px}
+  .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px dotted var(--line2); font-size:14px}
   /* fuel */
   .track{width:100%; height:14px; background:var(--line); margin:14px 0 8px}
   .track i{display:block; height:100%; background:var(--ox); transition:width .3s}
@@ -115,13 +135,14 @@
   .chips button{flex:0 0 auto; border:2px solid var(--ctrl); padding:12px 18px;
     font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em}
   .chips button:active{background:var(--bone); color:var(--black)}
-  .mealrow{display:flex; justify-content:space-between; gap:8px; border-bottom:1px solid var(--line); padding:12px 0;
+  .mealrow{display:flex; justify-content:space-between; gap:8px; border-bottom:1px dotted var(--line2); padding:12px 0;
     font-family:var(--fhead); font-size:14px; text-transform:uppercase; color:var(--dim)}
   .mealrow .g{color:var(--bone); font-family:var(--fnum); font-size:16px; white-space:nowrap}
   /* tab bar */
   .tabbar{position:fixed; left:0; right:0; bottom:0; height:calc(72px + env(safe-area-inset-bottom)); display:flex;
     background:var(--black); border-top:2px solid var(--line); padding-bottom:env(safe-area-inset-bottom); z-index:20}
   .tabbar button{flex:1; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); position:relative}
+  .tabbar button.main{flex:1.4; font-size:16px; font-weight:700; color:var(--bone)}
   .tabbar button.sel{color:var(--ox)}
   .tabbar button.sel::after{content:''; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--ox)}
   .warn{color:var(--ox); font-size:13px; margin-top:8px}
@@ -134,9 +155,11 @@
 <div class="wrap" id="app"></div>
 <div class="timer" id="timer">
   <div class="drain" id="tdrain"></div>
-  <div class="label lit">Rest</div>
-  <div class="t" id="tval">0:00</div>
-  <button class="stop" onclick="stopTimer()">Done</button>
+  <div style="position:relative;z-index:1"><div class="label lit">Rest</div><div class="t" id="tval">0:00</div></div>
+  <div style="display:flex;gap:10px;position:relative;z-index:1">
+    <button class="tbtn" onclick="bump30()">+30</button>
+    <button class="tbtn" onclick="stopTimer()">Skip</button>
+  </div>
 </div>
 <div class="tabbar" id="tabbar"></div>
 <script>
@@ -174,8 +197,8 @@ async function init(){
   route();
 }
 function tabbar(){
-  const t=[['today','Today'],['review','Review'],['progress','Progress'],['fuel','Fuel'],['gear','Gear']];
-  $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
+  const t=[['review','Review'],['progress','Progress'],['today','Train'],['fuel','Fuel'],['gear','Gear']];
+  $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${v==='today'?'main ':''}${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
 }
 function route(){tabbar();({today:render,review:renderReview,progress:renderProgress,fuel:renderFuel,gear:renderGear})[view]()}
 
@@ -183,7 +206,7 @@ function route(){tabbar();({today:render,review:renderReview,progress:renderProg
 const KG2LB=2.20462;
 function unit(){return localStorage.getItem('unit')||'lb'}
 function toggleUnit(){localStorage.setItem('unit',unit()==='lb'?'kg':'lb');route()}
-function unitBtn(){return `<button class="skip" style="text-decoration:none;border:2px solid var(--ctrl);padding:12px 14px;font-family:var(--fhead);letter-spacing:.08em" onclick="toggleUnit()">UNITS: ${unit().toUpperCase()} ⇄</button>`}
+function unitBtn(){return `<button class="skip" style="text-decoration:none;border:2px solid var(--ctrl);padding:12px 14px;font-family:var(--fhead);letter-spacing:.08em" onclick="toggleUnit()">UNITS: ${unit().toUpperCase()}</button>`}
 function setLbs(st){const w=parseFloat(st&&st.w);if(!w)return 0;return (st.u==='kg')?w*KG2LB:w}
 function both(lbs){if(!lbs)return '—';const kg=lbs/KG2LB;
   return unit()==='kg'?`${Math.round(kg*10)/10} KG · ${Math.round(lbs)} LB`:`${Math.round(lbs)} LB · ${Math.round(kg*10)/10} KG`}
@@ -269,12 +292,31 @@ function render(){
     return;
   }
   const snum=String(idx+1).padStart(3,'0');
-  let h=connectBanner()+fuelStrip()+`<div style="display:flex;justify-content:space-between;align-items:center"><div class="label">Session ${snum} · ${esc(S.place.toUpperCase())}</div>${unitBtn()}</div><h1>${esc(S.phase.replace(/^Phase \d+ · /,''))}</h1>`;
-  if(S.formCue)h+=`<div class="coach"><div class="label" style="color:var(--ox)">Form focus</div><p>"${esc(S.formCue)}"</p></div>`;
+  // ---- workout mode: one dominant exercise, everything else collapses to receipt lines ----
+  const btotal=b=>(b.type==='timed'||b.type==='measure')?1:b.sets;
+  const bdone=(b,bl)=>(b.type==='timed'||b.type==='measure')?((bl.sets[0]&&bl.sets[0].done)?1:0):bl.sets.filter(s=>s&&s.done).length;
+  const bfin=(b,bl)=>bl.skipped||bdone(b,bl)>=btotal(b);
+  for(const b of S.blocks)L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
+  const firstOpen=S.blocks.find(b=>!bfin(b,L.blocks[b.id]));
+  const activeId=(EXP&&S.blocks.some(b=>b.id===EXP))?EXP:(firstOpen&&firstOpen.id);
+  const exN=S.blocks.length, exI=Math.max(1,S.blocks.findIndex(b=>b.id===activeId)+1);
+  const setsLeft=S.blocks.reduce((n,b)=>n+(L.blocks[b.id].skipped?0:btotal(b)-bdone(b,L.blocks[b.id])),0);
+  const obq=outbox().length;
+  let h=connectBanner()+`<div class="whead">
+    <span>SESSION ${snum} · EX ${exI}/${exN} · ${setsLeft} SET${setsLeft===1?'':'S'} LEFT</span>
+    <span><span id="whElapsed">${elapsedMin(L)}</span> · <span class="sync ${obq?'q':'ok'}">${obq?'QUEUED':'SYNCED'}</span></span></div>`;
+  h+=`<div style="display:flex;justify-content:space-between;align-items:center"><h1 style="margin:0">${esc(S.phase.replace(/^Phase \d+ · /,''))}</h1>${unitBtn()}</div>`;
+  if(S.formCue)h+=`<div class="coach" style="margin-top:12px"><div class="label" style="color:var(--ox)">Form focus</div><p>"${esc(S.formCue)}"</p></div>`;
   for(const b of S.blocks){
-    const bl=L.blocks[b.id]||(L.blocks[b.id]={sets:[],skipped:false});
+    const bl=L.blocks[b.id];
+    const fin=bfin(b,bl), active=b.id===activeId;
+    if(!active){ // collapsed receipt line — tap to expand
+      const st=bl.skipped?'SKIPPED':fin?(b.type==='timed'?(bl.sets[0].time||'DONE')+' ✓':`${bdone(b,bl)}/${btotal(b)} ✓`):`${btotal(b)} SET${btotal(b)===1?'':'S'}`;
+      h+=`<button class="receipt ${fin&&!bl.skipped?'done':''}" onclick="EXP='${b.id}';render()"><span>${esc(b.name)}</span><span class="st">${esc(st)}</span></button>`;
+      continue;
+    }
     h+=`<div class="card block">${howto(b)}<div class="exname">${esc(b.name)}</div>
-      <div class="label rx">${esc(b.detail)}</div>`;
+      <div class="rx">${esc(b.detail)}</div>`;
     if(bl.skipped){h+=`<div class="warn">Skipped — coach sees it and reprograms.</div></div>`;continue}
     if(b.type==='timed'){
       const d=bl.sets[0]||{};
@@ -282,7 +324,7 @@ function render(){
       h+=`<div class="logrow ${d.done?'done':''}">
         <div class="sn">1</div>
         <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="numeric" placeholder="${M[0]}" value="${esc(DRAFTS[`t_${b.id}`]??d.time??'')}" oninput="${(b.metric||'min')==='min'?'timeIn(this)':'draft(this)'}"><span>${M[1]}</span></div></div>
-        <button class="go" onclick="logTimed('${b.id}')">${d.done?'DONE':'LOG'}</button></div>`;
+        <button class="go" onclick="logTimed('${b.id}')">${d.done?'✓':'LOG'}</button></div>`;
     }else if(b.type==='measure'){
       const d=bl.sets[0]||{};
       h+=(b.measures||[]).map(m=>`<div class="logrow">
@@ -290,7 +332,6 @@ function render(){
         <div class="grp"><div class="box"><input id="m_${b.id}_${m.id}" inputmode="decimal" placeholder="—" value="${esc(DRAFTS[`m_${b.id}_${m.id}`]??d[m.id]??'')}" oninput="draft(this)"><span>${esc(m.unit||'')}</span></div></div></div>`).join('')+
         `<button class="go head" style="border:2px solid var(--ctrl);padding:12px 18px;margin-top:6px" onclick="logMeasure('${b.id}')">${d.done?'SAVED ✓':'SAVE MEASUREMENTS'}</button>`;
     }else if(b.type==='work'){
-      // carries, sleds, walks — done work, not reps. One weight box per round; LOG marks the round.
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
         const prevSet=i>0?bl.sets[i-1]:null;
@@ -299,12 +340,11 @@ function render(){
         h+=`<div class="logrow ${d.done?'done':''}">
           <div class="sn">${i+1}</div>
           <div class="grp"><div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${esc(shown)}" oninput="draft(this)"><span>${esc((d.u||unit()).toUpperCase())} · OPTIONAL</span></div></div>
-          <button class="go" onclick="logWork('${b.id}',${i})">${d.done?'DONE':'LOG'}</button></div>`;
+          <button class="go" onclick="logWork('${b.id}',${i})">${d.done?'✓':'LOG'}</button></div>`;
       }
     }else{
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
-        // prefill priority: draft typed but not logged > this set's logged value > previous set's weight > Rx target
         const prevSet=i>0?bl.sets[i-1]:null;
         const prevW=(prevSet&&prevSet.done&&(!prevSet.u||prevSet.u===unit()))?prevSet.w:null;
         const shown=DRAFTS[`w_${b.id}_${i}`]??d.w??((d.u&&d.u!==unit())?'':(prevW??targetIn(b.targetWeight)));
@@ -315,14 +355,14 @@ function render(){
             <div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${esc(shown)}" oninput="draft(this)"><span>${esc((d.u||unit()).toUpperCase())}</span></div>
             <div class="box"><input id="r_${b.id}_${i}" inputmode="numeric" placeholder="—" value="${esc(shownR)}" oninput="draft(this)"><span>REPS</span></div>
           </div>
-          <button class="go" onclick="logSet('${b.id}',${i})">${d.done?'DONE':'LOG'}</button></div>`;
+          <button class="go" onclick="logSet('${b.id}',${i})">${d.done?'✓':'LOG'}</button></div>`;
       }
     }
     {
       const ups=bl.uploads||[];
       const busy=bl.uploading;
       const rx=!!b.film;
-      h+=`<button class="filmbadge" style="${rx?'':'background:none;border-color:var(--ctrl);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':'◉ '}${busy?'UPLOADING…':ups.length?`ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
+      h+=`<button class="filmbadge" style="${rx?'':'background:none;border-color:var(--ctrl);color:var(--dim)'}" onclick="film('${b.id}')">${rx?'<span class="dot"></span>':''}${busy?'UPLOADING…':ups.length?`FILM — ADD ANOTHER (${ups.length} IN)`:rx?'FILM THIS SET':'FILM / PHOTO'}</button>
         <input type="file" id="f_${b.id}" accept="video/*,image/*" style="display:none" onchange="gotClip('${b.id}',this)">`;
       if(ups.length&&!busy)h+=`<div class="good">${ups.length} in — coach review lands in ~3 min (Review tab).</div>`;
       if(bl.uploadError)h+=`<div class="warn">Last upload failed — NOT saved. Shoot with the Camera app, attach here after.</div>`;
@@ -337,6 +377,12 @@ function render(){
     <button class="btn primary" style="margin-top:16px" onclick="finish()">Finish session</button></div>`;
   app.innerHTML=h+requestsCard();
 }
+let EXP=null; // user-expanded block override (cleared on every log action)
+function elapsedMin(L){
+  if(!L.revealedAt)return '0 MIN';
+  return Math.max(0,Math.round((Date.now()-new Date(L.revealedAt))/60000))+' MIN';
+}
+setInterval(()=>{const el=$('whElapsed');if(el&&S&&log[S.id]&&log[S.id].revealed&&!log[S.id].completed)el.textContent=elapsedMin(log[S.id])},30000);
 function requestsCard(){
   const reqs=j('movereqs',[]);
   return `<div class="card" style="border-style:dotted;background:transparent">
@@ -364,14 +410,14 @@ function logSet(bid,i){
   if(!r){$(`r_${bid}_${i}`).focus();return} // no reps = not a set; weight may be blank (bodyweight moves)
   bl.sets[i]={w:$(`w_${bid}_${i}`).value.trim(),u:unit(),r,done:true,at:new Date().toISOString()};
   delete DRAFTS[`w_${bid}_${i}`];delete DRAFTS[`r_${bid}_${i}`];
-  store.save(log);autoSync();startTimer(90);render();
+  EXP=null;store.save(log);autoSync();startTimer(90);render();
 }
 function logWork(bid,i){
   const b=S.blocks.find(x=>x.id===bid);
   const bl=log[S.id].blocks[bid];
   bl.sets[i]={w:$(`w_${bid}_${i}`).value.trim(),u:unit(),done:true,at:new Date().toISOString()};
   delete DRAFTS[`w_${bid}_${i}`];
-  store.save(log);autoSync();startTimer((b&&b.rest)||60);render();
+  EXP=null;store.save(log);autoSync();startTimer((b&&b.rest)||60);render();
 }
 // time entry: digits only, first two = minutes — typing 0834 renders 08:34 live
 function maskTime(v){
@@ -387,14 +433,14 @@ function logTimed(bid){
   if(((b&&b.metric)||'min')==='min')t=maskTime(t);
   bl.sets[0]={time:t,metric:(b&&b.metric)||'min',done:true,at:new Date().toISOString()};
   delete DRAFTS[`t_${bid}`];
-  store.save(log);autoSync();render();
+  EXP=null;store.save(log);autoSync();render();
 }
 function logMeasure(bid){
   const b=S.blocks.find(x=>x.id===bid);
   const d={done:true,at:new Date().toISOString()};
   for(const m of (b.measures||[]))d[m.id]=$(`m_${bid}_${m.id}`).value;
   log[S.id].blocks[bid].sets[0]=d;
-  store.save(log);autoSync();render();
+  EXP=null;store.save(log);autoSync();render();
 }
 /* ---------- OUTBOX (every write survives a dead zone; retried until 2xx) ---------- */
 function outbox(){return j('outbox',[])}
@@ -445,10 +491,17 @@ function skipBlock(bid){
   render();
 }
 let tEnd=0; // wall-clock deadline — survives iOS suspending the PWA mid-rest
-function startTimer(n){tTotal=n;tEnd=Date.now()+n*1000;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
+function startTimer(n){tTotal=n;tEnd=Date.now()+n*1000;const T=$('timer');T.classList.add('on');T.classList.remove('fin');tick();clearInterval(tint);tint=setInterval(tick,1000)}
+function bump30(){tEnd+=30000;tTotal+=30;$('timer').classList.remove('fin');tick()}
 function tick(){
   const sec=Math.round((tEnd-Date.now())/1000);
-  if(sec<0){if(navigator.vibrate)navigator.vibrate(200);return stopTimer()}
+  if(sec<=0){ // time — flip the sheet pine, buzz, then clear
+    clearInterval(tint);
+    $('tval').textContent='0:00';$('timer').classList.add('fin');
+    if(navigator.vibrate)navigator.vibrate([180,80,180]);
+    setTimeout(()=>{$('timer').classList.remove('fin');stopTimer()},1800);
+    return;
+  }
   $('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
   $('tdrain').style.width=(100*(1-sec/tTotal))+'%';
 }
@@ -506,12 +559,13 @@ function sessionStats(L){
 function renderDone(){
   const L=log[S.id];
   const {vol,dur}=sessionStats(L);
-  $('app').innerHTML=`<div class="sealwrap">
+  $('app').innerHTML=fuelStrip()+`<div class="sealwrap">
     <div class="poster num">DONE</div>
     <hr class="rule">
     ${dur?`<div style="display:flex;justify-content:space-between" class="label lit"><span>DURATION</span><span class="num" style="font-size:18px">${dur} MIN</span></div><hr class="dotted" style="margin:10px 0">`:''}
     ${vol?`<div style="display:flex;justify-content:space-between" class="label lit"><span>VOLUME</span><span class="num" style="font-size:18px">${both(vol)}</span></div><hr class="rule">`:''}
     <div class="label lit" style="margin-top:8px">RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div>
+    ${zooStamp(vol,S.id+(L.completedAt||''))}
     <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — queued, retries automatically when you have signal. Export below if you want it out now.'}</div>
     ${L.synced?'':'<button class="btn small" style="margin-top:12px" onclick="flushOutbox().then(()=>renderDone())">Retry sync now</button>'}
     <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button>
@@ -519,6 +573,46 @@ function renderDone(){
 }
 async function sync(){
   await queuePost('session',{type:'session-log',sessionId:S.id,log:log[S.id]});
+}
+/* ---------- THE ZOO — total volume, measured in cute animals ---------- */
+const ZOO=[
+  ['squirrels',1.5],['rabbits',4],['housecats',10],['cockapoos',20],['beavers',50],
+  ['goats',130],['pandas',250],['sea turtles',300],['ponies',600],['moose',1200],['cows',1400],['hippos',3300]
+];
+function zooHash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
+function animalSVG(name){
+  const W='#F8F5EE',K='#191410',OX='#8C1B14',P='#31543F';
+  const face=(fill,extra)=>`<svg viewBox="0 0 48 48" fill="none">${extra.back||''}<circle cx="24" cy="26" r="15" fill="${fill}" stroke="${K}" stroke-width="2"/>${extra.mid||''}<circle cx="18" cy="24" r="1.8" fill="${K}"/><circle cx="30" cy="24" r="1.8" fill="${K}"/><circle cx="15" cy="29" r="2.2" fill="${OX}" opacity=".35"/><circle cx="33" cy="29" r="2.2" fill="${OX}" opacity=".35"/>${extra.mouth||`<path d="M22 30 q2 2 4 0" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`}${extra.front||''}</svg>`;
+  switch(name){
+    case 'squirrels':return face('#D8B384',{back:`<path d="M35 34 q11 0 10 -13 q-1 -11 -11 -12 q6 6 3 14" fill="#B08657" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>`,mid:`<circle cx="15" cy="13" r="3.6" fill="#D8B384" stroke="${K}" stroke-width="1.8"/><circle cx="33" cy="13" r="3.6" fill="#D8B384" stroke="${K}" stroke-width="1.8"/>`,mouth:`<path d="M22 30 q2 2 4 0" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/><path d="M22.6 31 h2.8 v2.6 h-2.8 z" fill="${W}" stroke="${K}" stroke-width="1.2"/>`});
+    case 'rabbits':return face(W,{back:`<path d="M17 14 q-3 -13 3 -13 q4 0 3 12 M31 14 q3 -13 -3 -13 q-4 0 -3 12" fill="${W}" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>`,mouth:`<path d="M24 28 v3 M22 33 q2 2 4 0 M24 28 l-2 -1.5 M24 28 l2 -1.5" stroke="${K}" stroke-width="1.4" stroke-linecap="round"/>`});
+    case 'housecats':return face(W,{back:`<path d="M13 18 l-1 -9 l8 5 M35 18 l1 -9 l-8 5" fill="${W}" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>`,front:`<path d="M10 27 h-6 M10 30 h-5 M38 27 h6 M38 30 h5" stroke="${K}" stroke-width="1.2" stroke-linecap="round"/>`});
+    case 'cockapoos':return face('#E4C89A',{back:`<path d="M12 20 q-6 2 -5 12 q1 7 6 5 M36 20 q6 2 5 12 q-1 7 -6 5" fill="#C89B6B" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>`,mid:`<path d="M15 15 q3 -6 9 -5 q7 -1 9 5 q-4 -2 -9 -1 q-5 -1 -9 1" fill="#C89B6B" stroke="${K}" stroke-width="2" stroke-linejoin="round"/>`,mouth:`<circle cx="24" cy="28" r="1.6" fill="${K}"/><path d="M24 30 q0 3 3 3" stroke="${K}" stroke-width="1.4" stroke-linecap="round"/><path d="M26 32 q1 4 -1 4 q-2 0 -1 -3" fill="${OX}" opacity=".8"/>`});
+    case 'beavers':return face('#C89B6B',{back:`<ellipse cx="24" cy="44" rx="8" ry="4" fill="#8A6A45" stroke="${K}" stroke-width="1.6"/>`,mid:`<circle cx="15" cy="14" r="3.4" fill="#C89B6B" stroke="${K}" stroke-width="1.8"/><circle cx="33" cy="14" r="3.4" fill="#C89B6B" stroke="${K}" stroke-width="1.8"/>`,mouth:`<path d="M21 29 h6 v4 h-6 z" fill="${W}" stroke="${K}" stroke-width="1.4"/><path d="M24 29 v4" stroke="${K}" stroke-width="1.2"/>`});
+    case 'goats':return face(W,{back:`<path d="M17 13 q-2 -9 -7 -9 q0 7 4 10 M31 13 q2 -9 7 -9 q0 7 -4 10" fill="#D8CDBB" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><path d="M11 21 q-6 0 -6 5 q4 2 8 -2 M37 21 q6 0 6 5 q-4 2 -8 -2" fill="${W}" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`,mouth:`<path d="M22 30 q2 2 4 0" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/><path d="M24 40.5 q-1.6 3.5 0 5.5 q1.6 -2 0 -5.5" fill="#D8CDBB" stroke="${K}" stroke-width="1.4" stroke-linejoin="round"/>`});
+    case 'pandas':return face(W,{mid:`<circle cx="13" cy="13" r="4.5" fill="${K}"/><circle cx="35" cy="13" r="4.5" fill="${K}"/><ellipse cx="18" cy="24" rx="3.6" ry="4.4" fill="${K}"/><ellipse cx="30" cy="24" rx="3.6" ry="4.4" fill="${K}"/><circle cx="18" cy="24" r="1.4" fill="${W}"/><circle cx="30" cy="24" r="1.4" fill="${W}"/>`});
+    case 'sea turtles':return `<svg viewBox="0 0 48 48" fill="none"><ellipse cx="21" cy="26" rx="14" ry="11" fill="${P}" stroke="#191410" stroke-width="2"/><path d="M14 20 l5 3 l-1 6 l-6 1 z M25 18 l5 4 l-2 6 l-6 -2 z" fill="#4A7561" stroke="#191410" stroke-width="1.2" stroke-linejoin="round"/><circle cx="39" cy="20" r="6" fill="#B9D2A9" stroke="#191410" stroke-width="2"/><circle cx="41" cy="19" r="1.6" fill="#191410"/><circle cx="37.5" cy="23" r="1.8" fill="#8C1B14" opacity=".35"/><path d="M40 24 q2 1.5 4 0" stroke="#191410" stroke-width="1.4" stroke-linecap="round"/><path d="M10 34 q-3 4 1 5 M26 36 q0 5 4 4" stroke="#191410" stroke-width="2" stroke-linecap="round" fill="none"/></svg>`;
+    case 'ponies':return face('#D8B384',{back:`<path d="M15 15 l0 -8 l6 5 M33 15 l0 -8 l-6 5" fill="#D8B384" stroke="${K}" stroke-width="2" stroke-linejoin="round"/><path d="M24 9 q-2 5 0 9 q3 -4 6 -5 q-2 -4 -6 -4" fill="#8A6A45" stroke="${K}" stroke-width="1.6" stroke-linejoin="round"/>`,mouth:`<ellipse cx="24" cy="33.5" rx="7.5" ry="5" fill="#EAD9C2" stroke="${K}" stroke-width="1.4"/><path d="M20.5 33 q0 1.4 1 1.4 M27.5 33 q0 1.4 -1 1.4" stroke="${K}" stroke-width="1.3" stroke-linecap="round"/><path d="M21.5 37 q2.5 1.4 5 0" stroke="${K}" stroke-width="1.2" stroke-linecap="round"/>`});
+    case 'moose':return face('#B08657',{back:`<path d="M13 13 q-10 -1 -10 -8 q5 -1 7 2 q0 -3 3 -4 q3 4 3 9 M35 13 q10 -1 10 -8 q-5 -1 -7 2 q0 -3 -3 -4 q-3 4 -3 9" fill="#8A6A45" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`,mouth:`<ellipse cx="24" cy="32" rx="7" ry="5" fill="#C89B6B" stroke="${K}" stroke-width="1.4"/><circle cx="21" cy="31.5" r="1.1" fill="${K}"/><circle cx="27" cy="31.5" r="1.1" fill="${K}"/>`});
+    case 'cows':return face(W,{back:`<path d="M12 18 q-7 0 -7 -5 q4 -2 8 1 M36 18 q7 0 7 -5 q-4 -2 -8 1" fill="#D8CDBB" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`,mid:`<path d="M27 14 q6 -1 8 4 q-5 2 -9 -1 z" fill="${K}" opacity=".85"/>`,mouth:`<ellipse cx="24" cy="32" rx="7" ry="4.5" fill="#EAC9C1" stroke="${K}" stroke-width="1.4"/><circle cx="21" cy="32" r="1.1" fill="${K}"/><circle cx="27" cy="32" r="1.1" fill="${K}"/>`});
+    case 'hippos':return face('#AFA3B8',{back:`<circle cx="13" cy="13" r="3.2" fill="#AFA3B8" stroke="${K}" stroke-width="1.8"/><circle cx="35" cy="13" r="3.2" fill="#AFA3B8" stroke="${K}" stroke-width="1.8"/>`,mouth:`<ellipse cx="24" cy="33" rx="9" ry="6" fill="#C4BACB" stroke="${K}" stroke-width="1.6"/><circle cx="20" cy="31.5" r="1.3" fill="${K}"/><circle cx="28" cy="31.5" r="1.3" fill="${K}"/><path d="M20 37 v1.6 M28 37 v1.6" stroke="${K}" stroke-width="1.6" stroke-linecap="round"/>`});
+    default:return face(W,{});
+  }
+}
+function zooStamp(vol,seed){
+  if(!vol||vol<50)return '';
+  const h=zooHash(seed);
+  let cands=ZOO.filter(([n,w])=>{const c=vol/w;return c>=2&&c<=40});
+  if(!cands.length)cands=[vol<ZOO[0][1]*2?ZOO[0]:ZOO[ZOO.length-1]];
+  const [name,w]=cands[h%cands.length];
+  const count=Math.max(1,Math.round(vol/w));
+  const shown=Math.min(count,36);
+  return `<hr class="dotted" style="margin:14px 0 10px">
+    <div class="label">TOTAL IRON MOVED</div>
+    <div style="display:flex;align-items:baseline;justify-content:center;gap:8px"><span class="num" style="font-size:44px;color:var(--ox)">${count}</span><span class="head" style="font-size:16px">${esc(name.toUpperCase())}</span></div>
+    <div class="zoo">${animalSVG(name).repeat(shown)}</div>
+    ${count>shown?`<div class="label" style="font-size:12px">+ ${count-shown} more ${esc(name)}</div>`:''}
+    <div class="label" style="font-size:12px;margin-top:2px">${both(vol)} — that's ~${count} ${esc(name)}</div>`;
 }
 function exportLog(){
   const payload=JSON.stringify({sessionId:S.id,session:S.phase,log:log[S.id]},null,2);
@@ -550,10 +644,24 @@ async function renderReview(){
       h+=`<div class="card"><div class="label lit">${esc(label)}</div>
         <div class="label" style="font-size:11px;margin-top:2px">${(m.size/1048576).toFixed(1)} MB</div>
         <button class="btn small" style="margin-top:12px" onclick="playClip('${esc(m.key)}',this)">▶ Watch</button>
-        ${f?`<div class="fb">${esc(f.notes)}</div>`:`<div class="pending">Review pending…</div>`}</div>`;
+        ${f?fbHtml(f.notes):`<div class="pending">Review pending…</div>`}</div>`;
     }
     app.innerHTML=h;
   }catch(e){app.innerHTML=`<h1 style="margin-top:8px">Film room</h1><div class="card warn">Couldn't load clips (${e.message||'network'}) — not the same as "no clips."</div><button class="btn small" onclick="renderReview()">Retry</button>`}
+}
+// coach notes render as stamped sections when the review uses the KEEP/FIX/WATCH/NEXT headings
+function fbHtml(notes){
+  const heads={'KEEP':'keep','FIX NEXT SET':'','FIX':'','WATCH':'','NEXT SESSION':'','NEXT':''};
+  const re=/^(KEEP|FIX NEXT SET|FIX|WATCH|NEXT SESSION|NEXT)\s*[:—-]\s*/i;
+  const lines=String(notes||'').split(/\n/);
+  const secs=[];let cur=null;
+  for(const ln of lines){
+    const m=ln.match(re);
+    if(m){cur={h:m[1].toUpperCase(),body:[ln.replace(re,'')]};secs.push(cur)}
+    else if(cur)cur.body.push(ln);
+  }
+  if(secs.length<2)return `<div class="fb">${esc(notes)}</div>`;
+  return secs.map(s=>`<div class="fbsec ${s.h==='KEEP'?'keep':''}"><b>${esc(s.h)}</b><p>${esc(s.body.join('\n').trim())}</p></div>`).join('');
 }
 async function playClip(key,btn){
   btn.textContent='Loading…';
@@ -594,7 +702,7 @@ function renderProgress(){
   h+=`<div style="display:flex;gap:10px;margin:14px 0 26px">
     <input id="bw" inputmode="decimal" placeholder="LB" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--line);color:var(--bone);font-family:var(--fhead);font-size:22px;text-align:center;outline:none">
     <button class="go head" style="border:2px solid var(--ctrl);padding:0 22px;height:52px" onclick="logWeight()">Log weight</button></div>
-  <button class="btn" onclick="$('photoIn').click()">◯ Log physique</button>
+  <button class="btn" onclick="$('photoIn').click()">Log physique</button>
   <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="gotPhoto(this)">
   <div id="photoStatus"></div>
   <div class="label" style="margin:6px 0 22px;font-size:11px">Weekly. Same spot, same light. Front · side · back.</div>
@@ -660,9 +768,9 @@ async function renderGear(){
   const notes=j('gearnotes',[]);
   let h=`<h1 style="margin-top:8px">Gear</h1>
   <div class="label" style="margin-bottom:14px">What I'm programming around${eq&&eq.updated?` · AS OF ${esc(eq.updated)}`:''}</div>
-  <button class="btn accent" onclick="$('gearIn').click()">＋ Snap new gear</button>
+  <button class="btn accent" onclick="$('gearIn').click()">+ Snap new gear</button>
   <input type="file" id="gearIn" accept="image/*" multiple style="display:none" onchange="gotGear(this)">
-  <div id="gearStatus">${j('gearq',[]).length?'<div class="label" style="margin-top:10px">📷 IN — CLAUDE CATALOGS IT AND STARTS PROGRAMMING WITH IT.</div>':''}</div>
+  <div id="gearStatus">${j('gearq',[]).length?'<div class="label" style="margin-top:10px">IN — CLAUDE CATALOGS IT AND STARTS PROGRAMMING WITH IT.</div>':''}</div>
   <div class="card" style="border-style:dotted;background:transparent;margin-top:14px">
     <div class="label" style="margin-bottom:10px">Corrections · new gym · travel spot</div>
     <div style="display:flex;gap:10px">
@@ -671,7 +779,7 @@ async function renderGear(){
     ${notes.map(n=>`<div class="statrow"><span>${esc(n.t)}</span><span class="label" style="font-size:11px">${esc(n.d)}${n.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
   if(eq&&eq.categories)for(const c of eq.categories){
     h+=`<div class="card"><div class="exname" style="font-size:16px">${esc(c.name)}</div>`+
-      c.items.map(it=>`<div class="statrow" style="border-bottom:1px solid var(--line)"><span>${esc(it)}</span></div>`).join('')+`</div>`;
+      c.items.map(it=>`<div class="statrow" style="border-bottom:1px dotted var(--line2)"><span>${esc(it)}</span></div>`).join('')+`</div>`;
   }
   else h+='<div class="card warn">Equipment list didn\'t load — pull to refresh.</div>';
   app.innerHTML=h;
@@ -716,7 +824,7 @@ function suggestBox(){
   const s=j('suggest',null);
   const pending=j('suggestq',[]).length;
   let h='';
-  if(pending)h+=`<div class="label" style="margin-top:12px">🧭 SCOUTING NEARBY PROTEIN — PICKS LAND IN ~3 MIN…</div>`;
+  if(pending)h+=`<div class="label" style="margin-top:12px">SCOUTING NEARBY PROTEIN — PICKS LAND IN ~3 MIN…</div>`;
   if(s&&s.date===today()){
     h+=`<div class="cuebox"><b>NEAR ${esc((s.where||'YOU').toUpperCase())}</b>`+
       (s.picks||[]).map(p=>`<div style="margin-top:10px"><span class="head" style="font-size:15px">${esc(p.spot)}</span> — ${esc(p.order)} <span class="num" style="color:var(--ox)">~${esc(p.protein_g)}G</span></div>`).join('')+`</div>`;
@@ -736,7 +844,7 @@ async function checkMealQueue(){
       try{
         const m=JSON.parse(f.notes.match(/\{.*\}/s)[0]);
         const dk='fuel:'+it.date;const day=j(dk,{g:0,items:[]});
-        day.items.push({n:'📷 '+m.desc+(m.note?' — '+m.note:''),g:m.protein_g});
+        day.items.push({n:'PHOTO · '+m.desc+(m.note?' — '+m.note:''),g:m.protein_g});
         day.g+=m.protein_g;sv(dk,day);changed=true;
         postLog({type:'nutrition',date:it.date,protein_g:day.g,items:day.items});
       }catch(e){remain.push(it)}
@@ -760,7 +868,7 @@ function renderFuel(){
   <button class="btn primary" onclick="$('mealIn').click()">+ Snap meal / menu</button>
   <button class="btn small" onclick="nearMe()">// What's good near me</button>
   <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
-  ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="label" style="margin-top:12px">📷 ANALYZING — PROTEIN LANDS IN ~2 MIN…</div>`).join('')}
+  ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="label" style="margin-top:12px">ANALYZING — PROTEIN LANDS IN ~2 MIN…</div>`).join('')}
   <div id="suggestBox">${suggestBox()}</div>
   <div class="label" style="margin:22px 0 6px">Quick add</div>
   <div class="chips">${MEALS.map(([n,g])=>`<button onclick="addFuel('${n}',${g})">${n} <span style="color:var(--pine);font-weight:700">+${g}G</span></button>`).join('')}
