@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#E8E2D5">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Train">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Train</title>
 <link rel="manifest" href="manifest.json">
@@ -154,12 +156,15 @@ function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 function j(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}}
 function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
+let loadFailed=false;
 async function init(){
   try{
     const r=await fetch('data/sessions.json?_='+Date.now());
+    if(!r.ok)throw new Error(r.status);
     ALLSESS=(await r.json()).sessions;
-  }catch(e){ALLSESS=[]}
+  }catch(e){ALLSESS=[];loadFailed=true}
   S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
+  flushOutbox();
   route();
 }
 function tabbar(){
@@ -234,7 +239,9 @@ function sealCard(kicker,btn){
 }
 function render(){
   const app=$('app');
-  if(!S){app.innerHTML=connectBanner()+fuelStrip()+`<div class="sealwrap"><div class="seal"><div class="mon">No session queued</div><hr class="dotted"><div class="label">Claude programs the next one tonight.</div></div></div>`;return}
+  if(!S){app.innerHTML=connectBanner()+fuelStrip()+(loadFailed
+    ?`<div class="sealwrap"><div class="seal"><div class="mon">Can't load sessions</div><hr class="dotted"><div class="label">Offline and nothing cached — reopen with signal.</div></div><button class="btn small" onclick="init()">Retry</button></div>`
+    :`<div class="sealwrap"><div class="seal"><div class="mon">No session queued</div><hr class="dotted"><div class="label">Claude programs the next one tonight.</div></div></div>`);return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
   const idx=ALLSESS.indexOf(S);
@@ -320,17 +327,9 @@ function requestsCard(){
 async function sendReq(){
   const t=$('mreq').value.trim();if(!t)return;
   const reqs=j('movereqs',[]);
-  const r={t,d:today(),synced:false};reqs.push(r);sv('movereqs',reqs);
-  const c=cfg();
-  if(c){
-    const [endpoint,token]=c;
-    try{
-      const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-        body:JSON.stringify({sessionId:'movement-request',log:{type:'movement-request',date:today(),request:t}})});
-      if(res.ok)r.synced=true;
-    }catch(e){}
-  }
-  sv('movereqs',reqs);render();
+  const r={t,d:today(),synced:true};reqs.push(r);sv('movereqs',reqs);
+  await queuePost('movereq',{sessionId:'movement-request',log:{type:'movement-request',date:today(),request:t}});
+  render();
 }
 function scale(k,sel){let s='';for(let i=1;i<=10;i++)s+=`<button class="${sel===i?'sel':''}" onclick="pick('${k}',${i})">${i}</button>`;return s}
 function pick(k,v){log[S.id][k]=v;store.save(log);render()}
@@ -353,24 +352,59 @@ function logMeasure(bid){
   log[S.id].blocks[bid].sets[0]=d;
   store.save(log);autoSync();render();
 }
+/* ---------- OUTBOX (every write survives a dead zone; retried until 2xx) ---------- */
+function outbox(){return j('outbox',[])}
+function queuePost(kind,body){
+  const ob=outbox();
+  // one queued entry per session log — newer snapshot replaces older
+  const eid=kind==='session'?'s:'+body.sessionId:kind+':'+Date.now()+':'+Math.random().toString(36).slice(2,7);
+  const i=ob.findIndex(e=>e.id===eid);
+  const entry={id:eid,body,at:Date.now()};
+  if(i>=0)ob[i]=entry;else ob.push(entry);
+  sv('outbox',ob);
+  return flushOutbox();
+}
+let flushing=false;
+async function flushOutbox(){
+  if(flushing)return;const c=cfg();if(!c)return;
+  flushing=true;
+  const [endpoint,token]=c;
+  try{
+    for(const e of outbox()){
+      try{
+        const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+          body:JSON.stringify(e.body)});
+        if(!res.ok)continue;
+        sv('outbox',outbox().filter(x=>x.id!==e.id));
+        if(e.body.sessionId&&e.body.log&&e.body.log.completed&&log[e.body.sessionId]){
+          log[e.body.sessionId].synced=true;store.save(log);
+          if(view==='today')route();
+        }
+      }catch(err){/* still offline — keep it queued */}
+    }
+  }finally{flushing=false}
+}
+addEventListener('online',flushOutbox);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushOutbox()});
 let autoT=null;
 function autoSync(){ /* auto-save to the vault pipe ~90s after the last logged set — no button needed */
   clearTimeout(autoT);
-  autoT=setTimeout(()=>{const c=cfg();if(!c||!S)return;const [endpoint,token]=c;
-    fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({type:'session-log',sessionId:S.id,log:{...log[S.id],partial:!log[S.id].completed}})}).catch(()=>{});
+  autoT=setTimeout(()=>{if(!S)return;
+    if(log[S.id]&&log[S.id].completed)return; // final snapshot already queued by finish()
+    queuePost('session',{type:'session-log',sessionId:S.id,log:{...log[S.id],partial:true}});
   },90000);
 }
 function skipBlock(bid){
   if(!confirm('Skip this one? It carries forward — nothing gets lost.'))return;
   log[S.id].blocks[bid].skipped=true;store.save(log);render();
 }
-function startTimer(n){sec=n;tTotal=n;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
+let tEnd=0; // wall-clock deadline — survives iOS suspending the PWA mid-rest
+function startTimer(n){tTotal=n;tEnd=Date.now()+n*1000;$('timer').classList.add('on');tick();clearInterval(tint);tint=setInterval(tick,1000)}
 function tick(){
-  if(sec<0)return stopTimer();
+  const sec=Math.round((tEnd-Date.now())/1000);
+  if(sec<0){if(navigator.vibrate)navigator.vibrate(200);return stopTimer()}
   $('tval').textContent=Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');
   $('tdrain').style.width=(100*(1-sec/tTotal))+'%';
-  sec--;
 }
 function stopTimer(){clearInterval(tint);$('timer').classList.remove('on')}
 function film(bid){$(`f_${bid}`).click()}
@@ -396,6 +430,7 @@ async function gotClip(bid,input){
   bl.uploading=false;store.save(log);render();
 }
 async function finish(){
+  clearTimeout(autoT); // delayed partial autosave must not fire after the final log
   const L=log[S.id];L.completed=true;L.completedAt=new Date().toISOString();
   L.notes=$('notes')?$('notes').value:L.notes;
   store.save(log);await sync();renderDone();
@@ -419,17 +454,12 @@ function renderDone(){
     ${dur?`<div style="display:flex;justify-content:space-between" class="label lit"><span>DURATION</span><span class="num" style="font-size:18px">${dur} MIN</span></div><hr class="dotted" style="margin:10px 0">`:''}
     ${vol?`<div style="display:flex;justify-content:space-between" class="label lit"><span>VOLUME</span><span class="num" style="font-size:18px">${both(vol)}</span></div><hr class="rule">`:''}
     <div class="label lit" style="margin-top:8px">RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div>
-    <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — will retry, or export below.'}</div>
+    <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — queued, retries automatically when you have signal. Export below if you want it out now.'}</div>
+    ${L.synced?'':'<button class="btn small" style="margin-top:12px" onclick="flushOutbox().then(()=>renderDone())">Retry sync now</button>'}
     <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button></div>`;
 }
 async function sync(){
-  const c=cfg();if(!c)return;
-  const [endpoint,token]=c;
-  try{
-    const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({type:'session-log',sessionId:S.id,log:log[S.id]})});
-    if(res.ok){log[S.id].synced=true;store.save(log)}
-  }catch(e){}
+  await queuePost('session',{type:'session-log',sessionId:S.id,log:log[S.id]});
 }
 function exportLog(){
   const payload=JSON.stringify({sessionId:S.id,session:S.phase,log:log[S.id]},null,2);
@@ -446,9 +476,10 @@ async function renderReview(){
   const [endpoint,token]=c;
   try{
     const H={'Authorization':'Bearer '+token};
+    const okJson=r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()};
     const [pull,fb]=await Promise.all([
-      fetch(endpoint+'/pull',{headers:H}).then(r=>r.json()).catch(()=>({media:[]})),
-      fetch(endpoint+'/feedback',{headers:H}).then(r=>r.json()).catch(()=>({}))
+      fetch(endpoint+'/pull',{headers:H}).then(okJson),
+      fetch(endpoint+'/feedback',{headers:H}).then(okJson)
     ]);
     const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')&&!m.key.startsWith('meals/')&&!m.key.startsWith('suggest/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
     let h='<h1 style="margin-top:8px">Film room</h1>';
@@ -463,13 +494,14 @@ async function renderReview(){
         ${f?`<div class="fb">${f.notes}</div>`:`<div class="pending">Review pending…</div>`}</div>`;
     }
     app.innerHTML=h;
-  }catch(e){app.innerHTML='<div class="card warn">Couldn\'t reach the server — check connection.</div>'}
+  }catch(e){app.innerHTML=`<h1 style="margin-top:8px">Film room</h1><div class="card warn">Couldn't load clips (${e.message||'network'}) — not the same as "no clips."</div><button class="btn small" onclick="renderReview()">Retry</button>`}
 }
 async function playClip(key,btn){
   btn.textContent='Loading…';
   const [endpoint,token]=cfg();
   try{
     const r=await fetch(endpoint+'/media/'+encodeURIComponent(key),{headers:{'Authorization':'Bearer '+token}});
+    if(!r.ok)throw new Error('HTTP '+r.status);
     const blob=await r.blob();
     const v=document.createElement('video');
     v.src=URL.createObjectURL(blob);v.controls=true;v.playsInline=true;
@@ -558,10 +590,7 @@ async function gotPhoto(input){
   }catch(e){el.innerHTML='<div class="warn">Upload failed — try again.</div>'}
 }
 async function postLog(obj){
-  const c=cfg();if(!c)return;
-  const [endpoint,token]=c;
-  try{await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-    body:JSON.stringify({sessionId:obj.type,log:obj})})}catch(e){}
+  await queuePost(obj.type,{sessionId:obj.type,log:obj});
 }
 
 /* ---------- GEAR ---------- */

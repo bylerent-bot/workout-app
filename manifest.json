@@ -3,7 +3,15 @@
   "short_name": "Train",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#0d0f12",
-  "theme_color": "#0d0f12",
-  "icons": [{ "src": "icon.png", "sizes": "512x512", "type": "image/png" }]
+  "background_color": "#E8E2D5",
+  "theme_color": "#E8E2D5",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "id": "train",
+  "scope": "."
 }
