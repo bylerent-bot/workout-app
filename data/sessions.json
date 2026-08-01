@@ -2,16 +2,16 @@
  "sessions": [
   {
    "id": "s3",
-   "phase": "Phase 1 · Session 3 (Reboot C — Pull focus)",
+   "phase": "Phase 1 \u00b7 Session 3 (Reboot C \u2014 Pull focus)",
    "date": "2026-07-29",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "Neutral hinge held well in S1 — this session: strict row, no torso twist, elbow to the hip.",
-   "notes": "Carries the 1-arm DB row skipped in S2. Load flat, finisher Zone 2, pec-safe. NEW: correctives block from 7/29 squat film (early hinge + torso pitch) — see Movement Profile.",
+   "formCue": "Neutral hinge held well in S1 \u2014 this session: strict row, no torso twist, elbow to the hip.",
+   "notes": "Carries the 1-arm DB row skipped in S2. Load flat, finisher Zone 2, pec-safe. NEW: correctives block from 7/29 squat film (early hinge + torso pitch) \u2014 see Movement Profile.",
    "blocks": [
     {
      "id": "w",
-     "name": "Correctives warm-up (new — from your squat film)",
+     "name": "Correctives warm-up (new \u2014 from your squat film)",
      "detail": "Knee-to-wall ankle test both sides (note inches, tell me in session notes) + 2x30s/side wall ankle rocks + 2x10 thoracic extensions over foam roller",
      "type": "sets",
      "sets": 1,
@@ -22,7 +22,7 @@
     {
      "id": "a",
      "name": "1-arm DB row",
-     "detail": "3 sets × 10/side — FILM the top set, side-on",
+     "detail": "3 sets \u00d7 10/side \u2014 FILM the top set, side-on",
      "type": "sets",
      "sets": 3,
      "targetReps": 10,
@@ -32,7 +32,7 @@
     {
      "id": "b",
      "name": "Trap-bar deadlift",
-     "detail": "3 sets × 8 @ 221 lb (held flat from S1)",
+     "detail": "3 sets \u00d7 8 @ 221 lb (held flat from S1)",
      "type": "sets",
      "sets": 3,
      "targetReps": 8,
@@ -51,8 +51,8 @@
     },
     {
      "id": "d",
-     "name": "Finisher — steady row",
-     "detail": "8 min continuous, Zone 2 (conversational, ~1:55–2:05/500m). NOT a redline.",
+     "name": "Finisher \u2014 steady row",
+     "detail": "8 min continuous, Zone 2 (conversational, ~1:55\u20132:05/500m). NOT a redline.",
      "type": "timed",
      "sets": 1,
      "targetReps": null,
@@ -63,11 +63,11 @@
   },
   {
    "id": "s4",
-   "phase": "Phase 1 · Session 4 (Engine A)",
+   "phase": "Phase 1 \u00b7 Session 4 (Engine A)",
    "date": "2026-07-31",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "Engine day. Smooth is fast — hold the split, don't redline the first round.",
+   "formCue": "Engine day. Smooth is fast \u2014 hold the split, don't redline the first round.",
    "notes": "First engine day of the new mix (HWPO-style pacing). Pec-safe. Intervals, not a hero WOD.",
    "blocks": [
     {
@@ -94,22 +94,23 @@
      "id": "b",
      "name": "Farmer carry finisher",
      "detail": "4 x 40yd heavy carry (whatever handles you have), walk tall, rest 60s",
-     "type": "sets",
+     "type": "work",
      "sets": 4,
      "targetReps": null,
      "targetWeight": null,
-     "film": false
+     "film": false,
+     "rest": 60
     }
    ]
   },
   {
    "id": "s5",
-   "phase": "Phase 1 · Session 5 (Hypertrophy — legs)",
+   "phase": "Phase 1 \u00b7 Session 5 (Hypertrophy \u2014 legs)",
    "date": "2026-08-01",
    "place": "Home gym",
    "time": "after work",
    "formCue": "From your squat film: chest tall, break knees and hips together, sit between your feet.",
-   "notes": "Hypertrophy lower. Tempo work grooves the squat pattern from Movement Profile. Adjusted 7/30: you're going lighter to protect the pec — so the baseline is now BY FEEL, not a fixed 221. Trap-bar is pec-safe (arms hang, no pec stretch/load) but you set the ceiling.",
+   "notes": "Hypertrophy lower. Tempo work grooves the squat pattern from Movement Profile. Adjusted 7/30: you're going lighter to protect the pec \u2014 so the baseline is now BY FEEL, not a fixed 221. Trap-bar is pec-safe (arms hang, no pec stretch/load) but you set the ceiling.",
    "blocks": [
     {
      "id": "w",
@@ -124,7 +125,7 @@
     {
      "id": "a",
      "name": "Trap-bar deadlift",
-     "detail": "Work UP over 3 sets of 8 (e.g. 160 → 180 → 200, by feel), then one last set of 8 at RPE 8-9 — heavy but crisp, stop instantly if the pec says anything. Whatever that weight is, that's our baseline.",
+     "detail": "Work UP over 3 sets of 8 (e.g. 160 \u2192 180 \u2192 200, by feel), then one last set of 8 at RPE 8-9 \u2014 heavy but crisp, stop instantly if the pec says anything. Whatever that weight is, that's our baseline.",
      "type": "sets",
      "sets": 4,
      "targetReps": 8,
@@ -133,8 +134,8 @@
     },
     {
      "id": "b",
-     "name": "Goblet squat — 3s down, 1s pause",
-     "detail": "3 x 10, light KB. FILM set 3 side-on — this is the pattern check.",
+     "name": "Goblet squat \u2014 3s down, 1s pause",
+     "detail": "3 x 10, light KB. FILM set 3 side-on \u2014 this is the pattern check.",
      "type": "sets",
      "sets": 3,
      "targetReps": 10,
@@ -155,7 +156,7 @@
   },
   {
    "id": "s6",
-   "phase": "Phase 1 · Session 6 (Baselines — engine)",
+   "phase": "Phase 1 \u00b7 Session 6 (Baselines \u2014 engine)",
    "date": "2026-08-02",
    "place": "Home gym or a track",
    "time": "after work",
@@ -174,7 +175,7 @@
     },
     {
      "id": "a",
-     "name": "1-mile run — TIME TRIAL",
+     "name": "1-mile run \u2014 TIME TRIAL",
      "detail": "Enter total minutes. Even pacing; this is a baseline, not a death march",
      "type": "timed",
      "sets": 1,
@@ -184,7 +185,7 @@
     },
     {
      "id": "b",
-     "name": "500m row — TIME TRIAL",
+     "name": "500m row \u2014 TIME TRIAL",
      "detail": "Full rest after the mile (10+ min), then one hard 500. Enter time",
      "type": "timed",
      "sets": 1,
@@ -196,7 +197,7 @@
   },
   {
    "id": "s7",
-   "phase": "Phase 1 · Session 7 (Hypertrophy — pull)",
+   "phase": "Phase 1 \u00b7 Session 7 (Hypertrophy \u2014 pull)",
    "date": "2026-08-03",
    "place": "Home gym",
    "time": "after work",
@@ -206,7 +207,7 @@
     {
      "id": "w",
      "name": "Correctives + ankle screen (OWED from S3)",
-     "detail": "Knee-to-wall test both sides — foot flat, knee to wall, farthest toe distance that still touches. Enter inches below. Then ankle rocks 2x30s/side + t-spine ext 2x10.",
+     "detail": "Knee-to-wall test both sides \u2014 foot flat, knee to wall, farthest toe distance that still touches. Enter inches below. Then ankle rocks 2x30s/side + t-spine ext 2x10.",
      "type": "measure",
      "sets": 1,
      "targetReps": null,
@@ -227,8 +228,8 @@
     },
     {
      "id": "a",
-     "name": "1-arm DB row — heavier",
-     "detail": "4 x 10/side @ 0-3 RIR. You have up to 60 lb on the rack — 25 was too light (30 reps last time). FILM the top set, side-on (owed since S2).",
+     "name": "1-arm DB row \u2014 heavier",
+     "detail": "4 x 10/side @ 0-3 RIR. You have up to 60 lb on the rack \u2014 25 was too light (30 reps last time). FILM the top set, side-on (owed since S2).",
      "type": "sets",
      "sets": 4,
      "targetReps": 10,
@@ -286,11 +287,11 @@
   },
   {
    "id": "s8",
-   "phase": "Phase 1 · Session 8 (Engine B)",
+   "phase": "Phase 1 \u00b7 Session 8 (Engine B)",
    "date": "2026-08-04",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "For-time pieces score CALORIES now — the rower counts them for you. Smooth is fast.",
+   "formCue": "For-time pieces score CALORIES now \u2014 the rower counts them for you. Smooth is fast.",
    "notes": "Engine intervals, pec-safe. New scoring convention: for-time = calories.",
    "blocks": [
     {
@@ -305,7 +306,7 @@
     },
     {
      "id": "a",
-     "name": "Row intervals — for calories",
+     "name": "Row intervals \u2014 for calories",
      "detail": "5 rounds: 3 min row for MAX CALORIES + 10 goblet squats + 10 KB swings between rounds. Enter TOTAL calories across all 5. Rest 90s between rounds. FILM round 3 side-on.",
      "type": "timed",
      "metric": "cal",
@@ -318,22 +319,23 @@
      "id": "b",
      "name": "Farmer carry",
      "detail": "4 x 40yd heavy, walk tall, rest 60s",
-     "type": "sets",
+     "type": "work",
      "sets": 4,
      "targetReps": null,
      "targetWeight": null,
-     "film": false
+     "film": false,
+     "rest": 60
     }
    ]
   },
   {
    "id": "s9",
-   "phase": "Phase 1 · Session 9 (Hypertrophy — legs B)",
+   "phase": "Phase 1 \u00b7 Session 9 (Hypertrophy \u2014 legs B)",
    "date": "2026-08-05",
    "place": "Home gym",
    "time": "after work",
    "formCue": "Chest tall, break knees and hips together, sit between your feet.",
-   "notes": "Hyp lower. Loads by feel per pec caution — pick weights that make the target reps hard at 0-3 RIR.",
+   "notes": "Hyp lower. Loads by feel per pec caution \u2014 pick weights that make the target reps hard at 0-3 RIR.",
    "blocks": [
     {
      "id": "w",
@@ -358,7 +360,7 @@
     {
      "id": "b",
      "name": "Belt squat (Hyper Pro)",
-     "detail": "3 x 12 @ 0-2 RIR — pec-free leg volume",
+     "detail": "3 x 12 @ 0-2 RIR \u2014 pec-free leg volume",
      "type": "sets",
      "sets": 3,
      "targetReps": 12,
@@ -379,7 +381,7 @@
   },
   {
    "id": "s10",
-   "phase": "Phase 1 · Session 10 (Hypertrophy — pull B)",
+   "phase": "Phase 1 \u00b7 Session 10 (Hypertrophy \u2014 pull B)",
    "date": "2026-08-06",
    "place": "Home gym",
    "time": "after work",

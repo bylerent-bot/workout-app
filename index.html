@@ -281,7 +281,7 @@ function render(){
       const M={min:['0:00','TIME (MIN)'],cal:['—','CALORIES'],m:['—','METERS']}[b.metric||'min'];
       h+=`<div class="logrow ${d.done?'done':''}">
         <div class="sn">1</div>
-        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="decimal" placeholder="${M[0]}" value="${esc(DRAFTS[`t_${b.id}`]??d.time??'')}" oninput="draft(this)"><span>${M[1]}</span></div></div>
+        <div class="grp"><div class="box"><input id="t_${b.id}" inputmode="numeric" placeholder="${M[0]}" value="${esc(DRAFTS[`t_${b.id}`]??d.time??'')}" oninput="${(b.metric||'min')==='min'?'timeIn(this)':'draft(this)'}"><span>${M[1]}</span></div></div>
         <button class="go" onclick="logTimed('${b.id}')">${d.done?'DONE':'LOG'}</button></div>`;
     }else if(b.type==='measure'){
       const d=bl.sets[0]||{};
@@ -289,6 +289,18 @@ function render(){
         <div class="sn" style="flex-basis:110px;font-size:12px">${esc(m.label)}</div>
         <div class="grp"><div class="box"><input id="m_${b.id}_${m.id}" inputmode="decimal" placeholder="—" value="${esc(DRAFTS[`m_${b.id}_${m.id}`]??d[m.id]??'')}" oninput="draft(this)"><span>${esc(m.unit||'')}</span></div></div></div>`).join('')+
         `<button class="go head" style="border:2px solid var(--ctrl);padding:12px 18px;margin-top:6px" onclick="logMeasure('${b.id}')">${d.done?'SAVED ✓':'SAVE MEASUREMENTS'}</button>`;
+    }else if(b.type==='work'){
+      // carries, sleds, walks — done work, not reps. One weight box per round; LOG marks the round.
+      for(let i=0;i<b.sets;i++){
+        const d=bl.sets[i]||{};
+        const prevSet=i>0?bl.sets[i-1]:null;
+        const prevW=(prevSet&&prevSet.done&&(!prevSet.u||prevSet.u===unit()))?prevSet.w:null;
+        const shown=DRAFTS[`w_${b.id}_${i}`]??d.w??(prevW??targetIn(b.targetWeight));
+        h+=`<div class="logrow ${d.done?'done':''}">
+          <div class="sn">${i+1}</div>
+          <div class="grp"><div class="box"><input id="w_${b.id}_${i}" inputmode="decimal" placeholder="—" value="${esc(shown)}" oninput="draft(this)"><span>${esc((d.u||unit()).toUpperCase())} · OPTIONAL</span></div></div>
+          <button class="go" onclick="logWork('${b.id}',${i})">${d.done?'DONE':'LOG'}</button></div>`;
+      }
     }else{
       for(let i=0;i<b.sets;i++){
         const d=bl.sets[i]||{};
@@ -354,11 +366,25 @@ function logSet(bid,i){
   delete DRAFTS[`w_${bid}_${i}`];delete DRAFTS[`r_${bid}_${i}`];
   store.save(log);autoSync();startTimer(90);render();
 }
+function logWork(bid,i){
+  const b=S.blocks.find(x=>x.id===bid);
+  const bl=log[S.id].blocks[bid];
+  bl.sets[i]={w:$(`w_${bid}_${i}`).value.trim(),u:unit(),done:true,at:new Date().toISOString()};
+  delete DRAFTS[`w_${bid}_${i}`];
+  store.save(log);autoSync();startTimer((b&&b.rest)||60);render();
+}
+// time entry: digits only, first two = minutes — typing 0834 renders 08:34 live
+function maskTime(v){
+  const d=v.replace(/\D/g,'').slice(0,4);
+  return d.length>2?d.slice(0,2)+':'+d.slice(2):d;
+}
+function timeIn(el){el.value=maskTime(el.value);draft(el)}
 function logTimed(bid){
   const bl=log[S.id].blocks[bid];
   const b=S.blocks.find(x=>x.id===bid);
-  const t=$(`t_${bid}`).value.trim();
+  let t=$(`t_${bid}`).value.trim();
   if(!t){$(`t_${bid}`).focus();return}
+  if(((b&&b.metric)||'min')==='min')t=maskTime(t);
   bl.sets[0]={time:t,metric:(b&&b.metric)||'min',done:true,at:new Date().toISOString()};
   delete DRAFTS[`t_${bid}`];
   store.save(log);autoSync();render();
