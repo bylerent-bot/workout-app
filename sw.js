@@ -1,6 +1,10 @@
-const CACHE = 'train-v31';
+const CACHE = 'train-v32';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.png',
-  'data/sessions.json', 'data/equipment.json'];
+  'data/sessions.json', 'data/equipment.json',
+  'game/scoring.js', 'game/benchmarks.js',
+  ...['safe-500','piano-700','vending-900','gold-1000','motorcycle-1200','dragster-1800',
+      'sedan-3200','pickup-4800','armored-suv-6500','container-8500','monster-truck-12000',
+      'city-bus-28000'].map(n => `assets/objects/${n}.svg`)];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
   self.skipWaiting();

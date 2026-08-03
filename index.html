@@ -3,153 +3,221 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#E8E2D5">
+<meta name="theme-color" content="#070A0C">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Train">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Train</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
-<link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@400;500;700&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  /* IRON & CHALK v3 — design language from the 7/29 Gemini pass, functionality intact. */
+  /* IRON CIRCUIT — Arcade Broadcast skin (Codex design-pack 2026-08-03), functionality intact.
+     Class contract preserved from v6 so the JS layer keeps working; only the paint changed.
+     Tokens per DESIGN_SYSTEM.md. Var names keep their historical ROLES:
+     --black = ground (ink-950), --bone = foreground text, --card = cabinet steel,
+     --ox = rage/danger + rival, --pine = volt/earned (success). */
   :root{
-    /* v6 palette (7/30, "push it harder") — FULL FLIP: bone-paper ground, black ink,
-       oxblood stamps. Vintage gym bill. Var names keep their roles: --black = ground,
-       --bone = ink/foreground, so every component inverts for free. */
-    --black:#E8E2D5; --card:#F1ECE1; --bone:#191410; --dim:#5C5348;
-    --ox:#8C1B14; --line:#BCAE97; --line2:#8E8069; --ctrl:#6E6250; --pine:#31543F;
-    /* --line/--line2 = decorative rules only; --ctrl = interactive-control boundaries (>=3:1 on ground) */
-    --fnum:'Anton',sans-serif; --fhead:'Oswald',sans-serif; --fbody:'Inter',sans-serif;
+    --black:#070A0C; --card:#10161A; --raised:#182126; --bone:#F4F7F2; --dim:#8FA3AA;
+    --ox:#FF3B30; --pine:#C7FF2E; --line:#34434A; --line2:#26333A; --ctrl:#5E7480;
+    --volt:#C7FF2E; --ice:#49C6FF; --gold:#FFCF40; --violet:#B48CFF;
+    --fnum:'Barlow Condensed',Impact,sans-serif; --fhead:'Barlow Condensed',Impact,sans-serif;
+    --fbody:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --fpix:'Press Start 2P','Arial Black',sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   body{margin:0; background:var(--black); color:var(--bone);
-    font:15px/1.5 var(--fbody);
+    font:16px/1.35 var(--fbody);
+    background-image:linear-gradient(rgba(73,198,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(73,198,255,.025) 1px,transparent 1px);
+    background-size:16px 16px;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
-  .wrap{max-width:520px; margin:0 auto; padding:20px 20px 110px}
-  body.resting .wrap{padding-bottom:300px} /* room to scroll past the open rest sheet */
-  .num{font-family:var(--fnum); letter-spacing:.02em}
-  .head{font-family:var(--fhead); text-transform:uppercase; letter-spacing:.03em}
-  h1{font-family:var(--fhead); font-size:30px; text-transform:uppercase; letter-spacing:.02em; margin:4px 0 16px; line-height:1.1}
-  .label{font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim)}
+  .wrap{max-width:520px; margin:0 auto; padding:20px 16px 110px}
+  body.resting .wrap{padding-bottom:300px}
+  .num{font-family:var(--fnum); font-weight:900; letter-spacing:.01em; font-variant-numeric:tabular-nums}
+  .head{font-family:var(--fhead); font-weight:700; text-transform:uppercase; letter-spacing:.045em}
+  .pix{font-family:var(--fpix); font-size:10px; line-height:1.5; color:var(--volt)}
+  h1{font-family:var(--fhead); font-weight:900; font-size:32px; text-transform:uppercase; letter-spacing:.02em; margin:4px 0 16px; line-height:1}
+  .label{font-family:var(--fhead); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim)}
   .label.lit{color:var(--bone)}
-  .card{background:var(--card); border:2px solid var(--line); padding:18px; margin-bottom:16px}
+  .card{position:relative; background:var(--card); border:2px solid var(--line); padding:18px; margin-bottom:16px;
+    box-shadow:5px 5px 0 #000; clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
   .rule{border:0; border-top:2px solid var(--line); margin:18px 0}
   .dotted{border:0; border-top:2px dotted var(--line); margin:18px 0}
   button{font:inherit; border:none; border-radius:0; cursor:pointer; color:var(--bone); background:none}
-  .btn{display:flex; align-items:center; justify-content:center; width:100%; height:60px;
-    border:2px solid var(--bone); font-family:var(--fhead); font-size:18px; text-transform:uppercase; letter-spacing:.06em}
-  .btn:active{background:var(--bone); color:var(--black)}
-  .btn.primary{background:var(--bone); color:var(--black)}
-  .btn.primary:active{background:#3A322A}
-  .btn.accent{background:var(--ox); border-color:var(--ox); color:#F1ECE1}
-  .btn.accent:active{background:#5E0D0D; color:#F1ECE1}
-  .btn.small{height:48px; font-size:15px; border:2px solid var(--ctrl); color:var(--dim)}
-  input:focus-visible,textarea:focus-visible{border-bottom-color:var(--ox) !important}
-  button:focus-visible,a:focus-visible{outline:2px solid var(--ox); outline-offset:2px}
+  .btn{display:flex; align-items:center; justify-content:center; width:100%; height:58px;
+    border:2px solid var(--line); background:var(--raised); font-family:var(--fhead); font-weight:900; font-size:18px;
+    text-transform:uppercase; letter-spacing:.06em; box-shadow:4px 4px 0 #000}
+  .btn:active{transform:translate(2px,2px); box-shadow:1px 1px 0 #000}
+  .btn.primary{background:var(--volt); border-color:var(--volt); color:var(--black)}
+  .btn.accent{background:var(--volt); border-color:var(--volt); color:var(--black)}
+  .btn.rival{background:var(--ox); border-color:var(--ox); color:#fff}
+  .btn.boss{background:var(--card); border:2px solid var(--violet); color:var(--violet)}
+  .btn.small{height:48px; font-size:15px; border:2px solid var(--line); color:var(--dim); box-shadow:3px 3px 0 #000}
+  input:focus-visible,textarea:focus-visible{border-bottom-color:var(--ice) !important}
+  button:focus-visible,a:focus-visible{outline:3px solid var(--ice); outline-offset:2px}
   .btn+.btn{margin-top:12px}
-  /* sealed ticket */
+  /* sealed session = the marquee */
   .sealwrap{text-align:center; padding:12px 0}
-  .seal{border:4px solid var(--line); padding:24px 18px; position:relative; margin:18px 0}
-  .seal::before,.seal::after{content:''; position:absolute; width:18px; height:18px; background:var(--black);
-    border:4px solid var(--line); border-radius:50%; top:50%; transform:translateY(-50%)}
-  .seal::before{left:-13px} .seal::after{right:-13px}
-  .seal .day{font-family:var(--fnum); font-size:96px; line-height:.95; margin:0; color:var(--ox)}
-  .seal .mon{font-family:var(--fhead); font-size:26px; text-transform:uppercase; letter-spacing:.08em; margin:2px 0 0}
-  /* coach banner */
-  .coach{border-left:4px solid var(--ox); background:rgba(140,27,20,.07); padding:12px 16px; margin:0 0 20px}
-  .coach .label{margin-bottom:4px}
-  .coach p{margin:0; font-style:italic; color:var(--dim); font-size:14px}
-  /* exercise blocks — workout mode: one dominant card, the rest collapse to receipt lines */
-  .block .exname{font-family:var(--fhead); font-weight:700; font-size:21px; text-transform:uppercase; color:var(--bone); margin:0 0 4px}
+  .seal{position:relative; overflow:hidden; border:4px solid var(--volt); background:var(--card); padding:26px 18px 20px; margin:18px 0; box-shadow:7px 7px 0 #000}
+  .seal::before{content:''; position:absolute; left:0; right:0; top:0; height:7px;
+    background:repeating-linear-gradient(90deg,var(--volt) 0 8px,transparent 8px 16px)}
+  .seal .day{font-family:var(--fnum); font-weight:900; font-size:96px; line-height:.95; margin:0; color:var(--volt); text-shadow:5px 5px 0 #000}
+  .seal .mon{font-family:var(--fhead); font-weight:900; font-size:26px; text-transform:uppercase; letter-spacing:.08em; margin:2px 0 0}
+  .coach{border-left:4px solid var(--ice); background:var(--card); padding:12px 16px; margin:0 0 20px}
+  .coach .label{margin-bottom:4px; color:var(--ice)}
+  .coach p{margin:0; color:var(--dim); font-size:14px}
+  .block .exname{font-family:var(--fhead); font-weight:900; font-size:24px; text-transform:uppercase; color:var(--bone); margin:0 0 4px}
   .block .rx{font:14px/1.45 var(--fbody); color:var(--dim); text-transform:none; letter-spacing:0; margin-bottom:14px}
-  .whead{position:sticky; top:0; z-index:15; background:var(--black); border-bottom:2px solid var(--bone);
+  .whead{position:sticky; top:0; z-index:15; background:rgba(7,10,12,.97); border-bottom:2px solid var(--line);
     display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:12px 0; margin:-20px 0 14px;
-    font-family:var(--fhead); font-size:12px; letter-spacing:.08em; text-transform:uppercase}
-  .whead .sync.ok{color:var(--pine)} .whead .sync.q{color:var(--ox)}
+    font-family:var(--fhead); font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase}
+  .whead .sync.ok{color:var(--volt)} .whead .sync.q{color:var(--gold)}
   .receipt{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left;
-    border:2px solid var(--line); padding:15px 16px; margin-bottom:8px;
-    font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim)}
-  .receipt.done{background:var(--bone); border-color:var(--bone); color:var(--black)}
-  .receipt.done .st{color:#7FBF9A}
+    border:2px solid var(--line); background:var(--card); padding:15px 16px; margin-bottom:8px; min-height:52px;
+    font-family:var(--fhead); font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim)}
+  .receipt.done{border-color:#40552D; color:var(--bone)}
+  .receipt.done .st{color:var(--volt)}
   .receipt .st{font-size:12px; white-space:nowrap}
-  .logrow{display:flex; height:68px; border-bottom:2px solid var(--line); margin-bottom:8px; background:transparent}
-  .logrow .sn{flex:0 0 40px; display:flex; align-items:center; font-family:var(--fhead); font-size:17px; color:var(--dim)}
+  .logrow{display:flex; height:66px; border:2px solid var(--line); background:var(--raised); margin-bottom:8px}
+  .logrow .sn{flex:0 0 40px; display:flex; align-items:center; justify-content:center; font-family:var(--fhead); font-weight:900; font-size:18px; color:var(--dim)}
   .logrow .grp{flex:1; display:flex; border-left:2px solid var(--line); border-right:2px solid var(--line)}
   .logrow .box{flex:1; position:relative; display:flex; flex-direction:column; justify-content:center}
   .logrow .box+.box{border-left:2px solid var(--line)}
-  .logrow .box span{position:absolute; bottom:4px; left:0; width:100%; text-align:center;
-    font-family:var(--fhead); font-size:11px; letter-spacing:.1em; color:var(--dim)}
+  .logrow .box span{position:absolute; bottom:3px; left:0; width:100%; text-align:center;
+    font-family:var(--fhead); font-weight:700; font-size:10px; letter-spacing:.1em; color:var(--dim)}
   .logrow input{background:transparent; border:none; outline:none; color:var(--bone); width:100%;
-    font-family:var(--fhead); font-size:26px; text-align:center; padding-bottom:10px}
-  .logrow .go{flex:0 0 64px; font-family:var(--fhead); font-size:24px; border-left:2px solid var(--ox); color:var(--ox)}
-  .logrow.done{background:var(--bone); height:44px}
-  .logrow.done .sn,.logrow.done .box span{color:var(--black)}
-  .logrow.done input{color:var(--black); font-size:18px; padding-bottom:10px}
-  .logrow.done .go{color:#7FBF9A; font-weight:700; border-left:2px solid var(--black); font-size:18px}
-  .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-size:14px;
-    text-transform:uppercase; letter-spacing:.06em; color:#F1ECE1; background:var(--ox); border:2px solid var(--ox); padding:13px 16px; margin-top:12px}
-  .filmbadge .dot{width:10px; height:10px; background:#F1ECE1; border-radius:50%}
+    font-family:var(--fnum); font-weight:900; font-size:28px; text-align:center; padding-bottom:10px}
+  .logrow .go{flex:0 0 72px; font-family:var(--fhead); font-weight:900; font-size:18px; letter-spacing:.04em; background:var(--volt); color:var(--black)}
+  .logrow .go:active{transform:translate(1px,1px)}
+  .logrow.done{height:48px; border-color:#40552D; opacity:.82; background:var(--card)}
+  .logrow.done .sn,.logrow.done .box span{color:var(--dim)}
+  .logrow.done input{color:var(--dim); font-size:20px; padding-bottom:10px}
+  .logrow.done .go{background:transparent; color:var(--volt); font-size:22px}
+  .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-weight:900; font-size:14px;
+    text-transform:uppercase; letter-spacing:.06em; color:var(--ice); background:var(--raised); border:2px solid var(--ice); padding:13px 16px; margin-top:12px; box-shadow:3px 3px 0 #000}
+  .filmbadge .dot{width:10px; height:10px; background:var(--ox); border-radius:50%}
   .skip{color:var(--dim); font-size:13px; text-decoration:underline; padding:14px 0; display:inline-block}
-  /* scales */
   .scales{display:flex; gap:8px; overflow-x:auto; padding:8px 0 10px; scrollbar-width:none}
   .scales::-webkit-scrollbar{display:none}
-  .scales button{flex:0 0 56px; height:56px; border:2px solid var(--ctrl); font-family:var(--fnum); font-size:22px}
-  .scales button.sel{background:var(--ox); color:#F1ECE1; border-color:var(--ox)}
+  .scales button{flex:0 0 52px; height:52px; border:2px solid var(--line); background:var(--raised); font-family:var(--fnum); font-weight:900; font-size:22px; box-shadow:3px 3px 0 #000}
+  .scales button.sel{background:var(--volt); color:var(--black); border-color:var(--volt)}
   textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--ctrl);
     color:var(--bone); font:16px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
-  /* rest timer — a deliberate bottom sheet, not a sliver */
-  .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom)); background:var(--black);
-    border-top:2px solid var(--ox); padding:16px 20px 18px; display:none; align-items:center; justify-content:space-between; gap:12px; z-index:10; overflow:hidden}
+  /* rest timer — red cabinet drawer */
+  .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom)); background:var(--card);
+    border-top:4px solid var(--ox); padding:16px 20px 18px; display:none; align-items:center; justify-content:space-between; gap:12px; z-index:10; overflow:hidden; box-shadow:0 -10px 0 rgba(0,0,0,.35)}
   .timer.on{display:flex}
-  .timer.fin{background:var(--pine); border-top-color:var(--pine)}
-  .timer.fin .t,.timer.fin .label{color:#F1ECE1}
+  .timer.fin{background:var(--volt); border-top-color:var(--volt)}
+  .timer.fin .t,.timer.fin .label{color:var(--black)}
   .timer.fin .drain{display:none}
-  .timer .drain{position:absolute; left:0; top:0; bottom:0; background:rgba(140,27,20,.18); transition:width 1s linear; pointer-events:none}
-  .timer .t{font-family:var(--fnum); font-size:64px; line-height:1}
-  .timer .tbtn{border:2px solid var(--ctrl); color:var(--dim); padding:14px 16px; font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.08em; position:relative; z-index:1}
-  /* review */
+  .timer .drain{position:absolute; left:0; top:0; height:8px; background:var(--ox); transition:width 1s linear; pointer-events:none}
+  .timer .t{font-family:var(--fnum); font-weight:900; font-size:72px; line-height:.95; font-variant-numeric:tabular-nums; text-shadow:4px 4px 0 #000}
+  .timer.fin .t{text-shadow:none}
+  .timer .tbtn{border:2px solid var(--line); background:var(--raised); color:var(--bone); padding:16px 18px; font-family:var(--fhead); font-weight:900; font-size:15px; text-transform:uppercase; letter-spacing:.06em; position:relative; z-index:1; box-shadow:3px 3px 0 #000}
+  .timer .tbtn:active{transform:translate(2px,2px)}
   .fb{border-left:2px solid var(--dim); padding-left:14px; margin-top:12px; font-size:14px; color:var(--dim); white-space:pre-wrap}
   .fbsec{margin-top:12px; border-left:3px solid var(--ox); padding-left:12px}
-  .fbsec.keep{border-left-color:var(--pine)}
-  .fbsec b{display:block; font-family:var(--fhead); font-size:12px; letter-spacing:.12em; color:var(--ox); margin-bottom:4px}
-  .fbsec.keep b{color:var(--pine)}
+  .fbsec.keep{border-left-color:var(--volt)}
+  .fbsec b{display:block; font-family:var(--fhead); font-weight:700; font-size:12px; letter-spacing:.12em; color:var(--ox); margin-bottom:4px}
+  .fbsec.keep b{color:var(--volt)}
   .fbsec p{margin:0; font-size:14px; color:var(--bone); white-space:pre-wrap}
-  .zoo{display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin:14px 0 4px}
-  .zoo svg{width:42px; height:42px}
-  .pending{font-family:var(--fhead); font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--ox); margin-top:12px}
+  .pending{font-family:var(--fhead); font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.08em; color:var(--gold); margin-top:12px}
   video{width:100%; margin-top:10px; background:#000; border:2px solid var(--line)}
-  /* progress */
-  .poster{font-family:var(--fnum); font-size:92px; line-height:.95; margin:0}
+  .poster{font-family:var(--fnum); font-weight:900; font-size:88px; line-height:.9; margin:0; text-shadow:5px 5px 0 #000}
   .poster small{font-family:var(--fhead); font-size:22px; color:var(--dim); letter-spacing:.04em}
   .spark{width:100%; height:56px; border-bottom:2px solid var(--line); margin:18px 0}
-  .lb-row{display:flex; align-items:baseline; margin-bottom:12px; font-family:var(--fhead); font-size:17px; text-transform:uppercase}
+  .lb-row{display:flex; align-items:baseline; margin-bottom:12px; font-family:var(--fhead); font-weight:700; font-size:17px; text-transform:uppercase}
   .lb-dots{flex:1; border-bottom:2px dotted var(--line); margin:0 8px; position:relative; top:-4px}
-  .lb-val{font-family:var(--fnum); font-size:22px; color:var(--ox)}
+  .lb-val{font-family:var(--fnum); font-weight:900; font-size:22px; color:var(--volt)}
   .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px dotted var(--line2); font-size:14px}
-  /* fuel */
-  .track{width:100%; height:14px; background:var(--line); margin:14px 0 8px}
-  .track i{display:block; height:100%; background:var(--ox); transition:width .3s}
-  .track.hit i{background:var(--pine)}
+  .track{width:100%; height:14px; background:var(--line2); border:2px solid var(--line); margin:14px 0 8px}
+  .track i{display:block; height:100%; background:var(--gold); transition:width .3s}
+  .track.hit i{background:var(--volt)}
   .chips{display:flex; gap:10px; overflow-x:auto; padding:6px 0 12px; scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chips button{flex:0 0 auto; border:2px solid var(--ctrl); padding:12px 18px;
-    font-family:var(--fhead); font-size:14px; text-transform:uppercase; letter-spacing:.04em}
-  .chips button:active{background:var(--bone); color:var(--black)}
+  .chips button{flex:0 0 auto; border:2px solid var(--line); background:var(--raised); padding:12px 18px;
+    font-family:var(--fhead); font-weight:700; font-size:14px; text-transform:uppercase; letter-spacing:.04em; box-shadow:3px 3px 0 #000}
+  .chips button:active{transform:translate(2px,2px)}
   .mealrow{display:flex; justify-content:space-between; gap:8px; border-bottom:1px dotted var(--line2); padding:12px 0;
-    font-family:var(--fhead); font-size:14px; text-transform:uppercase; color:var(--dim)}
-  .mealrow .g{color:var(--bone); font-family:var(--fnum); font-size:16px; white-space:nowrap}
-  /* tab bar */
+    font-family:var(--fhead); font-weight:700; font-size:14px; text-transform:uppercase; color:var(--dim)}
+  .mealrow .g{color:var(--bone); font-family:var(--fnum); font-weight:900; font-size:16px; white-space:nowrap}
   .tabbar{position:fixed; left:0; right:0; bottom:0; height:calc(72px + env(safe-area-inset-bottom)); display:flex;
-    background:var(--black); border-top:2px solid var(--line); padding-bottom:env(safe-area-inset-bottom); z-index:20}
-  .tabbar button{flex:1; font-family:var(--fhead); font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim); position:relative}
-  .tabbar button.main{flex:1.4; font-size:16px; font-weight:700; color:var(--bone)}
-  .tabbar button.sel{color:var(--ox)}
-  .tabbar button.sel::after{content:''; position:absolute; bottom:12px; left:50%; transform:translateX(-50%); width:24px; height:2px; background:var(--ox)}
+    background:var(--card); border-top:2px solid var(--line); padding-bottom:env(safe-area-inset-bottom); z-index:20}
+  .tabbar button{flex:1; font-family:var(--fhead); font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); border-right:1px solid var(--line)}
+  .tabbar button:last-child{border-right:0}
+  .tabbar button.main{flex:1.25; font-size:15px}
+  .tabbar button.sel{background:var(--volt); color:var(--black)}
   .warn{color:var(--ox); font-size:13px; margin-top:8px}
-  .good{color:var(--pine); font-size:13px; margin-top:8px}
-  .cuebox{border-left:3px solid var(--ox); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
-  .cuebox b{display:block; font-family:var(--fhead); font-size:11px; letter-spacing:.12em; color:var(--ox); margin-bottom:6px}
+  .good{color:var(--volt); font-size:13px; margin-top:8px}
+  .cuebox{border-left:3px solid var(--ice); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
+  .cuebox b{display:block; font-family:var(--fhead); font-weight:700; font-size:11px; letter-spacing:.12em; color:var(--ice); margin-bottom:6px}
+  /* ---- game surfaces ---- */
+  .toast{position:fixed; left:50%; top:16%; transform:translate(-50%,0); background:var(--volt); color:var(--black);
+    padding:12px 18px; font-family:var(--fhead); font-weight:900; font-size:18px; opacity:0; pointer-events:none; z-index:40}
+  .toast.on{animation:score .6s ease-out}
+  @keyframes score{0%{opacity:0;transform:translate(-50%,10px)}25%,70%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-18px)}}
+  .segs{display:grid; grid-template-columns:repeat(3,1fr); border:2px solid var(--line); margin-bottom:14px}
+  .segs button{height:48px; border:0; border-right:2px solid var(--line); background:var(--card); color:var(--dim); font-family:var(--fhead); font-weight:900; font-size:14px; letter-spacing:.08em}
+  .segs button:last-child{border-right:0}
+  .segs .on{background:var(--volt); color:var(--black)}
+  .leader{background:var(--card); border:2px solid var(--line); margin-bottom:10px; box-shadow:5px 5px 0 #000}
+  .player{display:grid; grid-template-columns:38px 52px 1fr auto; align-items:center; min-height:80px; padding:10px 12px; border-left:5px solid var(--player,#5E7480)}
+  .player .rank{font-family:var(--fpix); font-size:10px; color:var(--dim)}
+  .avatar{width:44px; height:44px; display:grid; place-items:center; background:var(--player,#5E7480); color:var(--black);
+    font-family:var(--fhead); font-weight:900; font-size:18px; clip-path:polygon(0 0,80% 0,100% 20%,100% 100%,20% 100%,0 80%)}
+  .pname{padding-left:10px; font-family:var(--fhead); font-weight:900; font-size:22px; line-height:1; text-transform:uppercase}
+  .pname small{display:block; font-family:var(--fhead); font-weight:700; font-size:11px; color:var(--dim); letter-spacing:.08em; margin-top:5px; text-transform:uppercase}
+  .pts{text-align:right; font-family:var(--fnum); font-weight:900; font-size:36px; line-height:.9; font-variant-numeric:tabular-nums}
+  .pts small{display:block; font-family:var(--fhead); font-weight:700; font-size:10px; color:var(--player,#5E7480); letter-spacing:.1em; margin-top:6px}
+  .delta{margin:16px 0; padding:13px 14px; background:var(--raised); border-left:4px solid var(--ox); font-family:var(--fhead); font-weight:900; font-size:17px; letter-spacing:.04em; text-transform:uppercase}
+  .feed{background:var(--card); border:2px solid var(--line)}
+  .event{padding:13px 14px 13px 16px; border-bottom:1px solid var(--line); border-left:4px solid var(--player,#5E7480)}
+  .event:last-child{border-bottom:0}
+  .event b{font-family:var(--fhead); font-weight:900; font-size:15px; text-transform:uppercase}
+  .event small{display:block; margin-top:3px; color:var(--dim); font-size:12px}
+  .event strong{color:var(--player,#5E7480)}
+  .win{text-align:center; border:3px solid var(--volt); background:var(--card); padding:22px 14px 16px; box-shadow:7px 7px 0 #000;
+    clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
+  .win .kicker{font-family:var(--fhead); font-weight:700; font-size:12px; letter-spacing:.16em; color:var(--volt); text-transform:uppercase}
+  .win h1{font-size:64px; line-height:.9; margin:8px 0; text-shadow:4px 4px 0 #000}
+  .scoregrid{display:grid; grid-template-columns:repeat(3,1fr); border:2px solid var(--line); margin:16px 0; background:var(--card)}
+  .scoregrid div{padding:12px 6px; text-align:center; border-right:2px solid var(--line)}
+  .scoregrid div:last-child{border:0}
+  .scoregrid strong{display:block; font-family:var(--fnum); font-weight:900; font-size:24px; color:var(--bone)}
+  .scoregrid small{font-family:var(--fhead); font-weight:700; font-size:10px; letter-spacing:.1em; color:var(--dim); text-transform:uppercase}
+  .scoregrid .gain{color:var(--volt)}
+  .lreceipt{position:relative; overflow:hidden; background:var(--card); border:3px solid var(--gold); padding:18px; margin-top:16px; box-shadow:6px 6px 0 #000; text-align:left}
+  .lreceipt::before{content:"LOADOUT RECEIPT"; display:block; color:var(--gold); font-family:var(--fpix); font-size:10px; line-height:1.5; margin-bottom:12px}
+  .object{display:grid; grid-template-columns:44% 1fr; gap:8px; align-items:center; min-height:150px; border-top:2px solid var(--line); border-bottom:2px solid var(--line); padding:12px 0}
+  .object img{width:100%; image-rendering:pixelated; filter:drop-shadow(6px 6px 0 #000)}
+  .equiv{font-family:var(--fhead); font-weight:900; font-size:20px; text-transform:uppercase; color:var(--dim)}
+  .equiv strong{display:block; font-size:42px; line-height:.9; color:var(--gold); margin:7px 0}
+  .exact{font-family:var(--fhead); font-weight:700; font-size:13px; letter-spacing:.08em}
+  .lchips{display:flex; gap:7px; flex-wrap:wrap; padding-top:12px}
+  .lchips span{background:var(--raised); border:1px solid var(--line); padding:7px 9px; font-family:var(--fhead); font-weight:700; font-size:12px; color:var(--dim); text-transform:uppercase}
+  .lchips b{color:var(--bone)}
+  .talk{margin-top:14px; border-left:4px solid var(--ice); background:var(--raised); padding:11px 13px; font-size:14px; color:var(--bone); text-align:left}
+  .talk b{display:block; color:var(--ice); font-family:var(--fhead); font-weight:900; font-size:12px; letter-spacing:.1em; margin-bottom:4px}
+  .marquee{position:relative; overflow:hidden; text-align:center; background:var(--card); border:4px solid var(--violet); padding:24px 14px 18px; box-shadow:7px 7px 0 #000; margin-bottom:14px}
+  .marquee::before{content:''; position:absolute; left:0; right:0; top:0; height:7px; background:repeating-linear-gradient(90deg,var(--violet) 0 8px,transparent 8px 16px)}
+  .marquee .kicker{font-family:var(--fpix); font-size:10px; line-height:1.5; color:var(--violet)}
+  .marquee h1{font-size:42px; margin:12px 0 6px}
+  .issuer{border-left:5px solid var(--ox); background:var(--card); padding:16px; margin-bottom:14px}
+  .issuer .danger{color:var(--ox); font-family:var(--fhead); font-weight:900; font-size:16px; text-transform:uppercase}
+  .rowsx{background:var(--card); border:2px solid var(--line); margin:15px 0}
+  .rowx{display:grid; grid-template-columns:88px 1fr; gap:10px; padding:12px; border-bottom:1px solid var(--line)}
+  .rowx:last-child{border:0}
+  .rowx b{font-family:var(--fhead); font-weight:900; font-size:12px; letter-spacing:.1em; color:var(--dim); text-transform:uppercase}
+  .rowx span{font-family:var(--fhead); font-weight:700; font-size:15px}
+  .subnav{display:flex; gap:8px; overflow-x:auto; padding:2px 0 14px; scrollbar-width:none}
+  .subnav::-webkit-scrollbar{display:none}
+  .subnav button{flex:0 0 auto; height:44px; padding:0 16px; border:2px solid var(--line); background:var(--card); color:var(--dim); font-family:var(--fhead); font-weight:900; font-size:13px; letter-spacing:.06em; text-transform:uppercase}
+  .subnav .on{background:var(--gold); color:var(--black); border-color:var(--gold)}
+  @media(prefers-reduced-motion:reduce){
+    .toast.on{animation:none;opacity:1}
+    .timer .drain{transition:none}
+    .track i{transition:none}
+  }
 </style>
 </head>
 <body>
@@ -163,6 +231,14 @@
   </div>
 </div>
 <div class="tabbar" id="tabbar"></div>
+<div class="toast" id="toast" role="status"></div>
+<script type="module">
+  // game engines ride as real modules; the app degrades gracefully if they fail to load
+  try{
+    const sc=await import('./game/scoring.js'); window.SCORING=sc;
+    const bm=await import('./game/benchmarks.js'); window.BENCHTALK=bm;
+  }catch(e){/* offline first launch before sw precache — game math waits for next open */}
+</script>
 <script>
 const $=id=>document.getElementById(id);
 // escape anything dynamic that rides innerHTML — server/model/user strings are data, not markup
@@ -198,10 +274,19 @@ async function init(){
   route();
 }
 function tabbar(){
-  const t=[['review','Review'],['progress','Progress'],['today','Train'],['fuel','Fuel'],['gear','Gear']];
+  const t=[['today','Train'],['fuel','Fuel'],['rivalry','Rivalry'],['vault','Vault']];
   $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${v==='today'?'main ':''}${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
 }
-function route(){tabbar();({today:render,review:renderReview,progress:renderProgress,fuel:renderFuel,gear:renderGear})[view]()}
+let VVIEW=localStorage.getItem('vview')||'film'; // vault sub-tab
+function route(){tabbar();({today:render,fuel:renderFuel,rivalry:renderRivalry,vault:renderVault})[view]()}
+function renderVault(){
+  const sub={film:renderReview,progress:renderProgress,gear:renderGear,trophy:renderTrophy};
+  (sub[VVIEW]||renderReview)();
+}
+function vaultNav(){
+  const t=[['film','Film'],['progress','Progress'],['trophy','Trophies'],['gear','Gear']];
+  return `<div class="pix" style="padding:6px 0 10px">TRAIN · THE VAULT</div><div class="subnav">${t.map(([v,l])=>`<button class="${VVIEW===v?'on':''}" onclick="VVIEW='${v}';localStorage.setItem('vview','${v}');renderVault()">${l}</button>`).join('')}</div>`;
+}
 
 /* ---------- UNITS ---------- */
 const KG2LB=2.20462;
@@ -271,7 +356,7 @@ function render(){
   const app=$('app');
   if(!S){app.innerHTML=connectBanner()+fuelStrip()+(loadFailed
     ?`<div class="sealwrap"><div class="seal"><div class="mon">Can't load sessions</div><hr class="dotted"><div class="label">Offline and nothing cached — reopen with signal.</div></div><button class="btn small" onclick="init()">Retry</button></div>`
-    :`<div class="sealwrap"><div class="seal"><div class="mon">No session queued</div><hr class="dotted"><div class="label">Claude programs the next one tonight.</div></div></div>`);return}
+    :`<div class="sealwrap"><div class="seal"><div class="mon">Coach is building the next round</div><hr class="dotted"><div class="label">Nothing queued. Enjoy it — it won't last.</div></div></div>`);return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
   const idx=ALLSESS.indexOf(S);
@@ -281,7 +366,7 @@ function render(){
       <div class="poster num">DONE</div>
       <hr class="rule">
       <div class="head" style="color:var(--ox);font-size:20px">Recovery required</div>
-      <p style="color:var(--dim)">Next session unlocks tomorrow. Protein and sleep are the workout now.</p></div>`+requestsCard();
+      <p style="color:var(--dim)">Next round unlocks tomorrow. Protein and sleep are the workout now — don't fuck with the recovery.</p></div>`+requestsCard();
     return;
   }
   if(!L.revealed && today()<S.date){
@@ -289,7 +374,7 @@ function render(){
     return;
   }
   if(!L.revealed){
-    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Today',`<button class="btn accent" onclick="reveal()">Break seal</button>`);
+    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Today',`<button class="btn accent" onclick="reveal()">PRESS START</button>`);
     return;
   }
   const snum=String(idx+1).padStart(3,'0');
@@ -415,6 +500,8 @@ function logSet(bid,i){
   if(!r){$(`r_${bid}_${i}`).focus();return} // no reps = not a set; weight may be blank (bodyweight moves)
   bl.sets[i]={w:$(`w_${bid}_${i}`).value.trim(),u:unit(),r,done:true,at:new Date().toISOString()};
   delete DRAFTS[`w_${bid}_${i}`];delete DRAFTS[`r_${bid}_${i}`];
+  const lb=Math.round(setLbs(bl.sets[i])*(parseFloat(r)||0));
+  if(lb)toastMsg(`+${lb.toLocaleString()} LB BANKED. CLEAN SHIT.`);
   EXP=null;store.save(log);autoSync();startTimer(90);render();
 }
 function logCheck(bid){
@@ -457,12 +544,12 @@ function logMeasure(bid){
 /* ---------- OUTBOX (every write survives a dead zone; retried until 2xx) ---------- */
 function outbox(){return j('outbox',[])}
 let obSeq=0;
-function queuePost(kind,body,mark){
+function queuePost(kind,body,mark,route){
   const ob=outbox();
-  // one queued entry per session log — newer snapshot replaces older
-  const eid=kind==='session'?'s:'+body.sessionId:kind+':'+Date.now()+':'+Math.random().toString(36).slice(2,7);
+  // one queued entry per session log — newer snapshot replaces older; scores dedupe per day
+  const eid=kind==='session'?'s:'+body.sessionId:kind==='score'?'sc:'+body.day:kind+':'+Date.now()+':'+Math.random().toString(36).slice(2,7);
   const i=ob.findIndex(e=>e.id===eid);
-  const entry={id:eid,body,v:Date.now()+(++obSeq/1000),mark};
+  const entry={id:eid,body,v:Date.now()+(++obSeq/1000),mark,route};
   if(i>=0)ob[i]=entry;else ob.push(entry);
   sv('outbox',ob);
   return flushOutbox();
@@ -482,7 +569,7 @@ async function flushOutbox(depth=0){
   try{
     for(const e of outbox()){
       try{
-        const res=await fetch(endpoint+'/log',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+        const res=await fetch(endpoint+(e.route||'/log'),{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
           body:JSON.stringify(e.body)});
         if(!res.ok)continue;
         // remove ONLY the exact version we sent — if Finish replaced this entry mid-flight, the newer snapshot survives
@@ -564,7 +651,11 @@ async function finish(){
   clearTimeout(autoT); // delayed partial autosave must not fire after the final log
   L.completed=true;L.completedAt=new Date().toISOString();
   L.notes=$('notes')?$('notes').value:L.notes;
-  store.save(log);await sync();renderDone();
+  store.save(log);
+  const ds=computeDayScore(L);
+  if(ds){L.dayScore=ds.score.total;store.save(log);postScore(ds)}
+  await sync();renderDone();
+  if(navigator.vibrate)navigator.vibrate([60,40,120]);
 }
 function unfinish(){ // 10-min undo window for a fat-fingered FINISH
   const L=log[S.id];L.completed=false;delete L.completedAt;L.synced=false;
@@ -583,235 +674,267 @@ function sessionStats(L){
 function renderDone(){
   const L=log[S.id];
   const {vol,dur}=sessionStats(L);
+  const snum=String(ALLSESS.indexOf(S)+1).padStart(3,'0');
+  const sc=L.dayScore??(j('dayscores',{})[(L.completedAt||'').slice(0,10)]||{}).total;
   $('app').innerHTML=fuelStrip()+`<div class="sealwrap">
-    <div class="poster num">DONE</div>
-    <hr class="rule">
-    ${dur?`<div style="display:flex;justify-content:space-between" class="label lit"><span>DURATION</span><span class="num" style="font-size:18px">${dur} MIN</span></div><hr class="dotted" style="margin:10px 0">`:''}
-    ${vol?`<div style="display:flex;justify-content:space-between" class="label lit"><span>VOLUME</span><span class="num" style="font-size:18px">${both(vol)}</span></div><hr class="rule">`:''}
-    <div class="label lit" style="margin-top:8px">RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div>
-    ${zooStamp(vol,S.id+(L.completedAt||''))}
-    <div class="${L.synced?'good':'warn'}">${L.synced?'Synced to coach ✓':'Not synced yet — queued, retries automatically when you have signal. Export below if you want it out now.'}</div>
-    ${L.synced?'':'<button class="btn small" style="margin-top:12px" onclick="flushOutbox().then(()=>renderDone())">Retry sync now</button>'}
-    <button class="btn small" style="margin-top:16px" onclick="exportLog()">Export log (share to Claude)</button>
+    <section class="win"><div class="kicker">SESSION ${snum} CLEARED</div><h1>DONE.</h1>
+      <div class="head" style="font-size:17px;letter-spacing:.08em;color:var(--dim)">${dur?dur+' MIN · ':''}RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div></section>
+    ${sc!=null?`<section class="scoregrid">
+      <div><strong class="gain">+${sc}</strong><small>DAILY SCORE</small></div>
+      <div><strong>${both(vol).split(' · ')[0]||'—'}</strong><small>IRON MOVED</small></div>
+      <div><strong>${dur??'—'}</strong><small>MINUTES</small></div></section>`:''}
+    ${loadoutStamp(vol)}
+    ${benchTalkFor(L)}
+    <div class="${L.synced?'good':'warn'}">${L.synced?'SYNCED TO COACH ✓':'QUEUED — retries automatically when you have signal. Nothing is lost.'}</div>
+    ${L.synced?'':'<button class="btn small" style="margin-top:12px" onclick="flushOutbox().then(()=>renderDone())">RETRY SYNC NOW</button>'}
+    <button class="btn small" style="margin-top:16px" onclick="exportLog()">EXPORT LOG (SHARE TO CLAUDE)</button>
     ${(L.completedAt&&Date.now()-new Date(L.completedAt)<600000)?'<br><span class="skip" onclick="unfinish()">undo — reopen this session</span>':''}</div>`;
 }
 async function sync(){
   await queuePost('session',{type:'session-log',sessionId:S.id,log:log[S.id]});
 }
-/* ---------- THE ZOO — total volume, measured in cute animals ---------- */
-const ZOO=[
-  ['squirrels',1.5],['guinea pigs',2.5],['rabbits',4],['housecats',10],['pugs',18],['cockapoos',20],
-  ['raccoons',25],['corgis',27],['beavers',50],['golden retrievers',65],['capybaras',110],['goats',130],
-  ['st bernards',160],['pandas',250],['sea turtles',300],['pigs',500],['ponies',600],['grizzly bears',700],
-  ['polar bears',990],['moose',1200],['cows',1400],['walruses',2000],['hippos',3300],['elephants',12000]
+/* ---------- THE GAME — IRON CIRCUIT core (loadout receipt, scoring, rivalry, trophies) ---------- */
+function toastMsg(t){const el=$('toast');el.textContent=t;el.classList.remove('on');void el.offsetWidth;el.classList.add('on')}
+// LOADOUT RECEIPT — volume restamped as real-world objects (design-pack OBJECT_SYSTEM.md).
+// Reference weights are round game values, not claims about specific models.
+const OBJECTS=[
+  ['safe-500','CAST-IRON SAFE','SAFES',500],['piano-700','CONCERT PIANO','PIANOS',700],
+  ['vending-900','LOADED VENDING MACHINE','VENDING MACHINES',900],['gold-1000','36 GOLD BARS','GOLD STACKS',1000],
+  ['motorcycle-1200','FULL-DRESS TOURING BIKE','TOURING BIKES',1200],['dragster-1800','DRAGSTER','DRAGSTERS',1800],
+  ['sedan-3200','SPORT SEDAN','SEDANS',3200],['pickup-4800','FULL-SIZE PICKUP','PICKUPS',4800],
+  ['armored-suv-6500','ARMORED SUV','ARMORED SUVS',6500],['container-8500','EMPTY 20-FT CONTAINER','CONTAINERS',8500],
+  ['monster-truck-12000','MONSTER TRUCK','MONSTER TRUCKS',12000],['city-bus-28000','CITY BUS','CITY BUSES',28000]
 ];
-function zooHash(s){let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))>>>0;return h}
-function animalSVG(name){
-  const K='#191410',W='#F8F5EE',OX='#8C1B14',P='#31543F';
-  const TAN='#CBA97E',BRN='#A67F54',DK='#82684A',OAT='#D6BE93',GRY='#B3AC9E',PNK='#D3A090',CHOC='#65472F';
-  const S=`stroke="${K}" stroke-width="2.2" stroke-linejoin="round"`;
-  const s1=`stroke="${K}" stroke-width="1.6" stroke-linejoin="round"`;
-  const eye=(x,y)=>`<circle cx="${x}" cy="${y}" r="1.8" fill="${K}"/>`;
-  const blush=(x,y)=>`<circle cx="${x}" cy="${y}" r="2.1" fill="${OX}" opacity=".22"/>`;
-  const smile=(x,y)=>`<path d="M${x-2} ${y} q2 2.2 4 0" stroke="${K}" stroke-width="1.5" fill="none" stroke-linecap="round"/>`;
-  const face=(x,y,mouth)=>eye(x-4.8,y)+eye(x+4.8,y)+blush(x-8.2,y+5)+blush(x+8.2,y+5)+(mouth||smile(x,y+4.5));
-  // hoofed muzzle
-  const muz=(x,y,fill)=>`<ellipse cx="${x}" cy="${y}" rx="7.4" ry="4.8" fill="${fill}" ${s1}/><circle cx="${x-2.8}" cy="${y-.4}" r="1.15" fill="${K}"/><circle cx="${x+2.8}" cy="${y-.4}" r="1.15" fill="${K}"/>`;
-  const teeth=(x,y)=>`<path d="M${x-2.4} ${y} h4.8 v3.4 h-4.8 z" fill="${W}" stroke="${K}" stroke-width="1.2"/><path d="M${x} ${y} v3.4" stroke="${K}" stroke-width="1.1"/>`;
-  const tongue=(x,y)=>`<circle cx="${x}" cy="${y}" r="1.5" fill="${K}"/><path d="M${x} ${y+1.4} q0 2.4 2.4 2.4" stroke="${K}" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M${x+1.8} ${y+3} q1 3.2 -.8 3.2 q-1.7 0 -.8 -2.6" fill="${OX}" opacity=".85"/>`;
-  const leg=(x,c,y=43,h=12)=>`<rect x="${x}" y="${y}" width="6.4" height="${h}" rx="3.2" fill="${c}" stroke="${K}" stroke-width="2"/>`;
-  const legs4=(c,y,h)=>leg(14,c,y,h)+leg(24,c,y,h)+leg(36,c,y,h)+leg(46,c,y,h);
-  const body=(c,rx=20,ry=12.5,cx=30,cy=37)=>`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="${c}" ${S}/>`;
-  const head=(c,r=13,cx=48,cy=19)=>`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${c}" ${S}/>`;
-  const wrap=x=>`<svg viewBox="0 0 72 60" fill="none">${x}</svg>`;
-  const earsRound=(c,r=3.8)=>`<circle cx="39" cy="8.5" r="${r}" fill="${c}" ${s1}/><circle cx="57" cy="8.5" r="${r}" fill="${c}" ${s1}/>`;
-  const earsPoint=c=>`<path d="M39 10 l-1.5 -8.5 l8 5 M57 10 l1.5 -8.5 l-8 5" fill="${c}" ${S}/>`;
-  const earsFlop=c=>`<path d="M37 9 q-6.5 1.5 -6 12 q.5 6.5 5.5 5 M59 9 q6.5 1.5 6 12 q-.5 6.5 -5.5 5" fill="${c}" ${S}/>`;
-  switch(name){
-    case 'squirrels':return wrap(
-      `<path d="M12 42 q-14 -5 -10 -22 q3 -14 16 -15 q-8 10 -3 21 q2.5 5.5 7 8" fill="${BRN}" ${S}/>`+
-      body(TAN,17,11.5,28,39)+leg(20,TAN,45,10)+leg(33,TAN,45,10)+
-      earsRound(TAN)+head(TAN)+face(48,18,teeth(48,23.5)));
-    case 'guinea pigs':return wrap(
-      `<path d="M9 38 q-1 -19 21 -19 h14 q19 0 19 15 q0 16 -19 16 h-16 q-18 0 -19 -12 z" fill="${OAT}" ${S}/>`+
-      `<path d="M12 24 q9 -4 14 2 q3 8 -3 13 q-9 2 -12 -5 q-1 -6 1 -10 z" fill="${BRN}" opacity=".85"/>`+
-      `<circle cx="52" cy="12.5" r="3.4" fill="${OAT}" ${s1}/><circle cx="40" cy="12.5" r="3.2" fill="${BRN}" ${s1}/>`+
-      face(46,24,teeth(46,29.5))+
-      `<rect x="20" y="48" width="5.4" height="6" rx="2.7" fill="${OAT}" stroke="${K}" stroke-width="1.8"/><rect x="42" y="48" width="5.4" height="6" rx="2.7" fill="${OAT}" stroke="${K}" stroke-width="1.8"/>`);
-    case 'rabbits':return wrap(
-      `<circle cx="10" cy="36" r="5" fill="${W}" ${s1}/>`+
-      body(W,19,12)+legs4(W)+
-      `<path d="M42 12 q-5 -12 .5 -12 q5 0 5.5 12 M54 12 q5 -12 -.5 -12 q-5 0 -5.5 12" fill="${W}" ${S}/>`+
-      `<path d="M43.6 10 q-2.8 -7.5 .2 -8 M52.4 10 q2.8 -7.5 -.2 -8" stroke="${PNK}" stroke-width="2.4" stroke-linecap="round" fill="none" opacity=".7"/>`+
-      head(W,12.5,48,21)+face(48,20,`<path d="M48 23 v2.6 M46 28 q2 1.8 4 0 M48 25.6 l-1.9 -1.3 M48 25.6 l1.9 -1.3" stroke="${K}" stroke-width="1.3" stroke-linecap="round" fill="none"/>`));
-    case 'housecats':return wrap(
-      `<path d="M10 44 q-9 -2 -6 -10 q2.5 -6 9 -3" fill="${GRY}" ${S}/>`+
-      body(GRY,19,12)+legs4(GRY)+earsPoint(GRY)+head(GRY)+
-      `<path d="M34 17 h-8 M34 20.5 h-7 M62 17 h8 M62 20.5 h7" stroke="${K}" stroke-width="1.1" stroke-linecap="round"/>`+
-      face(48,18));
-    case 'pugs':return wrap(
-      `<path d="M12 33 q-5 -1 -4 -6 q3.5 -1 6 2 z" fill="${OAT}" ${s1}/>`+
-      `<circle cx="11" cy="35" r="4.4" fill="${OAT}" ${s1}/>`+
-      body(OAT,19,12)+legs4(OAT)+
-      `<path d="M38 9 q-4 -2 -4 4 l3 4 M58 9 q4 -2 4 4 l-3 4" fill="${DK}" ${S}/>`+
-      head(OAT)+
-      `<ellipse cx="48" cy="24" rx="7.8" ry="6" fill="${DK}" opacity=".85"/>`+
-      eye(43.2,18)+eye(52.8,18)+blush(39.8,23)+blush(56.2,23)+
-      `<circle cx="48" cy="22.5" r="1.7" fill="${K}"/><path d="M48 24 q0 2.4 2.4 2.4 M48 24 q0 2.4 -2.4 2.4" stroke="${K}" stroke-width="1.3" fill="none" stroke-linecap="round"/>`);
-    case 'cockapoos':return wrap(
-      `<path d="M10 32 q-6 -3 -4 -8 q4.5 1.5 7 5" fill="#C89B6B" ${S}/>`+
-      body(OAT,19,12)+legs4(OAT)+earsFlop('#C89B6B')+head(OAT)+
-      `<path d="M38 11 q3.5 -6 10 -5 q7 -1 10 5 q-5 -2 -10 -1.2 q-5 -.8 -10 1.2" fill="#C89B6B" ${s1}/>`+
-      face(48,19,tongue(48,23.5)));
-    case 'raccoons':return wrap(
-      `<path d="M13 45 q-11 1 -10 -8 q1 -7 9 -6 l4 6 z" fill="${GRY}" ${S}/>`+
-      `<path d="M6 34 l8 2 M4.5 39 l9 1" stroke="${K}" stroke-width="1.8"/>`+
-      body(GRY,19,12)+legs4('#9A937F')+earsPoint(GRY)+head(GRY)+
-      `<path d="M36.5 15 q5 -3.5 11.5 -3.5 q6.5 0 11.5 3.5 q-1 6 -6 6.5 q-3.5 .5 -5.5 -2 q-2 2.5 -5.5 2 q-5 -.5 -6 -6.5 z" fill="${CHOC}" opacity=".88"/>`+
-      `<circle cx="43" cy="17.5" r="1.9" fill="${W}"/><circle cx="53" cy="17.5" r="1.9" fill="${W}"/>`+
-      eye(43,17.5)+eye(53,17.5)+blush(39.8,24)+blush(56.2,24)+
-      `<circle cx="48" cy="23" r="1.5" fill="${K}"/>`+smile(48,24.5));
-    case 'corgis':return wrap(
-      `<circle cx="11" cy="34" r="4.6" fill="${W}" ${s1}/>`+
-      body(TAN,19,12)+
-      `<path d="M14 41 a17 9 0 0 0 32 3 q-16 6 -32 -3 z" fill="${W}" stroke="none"/>`+
-      leg(16,W,44,9)+leg(26,W,44,9)+leg(36,W,44,9)+leg(45,W,44,9)+
-      `<path d="M38 11 l-3 -10 l10 6 M58 11 l3 -10 l-10 6" fill="${TAN}" ${S}/>`+
-      head(TAN)+
-      `<ellipse cx="48" cy="24" rx="6.2" ry="4.6" fill="${W}" stroke="none"/>`+
-      face(48,17.5,`<circle cx="48" cy="22.5" r="1.6" fill="${K}"/>`+smile(48,24.2)));
-    case 'beavers':return wrap(
-      `<path d="M4 44 q-3.5 -9 5 -12 q8 -2.5 10 4.5 l-3.5 10 q-8 3.5 -11.5 -2.5" fill="${DK}" ${S}/>`+
-      `<path d="M6 37 l9 3 M5 41 l10 1.5" stroke="${K}" stroke-width="1.2"/>`+
-      body(BRN,18,12.5,29,37)+legs4(BRN)+earsRound(BRN,3.4)+head(BRN)+face(48,18,teeth(48,23.5)));
-    case 'golden retrievers':return wrap(
-      `<path d="M11 30 q-8 -1 -7 8 q.5 6 6 5 l4 -9 z" fill="${OAT}" ${S}/>`+
-      body(OAT,19.5,12)+legs4(OAT)+earsFlop('#D8B384')+head(OAT)+
-      face(48,18,tongue(48,23)));
-    case 'capybaras':return wrap(
-      `<path d="M9 34 q0 -15 20 -15 h18 q16 0 16 13 q0 14 -16 14 h-18 q-20 0 -20 -12 z" fill="${BRN}" ${S}/>`+
-      `<circle cx="52" cy="14.5" r="3" fill="${BRN}" ${s1}/><circle cx="40" cy="14" r="2.7" fill="${BRN}" ${s1}/>`+
-      eye(44,24)+eye(53,24)+blush(40,29.5)+blush(57.5,29.5)+
-      `<ellipse cx="48.5" cy="31" rx="6.4" ry="4.2" fill="${DK}" opacity=".55"/>`+
-      `<circle cx="48.5" cy="29.8" r="1.4" fill="${K}"/><path d="M48.5 31.2 v2" stroke="${K}" stroke-width="1.2" stroke-linecap="round"/>`+
-      legs4(BRN,44,10));
-    case 'goats':return wrap(
-      `<path d="M11 30 q-3.5 -4 1 -6.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
-      body(W,19,11.5,30,36)+legs4(W)+
-      `<path d="M42 8 q-2.5 -8 -7.5 -8 q0 6.5 4.5 9.5 M54 8 q2.5 -8 7.5 -8 q0 6.5 -4.5 9.5" fill="#D8CDBB" ${S}/>`+
-      `<path d="M37 16 q-6.5 0 -6.5 5.5 q4.5 2 8.5 -2.5 M59 16 q6.5 0 6.5 5.5 q-4.5 2 -8.5 -2.5" fill="${W}" ${s1}/>`+
-      head(W,12.5)+face(48,17)+
-      `<path d="M48 30 q-1.6 3.2 0 5.5 q1.6 -2.3 0 -5.5" fill="#D8CDBB" ${s1}/>`);
-    case 'st bernards':return wrap(
-      `<circle cx="10" cy="33" r="4.8" fill="${W}" ${s1}/>`+
-      body(W,20.5,13,30,37)+
-      `<path d="M15 29 q8 -5 14 1 q3 7 -3 12 q-9 2 -13 -5 z" fill="${BRN}" opacity=".9"/>`+
-      legs4(W)+earsFlop(BRN)+head(W,13.5)+
-      `<path d="M40 8.5 q8 -5 16 0 l-2.5 8 q-5.5 -3 -11 0 z" fill="${BRN}" opacity=".9"/>`+
-      face(48,19,`<circle cx="48" cy="23" r="1.7" fill="${K}"/>`+smile(48,24.8)));
-    case 'pandas':return wrap(
-      body(W,19,12.5,29,37)+
-      `<path d="M12 32 q-6 4 -3 10 q3 5 8 2 z" fill="${K}"/><path d="M38 43 q1 8 8 7" stroke="${K}" stroke-width="6" stroke-linecap="round"/>`+
-      leg(16,K,44,10)+leg(38,K,44,10)+
-      `<circle cx="39" cy="8.5" r="4.6" fill="${K}"/><circle cx="57" cy="8.5" r="4.6" fill="${K}"/>`+
-      head(W)+
-      `<ellipse cx="43.4" cy="17.5" rx="3.6" ry="4.5" fill="${K}"/><ellipse cx="52.6" cy="17.5" rx="3.6" ry="4.5" fill="${K}"/>`+
-      `<circle cx="43.4" cy="17.5" r="1.4" fill="${W}"/><circle cx="52.6" cy="17.5" r="1.4" fill="${W}"/>`+
-      blush(39.5,23.5)+blush(56.5,23.5)+smile(48,23));
-    case 'sea turtles':return wrap(
-      `<ellipse cx="29" cy="32" rx="20" ry="15" fill="${P}" ${S}/>`+
-      `<path d="M19 24 l7 4 l-2 8 l-8 1 z M34 21.5 l7 5 l-3 8 l-8 -3 z M24 38 l6 2 l-1.5 6 l-7 -1 z" fill="#43654F" stroke="${K}" stroke-width="1.3" stroke-linejoin="round"/>`+
-      `<circle cx="54" cy="21" r="9.5" fill="#A8BF97" ${S}/>`+
-      eye(51,19.5)+eye(57.5,19.5)+blush(48.5,24.5)+blush(60,24.5)+smile(54,24.5)+
-      `<path d="M13 44 q-5 6 1.5 7.5 M35 47 q0 7 6.5 6" stroke="${K}" stroke-width="2.4" stroke-linecap="round" fill="none"/>`);
-    case 'pigs':return wrap(
-      `<path d="M10 33 q-5 -1 -4 -4 q3 -2 5 1 q2 -3 4 0 q0 3.5 -5 3" fill="${PNK}" ${s1}/>`+
-      body(PNK,19.5,12.5)+legs4(PNK)+
-      `<path d="M39 10 l-2 -8.5 l8.5 4.5 M57 10 l2 -8.5 l-8.5 4.5" fill="${PNK}" ${S}/>`+
-      head(PNK)+
-      `<ellipse cx="48" cy="22.5" rx="6" ry="4.4" fill="#C98F7F" ${s1}/><circle cx="45.8" cy="22.5" r="1.15" fill="${K}"/><circle cx="50.2" cy="22.5" r="1.15" fill="${K}"/>`+
-      eye(42.5,17)+eye(53.5,17)+blush(39.5,22.5)+blush(56.5,22.5));
-    case 'ponies':return wrap(
-      `<path d="M9 30 q-6 7 -2.5 14 q2.5 3.5 6 1" fill="${DK}" ${s1}/>`+
-      body(TAN,19,11.5,30,36)+legs4(TAN)+
-      `<path d="M41 9 l0 -8 l7 5 M57 9 l0 -8 l-7 5" fill="${TAN}" ${S}/>`+
-      `<path d="M49 4 q-3.5 6 0 11 q3.5 -4.5 7 -4.5 q-2.5 -6.5 -7 -6.5" fill="${DK}" ${s1}/>`+
-      head(TAN,12.5)+eye(43.5,15.5)+eye(52.5,15.5)+blush(40,20.5)+blush(56,20.5)+muz(48,24.5,'#DECDB0'));
-    case 'grizzly bears':return wrap(
-      `<circle cx="11" cy="33" r="4" fill="${BRN}" ${s1}/>`+
-      body(BRN,20.5,13,30,37)+legs4(BRN)+earsRound(BRN,4.2)+head(BRN)+
-      eye(43.5,17)+eye(52.5,17)+blush(40,22.5)+blush(56,22.5)+
-      `<ellipse cx="48" cy="23" rx="6" ry="4.4" fill="${TAN}" ${s1}/><circle cx="48" cy="21.8" r="1.7" fill="${K}"/>`+smile(48,23.8));
-    case 'polar bears':return wrap(
-      `<circle cx="11" cy="33" r="4" fill="${W}" ${s1}/>`+
-      body(W,20.5,13,30,37)+legs4(W)+earsRound(W,4)+head(W)+
-      eye(43.5,17)+eye(52.5,17)+blush(40,22.5)+blush(56,22.5)+
-      `<circle cx="48" cy="21.5" r="1.9" fill="${K}"/>`+smile(48,23.5));
-    case 'moose':return wrap(
-      `<path d="M10 31 q-3 3.5 -1 6.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
-      body(BRN,20,12,30,36)+legs4(BRN)+
-      `<path d="M39 9 q-10 -1 -10 -8.5 q5 -1.2 7.5 2.2 q0 -3.4 3.4 -4 q3.1 4 3.1 10.3 M57 9 q10 -1 10 -8.5 q-5 -1.2 -7.5 2.2 q0 -3.4 -3.4 -4 q-3.1 4 -3.1 10.3" fill="${DK}" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`+
-      head(BRN,12.5)+eye(43.5,15)+eye(52.5,15)+blush(40,20)+blush(56,20)+
-      `<ellipse cx="48" cy="24" rx="7.6" ry="5" fill="#C89B6B" ${s1}/><circle cx="45.2" cy="23.6" r="1.15" fill="${K}"/><circle cx="50.8" cy="23.6" r="1.15" fill="${K}"/>`);
-    case 'cows':return wrap(
-      `<path d="M9 29 q-4.5 4.5 -1 9 M8 37.5 l-2.5 2.5 M8 37.5 l3.5 1" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
-      body(W,20,12,30,36)+
-      `<path d="M17 29 q7 -3.5 10.5 1 q-1 7 -8 6 q-4.5 -2.5 -2.5 -7 z M31 40 q6 -2.5 8.5 1 q0 4.5 -6 4.5 q-4.5 -1 -2.5 -5.5 z" fill="${K}" opacity=".85"/>`+
-      legs4(W)+
-      `<path d="M38 12 q-8 0 -8 -5.5 q4.5 -2.2 9 1.2 M58 12 q8 0 8 -5.5 q-4.5 -2.2 -9 1.2" fill="#D8CDBB" stroke="${K}" stroke-width="1.8" stroke-linejoin="round"/>`+
-      head(W,12.5)+
-      `<path d="M52 7 q5.5 -1 8 3.5 q-4.5 2.2 -9 -.6 z" fill="${K}" opacity=".85"/>`+
-      eye(43.5,15.5)+eye(52.5,15.5)+muz(48,24,'#DDBCAF'));
-    case 'walruses':return wrap(
-      `<path d="M6 38 q0 -18 24 -18 q25 0 27 14 q1 11 -10 12 l-25 0 q-15 0 -16 -8 z" fill="#A5876F" ${S}/>`+
-      `<path d="M14 45 q-4 5 1 6 q4 1 5 -4 M40 46 q0 6 5.5 5.5 q4 -1 2 -5.5" stroke="${K}" stroke-width="2.2" stroke-linecap="round" fill="none"/>`+
-      eye(41,27)+eye(51,27)+blush(36.5,32)+blush(56,32)+
-      `<ellipse cx="46" cy="34" rx="8.6" ry="5.2" fill="#B69B82" ${s1}/>`+
-      `<circle cx="46" cy="32.4" r="1.5" fill="${K}"/>`+
-      `<path d="M42.5 37.5 q-.5 5.5 -2 7 M49.5 37.5 q.5 5.5 2 7" stroke="${W}" stroke-width="3.2" stroke-linecap="round" fill="none"/>`+
-      `<path d="M39 33 h-4.5 M39.5 35.5 h-4 M53 33 h4.5 M52.5 35.5 h4" stroke="${K}" stroke-width="1.1" stroke-linecap="round"/>`);
-    case 'hippos':return wrap(
-      body('#A79DA9',20.5,13,29,37)+
-      `<path d="M8.5 41 q-2 2 0 4" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
-      legs4('#A79DA9')+earsRound('#A79DA9',3.2)+head('#A79DA9')+
-      eye(43.5,16)+eye(52.5,16)+
-      `<ellipse cx="48" cy="24" rx="9" ry="5.8" fill="#B7AEB9" ${s1}/><circle cx="44.5" cy="22.5" r="1.35" fill="${K}"/><circle cx="51.5" cy="22.5" r="1.35" fill="${K}"/><path d="M44.5 27 v1.7 M51.5 27 v1.7" stroke="${K}" stroke-width="1.5" stroke-linecap="round"/>`+
-      blush(38.5,21.5)+blush(57.5,21.5));
-    case 'elephants':return wrap(
-      `<path d="M9 36 q-3 4 0 6 l2 -1" stroke="${K}" stroke-width="1.9" stroke-linecap="round" fill="none"/>`+
-      body(GRY,20,13,29,36)+legs4(GRY)+
-      `<path d="M40 8 q-14 -3 -16 9 q-1.5 10 8 11 q-1 -11 8 -14 z" fill="#9E978B" ${S}/>`+
-      head(GRY,13,49,19)+
-      eye(45,16)+eye(53.5,16)+blush(41.5,21.5)+blush(58,21.5)+
-      `<path d="M49 24 q1 8 -3 12 q-2.5 2.5 -5 1" stroke="${K}" stroke-width="2" fill="none" stroke-linecap="round"/>`+
-      `<path d="M49 24 q1 8 -3 12 q-2.5 2.5 -5 1 q-1 -2.5 1.5 -3 q3.5 -1 2.5 -10 z" fill="${GRY}" stroke="none"/>`);
-    default:return wrap('');
+function pickLoadout(vol){ // largest object with vol >= .85w; count 2-9 else promote; greedy mixed tail
+  if(!vol||vol<400)return null;
+  let pick=null;
+  for(const o of OBJECTS)if(vol>=o[3]*0.85)pick=o;
+  if(!pick)return null;
+  // if count would exceed 9, promote to the next object up when one exists
+  let i=OBJECTS.indexOf(pick);
+  while(i<OBJECTS.length-1&&vol/OBJECTS[i][3]>9)i++;
+  pick=OBJECTS[i];
+  const items=[];let rem=vol;
+  const n=Math.max(1,Math.floor(rem/pick[3]));
+  items.push({o:pick,n});rem-=n*pick[3];
+  // one greedy tail object keeps the story honest without absurd decimals (max 3 objects incl. leftover chip)
+  for(let k=OBJECTS.indexOf(pick)-1;k>=0&&items.length<2;k--){
+    const m=Math.floor(rem/OBJECTS[k][3]);
+    if(m>=1){items.push({o:OBJECTS[k],n:m});rem-=m*OBJECTS[k][3];break}
+  }
+  return {items,leftover:Math.round(rem)};
+}
+function loadoutStamp(vol){
+  const L=pickLoadout(vol);
+  if(!L)return vol?`<hr class="dotted"><div class="label">TOTAL IRON: ${both(vol)} — not even a safe. Move more shit.</div>`:'';
+  const top=L.items[0];
+  return `<div class="lreceipt">
+    <div class="object"><img src="assets/objects/${top.o[0]}.svg" alt="Pixel art ${esc(top.o[1].toLowerCase())}">
+      <div class="equiv">You moved<strong>${top.n} ${esc(top.n===1?top.o[1]:top.o[2])}</strong><span class="exact">${esc(both(vol))} TOTAL IRON</span></div></div>
+    <div class="lchips">${L.items.map(x=>`<span><b>${x.n}</b> ${esc(x.n===1?x.o[1]:x.o[2])}</span>`).join('')}
+      ${L.leftover>40?`<span><b>${L.leftover}</b> LB LEFT OVER</span>`:''}</div></div>`;
+}
+// benchmark shit-talk on the DONE screen — real numbers only (game/benchmarks.js, verified-only)
+function benchTalkFor(L){
+  if(!window.BENCHTALK||!S)return '';
+  const lines=[];
+  for(const b of S.blocks){
+    const bl=L.blocks[b.id];if(!bl)continue;
+    const name=b.name.toLowerCase();
+    if(/deadlift/.test(name)){
+      let best=0;for(const st of (bl.sets||[]))best=Math.max(best,setLbs(st));
+      if(best)lines.push(BENCHTALK.bestLine('deadlift_1rm_lb',best));
+    }else if(/push-?up/.test(name)){
+      let reps=0;for(const st of (bl.sets||[]))reps=Math.max(reps,parseInt(st&&st.r)||0);
+      if(reps)lines.push(BENCHTALK.bestLine('pushups_2min',reps));
+    }else if(/pull-?up|chin-?up/.test(name)){
+      let reps=0;for(const st of (bl.sets||[]))reps=Math.max(reps,parseInt(st&&st.r)||0);
+      if(reps)lines.push(BENCHTALK.bestLine('pullups_max',reps));
+    }else if(/sit-?up/.test(name)){
+      let reps=0;for(const st of (bl.sets||[]))reps=Math.max(reps,parseInt(st&&st.r)||0);
+      if(reps)lines.push(BENCHTALK.bestLine('situps_2min',reps));
+    }
+  }
+  const good=lines.filter(Boolean);
+  if(!good.length)return '';
+  return `<div class="talk"><b>VS THE PROS</b>${good.map(esc).join('<br>')}</div>`;
+}
+/* day score — engine in game/scoring.js; history built from local completed sessions */
+function hardMinutesOf(L,sess){
+  let min=0;
+  for(const b of sess.blocks){
+    const bl=L.blocks[b.id];if(!bl||!bl.sets[0]||!bl.sets[0].done)continue;
+    if(b.type==='timed'&&(b.metric||'min')==='min'){
+      const t=String(bl.sets[0].time||'').split(':');
+      if(t.length===2)min+=parseInt(t[0])+parseInt(t[1])/60;
+    }
+  }
+  return Math.round(min);
+}
+function dayHistory(beforeDate){
+  const hist=[];
+  for(const s of ALLSESS){
+    const L2=log[s.id];
+    if(!L2||!L2.completed||!L2.completedAt)continue;
+    if(L2.completedAt.slice(0,10)>=beforeDate)continue;
+    const {vol}=sessionStats(L2);
+    hist.push({workUnits:SCORING?SCORING.workUnits({volumeLb:vol,hardMinutes:hardMinutesOf(L2,s)}):0});
+  }
+  return hist;
+}
+function computeDayScore(L){
+  if(!window.SCORING)return null;
+  const d=(L.completedAt||new Date().toISOString()).slice(0,10);
+  const {vol}=sessionStats(L);
+  const f=j('fuel:'+d,{g:0,items:[]});
+  const weights=j('weights',[]);
+  const bw=weights.length?weights[weights.length-1].w:null;
+  const s=SCORING.dayScore({
+    session:{completed:true},
+    food:{planMet:f.g>=140},
+    today:{volumeLb:vol,hardMinutes:hardMinutesOf(L,S)},
+    profile:{bodyweightLb:bw,age:43},
+    history:dayHistory(d),
+    extras:{}
+  });
+  return {day:d,score:s};
+}
+function postScore(ds){
+  if(!ds)return;
+  const scores=j('dayscores',{});
+  scores[ds.day]={total:ds.score.total,parts:ds.score.parts,workUnits:ds.score.workUnits};
+  sv('dayscores',scores);
+  queuePost('score',{day:ds.day,score:scores[ds.day]},null,'/score');
+}
+/* ---------- RIVALRY ---------- */
+const PCOLORS=['var(--volt)','var(--rage)','var(--ice)','var(--gold)','var(--violet)'];
+let RTAB=localStorage.getItem('rtab')||'week';
+async function renderRivalry(){
+  const app=$('app');
+  const c=cfg();
+  if(!c){app.innerHTML=connectBanner()+`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div><div class="card"><div class="label">Connect first — no scoreboard without the wire.</div></div>`;return}
+  app.innerHTML=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div><div class="label">Dialing the scoreboard…</div>`;
+  const [endpoint,token]=c;
+  const H={'Authorization':'Bearer '+token};
+  const okJson=r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()};
+  try{
+    const [me,sb,feed,chals]=await Promise.all([
+      fetch(endpoint+'/me',{headers:H}).then(okJson),
+      fetch(endpoint+'/scoreboard?day='+today(),{headers:H}).then(okJson),
+      fetch(endpoint+'/feed',{headers:H}).then(okJson),
+      fetch(endpoint+'/challenges',{headers:H}).then(okJson)
+    ]);
+    window.ME=me;
+    const key={day:'today',week:'week',month:'month'}[RTAB];
+    const board=[...sb.board].sort((a,b)=>b[key]-a[key]);
+    const colorOf={};sb.board.forEach((p,i)=>colorOf[p.pid]=PCOLORS[i%PCOLORS.length]);
+    let h=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div>
+      <div class="segs">${['day','week','month'].map(t=>`<button class="${RTAB===t?'on':''}" onclick="RTAB='${t}';localStorage.setItem('rtab','${t}');renderRivalry()">${t.toUpperCase()}</button>`).join('')}</div>`;
+    if(board.length<2)h+=`<div class="card"><div class="label lit" style="margin-bottom:6px">NO OPPONENTS YET</div><div style="color:var(--dim);font-size:14px">The cabinet is warmed up and nobody's stepped in. Mint your rivals and let's ruin some friendships.</div></div>`;
+    board.forEach((p,i)=>{
+      const pts=p[key]||0;
+      h+=`<section class="leader" style="--player:${colorOf[p.pid]}"><div class="player">
+        <div class="rank">${String(i+1).padStart(2,'0')}</div>
+        <div class="avatar">${esc((p.name||p.pid).slice(0,2).toUpperCase())}</div>
+        <div class="pname">${esc(p.name||p.pid)}${p.pid===me.pid?'<small>THAT\'S YOU</small>':''}</div>
+        <div class="pts">${pts}<small>${p.today?`+${p.today} TODAY`:'NOTHING TODAY'}</small></div></div></section>`;
+    });
+    if(board.length>=2){
+      const [a,b]=board;
+      const gap=(a[key]||0)-(b[key]||0);
+      const meLeads=a.pid===me.pid;
+      h+=`<div class="delta">${meLeads?`${esc(b.name.toUpperCase())} IS ${gap} BACK. KEEP YOUR BOOT ON HIS NECK.`:`${esc(a.name.toUpperCase())} LEADS BY ${gap}. FIX THAT SHIT.`}</div>`;
+    }
+    // challenges
+    const open=(chals||[]).filter(x=>!x.expiresDay||x.expiresDay>=today());
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px" class="head"><span style="font-size:20px">OPEN CHALLENGES</span></div>`;
+    if(!open.length)h+=`<div class="card" style="padding:14px"><div class="label">Nothing on the table. Coward-free zone below.</div></div>`;
+    for(const ch of open){
+      const isBoss=ch.mode==='boss';
+      const mine=ch.results&&ch.results[me.pid];
+      h+=`<div class="${isBoss?'marquee':'issuer'}">
+        ${isBoss?`<div class="kicker">COACH-ISSUED BOSS BATTLE</div><h1>${esc(ch.title)}</h1>`:`<div class="danger">${esc((ch.by||'?').toUpperCase())} THREW THIS DOWN</div><div class="head" style="font-size:28px;margin:6px 0">${esc(ch.title)}</div>`}
+        ${ch.desc?`<div style="color:var(--dim);font-size:14px">${esc(ch.desc)}</div>`:''}
+        ${ch.expiresDay?`<div class="label" style="margin-top:8px">ANSWER BY ${esc(ch.expiresDay)}</div>`:''}
+        ${mine?`<div class="good" style="margin-top:10px">YOUR RESULT IS IN: ${esc(mine.result)} ✓</div>`
+          :`<button class="btn ${isBoss?'boss':'rival'}" style="margin-top:14px" onclick="answerChallenge('${esc(ch.id)}')">${isBoss?'ENTER BATTLE':'ANSWER IT'}</button>`}
+      </div>`;
+    }
+    h+=`<button class="btn rival" onclick="throwDown()">THROW DOWN A CHALLENGE</button>`;
+    // feed
+    h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px" class="head"><span style="font-size:20px">LIVE WIRE</span><span class="label" style="font-size:11px">NO CHAT · TALK IN THE GROUP</span></div>`;
+    const ev=(feed||[]).slice().reverse().slice(0,20);
+    h+=ev.length?`<section class="feed">${ev.map(e=>{
+      const col=colorOf[e.pid]||'var(--ctrl)';
+      const when=new Date(e.at).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+      const line=e.type==='score'?`${e.name} BANKED ${e.total} PTS`
+        :e.type==='challenge'?`${e.name} ${e.mode==='boss'?'UNLEASHED':'THREW DOWN'} “${e.title}”`
+        :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
+        :`${e.name} DID SOMETHING`;
+      return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
+    }).join('')}</section>`:`<div class="card" style="padding:14px"><div class="label">Dead quiet. Somebody do something.</div></div>`;
+    app.innerHTML=h;
+  }catch(e){
+    app.innerHTML=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div><div class="card warn">Scoreboard unreachable (${esc(e.message||'network')}). Not the same as losing.</div><button class="btn small" onclick="renderRivalry()">RETRY</button>`;
   }
 }
-// deterministic PRNG so the herd doesn't reshuffle on every render
-function zooRng(seed){let s=seed>>>0;return()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296}}
-function zooStamp(vol,seed){
-  if(!vol||vol<50)return '';
-  const h=zooHash(seed);
-  let cands=ZOO.filter(([n,w])=>{const c=vol/w;return c>=2&&c<=40});
-  if(!cands.length)cands=[vol<ZOO[0][1]*2?ZOO[0]:ZOO[ZOO.length-1]];
-  const [name,w]=cands[h%cands.length];
-  const count=Math.max(1,Math.round(vol/w));
-  const shown=Math.min(count,14); // a stamp, not a stampede — overflow becomes the x-N mark
-  const rng=zooRng(h);
-  const H=Math.max(110,50+Math.ceil(shown/5)*46);
-  let herd='';
-  for(let i=0;i<shown;i++){
-    const sz=42+rng()*22, x=rng()*80, y=rng()*(H-sz*0.75), rot=(rng()*20-10).toFixed(1), flip=rng()<0.5;
-    herd+=`<span style="position:absolute;left:${x.toFixed(1)}%;top:${y.toFixed(1)}px;width:${sz.toFixed(0)}px;transform:rotate(${rot}deg)${flip?' scaleX(-1)':''}">${animalSVG(name)}</span>`;
+async function throwDown(){
+  const title=prompt('Name the challenge (e.g. "100 burpees for time"):');
+  if(!title)return;
+  const desc=prompt('Rules / how it\'s scored (optional):')||'';
+  const expires=prompt('Answer-by date YYYY-MM-DD (optional):')||'';
+  const c=cfg();if(!c)return;
+  const [endpoint,token]=c;
+  try{
+    const r=await fetch(endpoint+'/challenge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({title,desc,mode:'player',expiresDay:expires})});
+    if(!r.ok)throw new Error();
+    toastMsg('CHALLENGE LIVE. NO TAKESIES.');renderRivalry();
+  }catch(e){alert('Failed to post — try again with signal.')}
+}
+async function answerChallenge(id){
+  const result=prompt('Your result (time, reps, weight — the number that settles it):');
+  if(!result)return;
+  const c=cfg();if(!c)return;
+  const [endpoint,token]=c;
+  try{
+    const r=await fetch(endpoint+'/challenge/result',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({id,result})});
+    if(!r.ok)throw new Error();
+    toastMsg('RESULT POSTED. SCOREBOARD DON\'T LIE.');renderRivalry();
+  }catch(e){alert('Failed to post — try again with signal.')}
+}
+/* ---------- TROPHY CASE ---------- */
+function renderTrophy(){
+  let lifetime=0,prCount=0,done=0;
+  const prs={};
+  for(const s of ALLSESS){
+    const L=log[s.id];if(!L||!L.completed)continue;
+    done++;
+    const {vol}=sessionStats(L);lifetime+=vol;
+    for(const b of s.blocks){
+      const bl=L.blocks[b.id];if(!bl)continue;
+      for(const st of (bl.sets||[])){const w=setLbs(st);if(w&&(!prs[b.name]||w>prs[b.name])){prs[b.name]=w}}
+    }
   }
-  return `<hr class="dotted" style="margin:14px 0 10px">
-    <div class="label">TOTAL IRON MOVED</div>
-    <div style="display:flex;align-items:baseline;justify-content:center;gap:8px"><span class="num" style="font-size:44px;color:var(--ox)">${count}</span><span class="head" style="font-size:16px">${esc(name.toUpperCase())}</span></div>
-    <div style="position:relative;height:${H}px;margin:10px 0 4px;overflow:hidden">${herd}
-      ${count>shown?`<span class="num" style="position:absolute;right:2%;bottom:4px;font-size:34px;color:var(--ox);transform:rotate(-6deg)">× ${count}</span>`:''}
-    </div>
-    <div class="label" style="font-size:12px;margin-top:2px">${both(vol)} — that's ~${count} ${esc(name)}</div>`;
+  prCount=Object.keys(prs).length;
+  const xp=Object.values(j('dayscores',{})).reduce((s,d)=>s+(d.total||0),0);
+  const lvl=Math.max(1,Math.floor(Math.sqrt(xp/100)));
+  const nextXp=Math.pow(lvl+1,2)*100;
+  const TIERS=[['Plate Collector',50000],['Vending Machine Mover',100000],['Truck Puller',250000],['Container Hauler',500000],['Millionaire',1000000]];
+  const badges=TIERS.map(([n,w])=>({n,w,earned:lifetime>=w,pct:Math.min(100,Math.round(lifetime/w*100))}));
+  $('app').innerHTML=vaultNav()+`
+    <div style="display:flex;justify-content:space-between;align-items:end;padding:0 0 12px">
+      <div class="pix" style="color:var(--gold)">TROPHY CASE</div>
+      <div style="text-align:right"><div class="num" style="font-size:34px;color:var(--gold)">LV ${lvl}</div><div class="label" style="font-size:10px">${xp.toLocaleString()} XP · ${(nextXp-xp).toLocaleString()} TO LV ${lvl+1}</div></div></div>
+    <div class="scoregrid"><div><strong>${done}</strong><small>SESSIONS</small></div><div><strong>${prCount}</strong><small>PRs</small></div><div><strong>${Math.round(lifetime/1000)}K</strong><small>LIFETIME LB</small></div></div>
+    <h1 style="font-size:24px">TONNAGE LADDER</h1>
+    ${badges.map(b=>`<div class="card" style="${b.earned?'border-color:var(--gold)':''};padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline">
+        <span class="head" style="font-size:17px;${b.earned?'color:var(--gold)':''}">${b.n}${b.earned?' ✓':''}</span>
+        <span class="label" style="font-size:11px">${b.w.toLocaleString()} LB</span></div>
+      <div class="track" style="height:8px;margin:10px 0 0"><i style="width:${b.pct}%;${b.earned?'background:var(--gold)':''}"></i></div></div>`).join('')}
+    <div class="label" style="margin-top:6px">W-L records, season trophies, and boss hardware land when the rivalry goes live.</div>`;
 }
 function exportLog(){
   const payload=JSON.stringify({sessionId:S.id,session:S.phase,log:log[S.id]},null,2);
@@ -824,7 +947,7 @@ async function renderReview(){
   const app=$('app');
   const c=cfg();
   if(!c){app.innerHTML=connectBanner();return}
-  app.innerHTML='<h1 style="margin-top:8px">Film room</h1><div class="label">Loading clips…</div>';
+  app.innerHTML=vaultNav()+'<h1 style="margin-top:8px">Film room</h1><div class="label">Loading clips…</div>';
   const [endpoint,token]=c;
   try{
     const H={'Authorization':'Bearer '+token};
@@ -834,7 +957,7 @@ async function renderReview(){
       fetch(endpoint+'/feedback',{headers:H}).then(okJson)
     ]);
     const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')&&!m.key.startsWith('meals/')&&!m.key.startsWith('suggest/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
-    let h='<h1 style="margin-top:8px">Film room</h1>';
+    let h=vaultNav()+'<h1 style="margin-top:8px">Film room</h1>';
     if(!media.length)h+='<div class="label" style="margin-top:12px">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
     for(const m of media){
       const f=fb[m.key];
@@ -846,7 +969,7 @@ async function renderReview(){
         ${f?fbHtml(f.notes):`<div class="pending">Review pending…</div>`}</div>`;
     }
     app.innerHTML=h;
-  }catch(e){app.innerHTML=`<h1 style="margin-top:8px">Film room</h1><div class="card warn">Couldn't load clips (${e.message||'network'}) — not the same as "no clips."</div><button class="btn small" onclick="renderReview()">Retry</button>`}
+  }catch(e){app.innerHTML=vaultNav()+`<h1 style="margin-top:8px">Film room</h1><div class="card warn">Couldn't load clips (${e.message||'network'}) — not the same as "no clips."</div><button class="btn small" onclick="renderReview()">Retry</button>`}
 }
 // coach notes render as stamped sections when the review uses the KEEP/FIX/WATCH/NEXT headings
 function fbHtml(notes){
@@ -892,7 +1015,7 @@ function renderProgress(){
   }
   const lastW=weights.length?weights[weights.length-1]:null;
   const wk=weekCount();
-  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><div class="label">Current bodyweight</div>${unitBtn()}</div>`;
+  let h=vaultNav()+`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px"><div class="label">Current bodyweight</div>${unitBtn()}</div>`;
   h+=lastW
     ?`<div style="display:flex;align-items:baseline;gap:10px"><div class="poster num">${lastW.w}</div><span class="poster small" style="font-size:22px;font-family:var(--fhead);color:var(--dim)">LBS</span></div>
       <div class="label" style="font-size:11px">LOGGED ${lastW.d} · ${both(lastW.w)}</div>`
@@ -961,11 +1084,11 @@ async function postLog(obj){
 /* ---------- GEAR ---------- */
 async function renderGear(){
   const app=$('app');
-  app.innerHTML='<h1 style="margin-top:8px">Gear</h1><div class="label">Loading…</div>';
+  app.innerHTML=vaultNav()+'<h1 style="margin-top:8px">Gear</h1><div class="label">Loading…</div>';
   let eq=null;
   try{eq=await fetch('data/equipment.json?_='+Date.now()).then(r=>r.json())}catch(e){}
   const notes=j('gearnotes',[]);
-  let h=`<h1 style="margin-top:8px">Gear</h1>
+  let h=vaultNav()+`<h1 style="margin-top:8px">Gear</h1>
   <div class="label" style="margin-bottom:14px">What I'm programming around${eq&&eq.updated?` · AS OF ${esc(eq.updated)}`:''}</div>
   <button class="btn accent" onclick="$('gearIn').click()">+ Snap new gear</button>
   <input type="file" id="gearIn" accept="image/*" multiple style="display:none" onchange="gotGear(this)">
@@ -1063,7 +1186,7 @@ function renderFuel(){
     <span class="num" style="font-size:40px;color:var(--dim)">/140</span>
     <span class="head" style="font-size:20px;color:var(--dim)">G</span></div>
   <div class="track ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
-  <div class="label" style="margin-bottom:18px">${f.g>=140?"HIT. THAT'S THE WHOLE GAME.":f.g>=100?'PAST THE FLOOR — PUSH TO 140.':'FLOOR IS 100.'}</div>
+  <div class="label" style="margin-bottom:18px">${f.g>=140?'FUEL LOCKED. STOP EATING LIKE AN INTERN.':f.g>=100?'PAST THE FLOOR — PUSH TO 140.':'FLOOR IS 100. FEED THE MACHINE.'}</div>
   <button class="btn primary" onclick="$('mealIn').click()">+ Snap meal / menu</button>
   <button class="btn small" onclick="nearMe()">// What's good near me</button>
   <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
