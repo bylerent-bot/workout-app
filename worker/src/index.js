@@ -1,10 +1,29 @@
-// train-sync — private pipe between the Train PWA and the vault.
-// Auth: Bearer token (secret SYNC_TOKEN). All routes 401 without it.
-// POST /log            JSON session log -> KV (key log:<sessionId>:<ts>)
-// POST /upload?key=..  video/photo bytes -> R2 (key e.g. s3/a-set3.mov)
-// GET  /pull           list + return all logs since ?after= (vault sync agent)
-// GET  /media/:key     fetch one object (vault sync agent)
-// DELETE /media/:key   remove after the vault has filed it
+// train-sync — private pipe between the Train PWA and the vault. v2: multiplayer.
+// Auth: Bearer token. env.SYNC_TOKEN = Patrick (admin, back-compat with the live app
+// and the iMac sync agent). Other players: tokens minted via POST /admin/player,
+// stored as sha256 hashes in the KV blob `auth` ({hash: pid}).
+//
+// Storage layout (per-player separation — friends' data must never ride the
+// patrick-only vault sync):
+//   patrick: legacy keys unchanged — log:<ts>:<sid>, idx:log, unprefixed R2 keys
+//   others:  log:<ts>:<pid>:<sid> indexed in idx:log:<pid>; R2 keys forced under p/<pid>/
+//   game (all players): scores:<pid> blob {day: score}, feed blob, challenges blob, players blob
+//
+// Routes:
+// POST /log            session log -> KV (player-scoped)
+// POST /upload?key=..  media -> R2 (non-admin keys forced under p/<pid>/)
+// GET  /pull           PATRICK-ONLY logs+media since ?after= (vault sync agent; friends' data excluded by design)
+// GET/DELETE /media/:key   (non-admin restricted to own p/<pid>/ prefix)
+// POST/GET /feedback   per-clip coach notes (non-admin sees own clips only)
+// POST /score          {day, score} -> scores:<pid>; emits a feed event
+// GET  /scoreboard?day=YYYY-MM-DD   daily/weekly/monthly totals for every player
+// GET  /feed           last 100 events
+// POST /challenge      {title, desc, mode:'boss'|'player', expiresDay?} -> challenge (boss = admin only)
+// POST /challenge/result {id, result, clipKey?}
+// GET  /challenges     open + recently closed
+// GET  /me             {pid, name, admin}
+// POST /admin/player   {pid, name} -> mints + returns a token ONCE (admin only)
+// GET  /admin/players  roster w/o hashes (admin only)
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -13,39 +32,43 @@ const CORS = {
 };
 const json = (o, s = 200) => new Response(JSON.stringify(o), { status: s, headers: { 'Content-Type': 'application/json', ...CORS } });
 
-// Free-tier KV allows only 1,000 list() calls/day — the 60s poller burned through
-// that (found 7/30, worker 500'd all day). So the hot read paths use INDEX KEYS
-// (plain gets, 100k/day) that the write paths append to. list() runs at most once
-// per UTC day, as a self-heal that picks up anything written outside the index.
-async function idxGet(env, name) {
-  try { return JSON.parse(await env.LOGS.get('idx:' + name)) || []; } catch (e) { return []; }
+async function sha256hex(s) {
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
 }
+
+// ---- KV blob helpers (free-tier discipline: hot paths are gets on blobs, never list()) ----
+async function blobGet(env, name, fallback) {
+  try { const v = await env.LOGS.get(name); return v === null ? fallback : (JSON.parse(v) ?? fallback); } catch (e) { return fallback; }
+}
+const blobPut = (env, name, v) => env.LOGS.put(name, JSON.stringify(v));
+
+async function idxGet(env, name) { return blobGet(env, 'idx:' + name, []); }
 async function idxAdd(env, name, key) {
   const a = await idxGet(env, name);
-  if (!a.includes(key)) { a.push(key); await env.LOGS.put('idx:' + name, JSON.stringify(a)); }
+  if (!a.includes(key)) { a.push(key); await blobPut(env, 'idx:' + name, a); }
 }
-// All feedback lives in ONE blob key (fb-all: {clipKey: {notes,at}}). Per-clip fb:*
-// keys nearly sank the free tier a second way: the 60s poller re-read every
-// accumulated key every poll (1,440 x total keys/day), crossing 100k reads/day
-// once enough clips existed. One blob = 1 read per poll, and writes stay rare.
+
+// All feedback lives in ONE blob key (fb-all: {clipKey: {notes,at}}) — see v1 notes:
+// per-clip reads on the 60s poller crossed the free 100k reads/day once clips accumulated.
 async function fbAll(env) {
   const blob = await env.LOGS.get('fb-all');
   if (blob !== null) { try { return JSON.parse(blob) || {}; } catch (e) { return {}; } }
-  // one-time migration from the legacy per-clip keys
   const out = {};
   for (const key of await idxGet(env, 'fb')) {
     const v = await env.LOGS.get('fb:' + key);
     if (v) { try { out[key] = JSON.parse(v); } catch (e) {} }
   }
-  await env.LOGS.put('fb-all', JSON.stringify(out));
+  await blobPut(env, 'fb-all', out);
   return out;
 }
+
 async function dailyReconcile(env) {
   const day = new Date().toISOString().slice(0, 10);
   if ((await env.LOGS.get('idx:day')) === day) return;
-  await env.LOGS.put('idx:day', day);            // claim first, so a failed list doesn't retry all day
+  await env.LOGS.put('idx:day', day); // claim first, so a failed list doesn't retry all day
   try {
-    const listAll = async prefix => { // KV list caps at 1000 keys/page — paginate
+    const listAll = async prefix => {
       const names = [];
       let cursor;
       do {
@@ -56,42 +79,107 @@ async function dailyReconcile(env) {
       return names;
     };
     const logs = await listAll('log:');
-    const fbs  = (await listAll('fb:')).map(n => n.slice(3));
-    const li = await idxGet(env, 'log');
-    const lm = [...new Set([...li, ...logs])].sort();
-    if (lm.length !== li.length) await env.LOGS.put('idx:log', JSON.stringify(lm));
-    if (fbs.length) {                              // sweep stragglers into the blob
+    // patrick's legacy logs (log:<ts>:<sid>) vs player logs (log:<ts>:<pid>:<sid>, 4 parts)
+    const players = await blobGet(env, 'players', {});
+    const byIdx = {};
+    for (const name of logs) {
+      const parts = name.split(':');
+      const pid = parts.length >= 4 && players[parts[2]] ? parts[2] : null;
+      const idx = pid ? 'log:' + pid : 'log';
+      (byIdx[idx] = byIdx[idx] || []).push(name);
+    }
+    for (const [idx, names] of Object.entries(byIdx)) {
+      const li = await idxGet(env, idx);
+      const merged = [...new Set([...li, ...names])].sort();
+      if (merged.length !== li.length) await blobPut(env, 'idx:' + idx, merged);
+    }
+    const fbs = (await listAll('fb:')).map(n => n.slice(3));
+    if (fbs.length) {
       const all = await fbAll(env);
       let changed = false;
       for (const k of fbs) {
         if (!(k in all)) { const v = await env.LOGS.get('fb:' + k); if (v) { try { all[k] = JSON.parse(v); changed = true; } catch (e) {} } }
       }
-      if (changed) await env.LOGS.put('fb-all', JSON.stringify(all));
+      if (changed) await blobPut(env, 'fb-all', all);
     }
-  } catch (e) { /* list quota gone — try again next UTC day */ }
+  } catch (e) { /* list quota gone — next UTC day */ }
+}
+
+// ---- game helpers ----
+async function feedAdd(env, entry) {
+  const feed = await blobGet(env, 'feed', []);
+  feed.push({ ...entry, at: Date.now() });
+  await blobPut(env, 'feed', feed.slice(-100));
+}
+const dayOk = d => /^\d{4}-\d{2}-\d{2}$/.test(d || '');
+// last-7-days window ending at ref (inclusive) — cheap, no ISO-week math
+function weekDays(ref) {
+  const out = [];
+  const d = new Date(ref + 'T00:00:00Z');
+  for (let i = 0; i < 7; i++) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() - 1); }
+  return out;
 }
 
 export default {
   async fetch(req, env) {
     if (req.method === 'OPTIONS') return new Response(null, { headers: CORS });
-    const auth = req.headers.get('Authorization') || '';
-    if (auth !== 'Bearer ' + env.SYNC_TOKEN) return json({ error: 'unauthorized' }, 401);
+    const auth = (req.headers.get('Authorization') || '').replace(/^Bearer /, '');
+    if (!auth) return json({ error: 'unauthorized' }, 401);
+
+    // resolve player
+    let pid = null, admin = false;
+    if (auth === env.SYNC_TOKEN) { pid = 'patrick'; admin = true; }
+    else {
+      const map = await blobGet(env, 'auth', {});
+      pid = map[await sha256hex(auth)] || null;
+    }
+    if (!pid) return json({ error: 'unauthorized' }, 401);
+    const players = await blobGet(env, 'players', { patrick: { name: 'Patrick' } });
+    const myName = players[pid]?.name || pid;
 
     const url = new URL(req.url);
     const path = url.pathname;
 
+    // ---- admin: player management ----
+    if (path === '/admin/player' && req.method === 'POST') {
+      if (!admin) return json({ error: 'forbidden' }, 403);
+      const body = await req.json();
+      const npid = (body.pid || '').toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (!npid || npid === 'patrick') return json({ error: 'bad pid' }, 400);
+      if (!body.name) return json({ error: 'name required' }, 400);
+      const tok = [...crypto.getRandomValues(new Uint8Array(24))].map(b => b.toString(16).padStart(2, '0')).join('');
+      const map = await blobGet(env, 'auth', {});
+      // one token per player: minting again rotates (old token dies)
+      for (const [h, p] of Object.entries(map)) if (p === npid) delete map[h];
+      map[await sha256hex(tok)] = npid;
+      await blobPut(env, 'auth', map);
+      players[npid] = { ...(players[npid] || {}), name: body.name, created: players[npid]?.created || Date.now() };
+      await blobPut(env, 'players', players);
+      return json({ ok: true, pid: npid, token: tok, note: 'token shown once — store it now' });
+    }
+    if (path === '/admin/players' && req.method === 'GET') {
+      if (!admin) return json({ error: 'forbidden' }, 403);
+      return json(players);
+    }
+
+    if (path === '/me') return json({ pid, name: myName, admin });
+
+    // ---- logs ----
     if (req.method === 'POST' && path === '/log') {
       const body = await req.json();
-      // timestamp-first so key order == time order (the sync cursor relies on it)
-      const key = `log:${Date.now()}:${body.sessionId || 'unknown'}`;
+      // patrick keeps the legacy 3-part key + idx (the vault sync agent's cursor relies on it)
+      const key = pid === 'patrick'
+        ? `log:${Date.now()}:${body.sessionId || 'unknown'}`
+        : `log:${Date.now()}:${pid}:${body.sessionId || 'unknown'}`;
       await env.LOGS.put(key, JSON.stringify(body));
-      await idxAdd(env, 'log', key);
+      await idxAdd(env, pid === 'patrick' ? 'log' : 'log:' + pid, key);
       return json({ ok: true, key });
     }
 
     if (req.method === 'POST' && path === '/upload') {
-      const key = url.searchParams.get('key');
+      let key = url.searchParams.get('key');
       if (!key || key.includes('..')) return json({ error: 'bad key' }, 400);
+      if (pid !== 'patrick' && !key.startsWith(`p/${pid}/`)) key = `p/${pid}/` + key; // hard per-player prefix
       const bytes = await req.arrayBuffer();
       if (!bytes || bytes.byteLength === 0) return json({ error: 'empty upload' }, 400);
       await env.FOOTAGE.put(key, bytes, {
@@ -100,55 +188,125 @@ export default {
       return json({ ok: true, key, size: bytes.byteLength });
     }
 
+    // vault sync agent — PATRICK'S data only, by design (friends' data stays out of the family vault)
     if (req.method === 'GET' && path === '/pull') {
+      if (!admin) return json({ error: 'forbidden' }, 403);
       await dailyReconcile(env);
       const after = url.searchParams.get('after') || '';
+      const player = url.searchParams.get('player'); // explicit opt-in to read another player's logs
       const out = [];
-      for (const name of await idxGet(env, 'log')) {
+      for (const name of await idxGet(env, player ? 'log:' + player : 'log')) {
         if (after && name <= after) continue;
         const v = await env.LOGS.get(name);
         if (v) out.push({ key: name, log: JSON.parse(v) });
       }
       const media = [];
       let mcur;
-      do { // R2 list pages at 1000 objects
+      do {
         const r = await env.FOOTAGE.list(mcur ? { cursor: mcur } : {});
         media.push(...r.objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded })));
         mcur = r.truncated ? r.cursor : null;
       } while (mcur);
-      return json({ logs: out, media });
+      // default pull excludes p/<pid>/ media so friends' footage never auto-lands in the vault
+      return json({ logs: out, media: player ? media.filter(m => m.key.startsWith(`p/${player}/`)) : media.filter(m => !m.key.startsWith('p/')) });
     }
 
     if (req.method === 'POST' && path === '/feedback') {
+      if (!admin) return json({ error: 'forbidden' }, 403); // coach loop writes feedback
       const body = await req.json();
       if (!body.clipKey) return json({ error: 'clipKey required' }, 400);
       const entry = { notes: body.notes, at: Date.now() };
-      // per-clip key first = the durable record; the blob is just the hot-read cache.
-      // If two writers race on the blob, the daily reconcile sweeps fb:* back in — nothing lost.
       await env.LOGS.put('fb:' + body.clipKey, JSON.stringify(entry));
       const all = await fbAll(env);
       all[body.clipKey] = entry;
-      await env.LOGS.put('fb-all', JSON.stringify(all));
+      await blobPut(env, 'fb-all', all);
       return json({ ok: true });
     }
 
     if (req.method === 'GET' && path === '/feedback') {
       await dailyReconcile(env);
-      return json(await fbAll(env));
+      const all = await fbAll(env);
+      if (admin) return json(all);
+      const mine = {};
+      for (const [k, v] of Object.entries(all)) if (k.startsWith(`p/${pid}/`)) mine[k] = v;
+      return json(mine);
     }
 
     if (path.startsWith('/media/')) {
       const key = decodeURIComponent(path.slice(7));
+      if (!admin && !key.startsWith(`p/${pid}/`)) return json({ error: 'forbidden' }, 403);
       if (req.method === 'GET') {
         const obj = await env.FOOTAGE.get(key);
         if (!obj) return json({ error: 'not found' }, 404);
         return new Response(obj.body, { headers: { 'Content-Type': obj.httpMetadata?.contentType || 'application/octet-stream', ...CORS } });
       }
       if (req.method === 'DELETE') {
+        if (!admin) return json({ error: 'forbidden' }, 403);
         await env.FOOTAGE.delete(key);
         return json({ ok: true });
       }
     }
+
+    // ---- game ----
+    if (req.method === 'POST' && path === '/score') {
+      const body = await req.json();
+      if (!dayOk(body.day) || !body.score || typeof body.score.total !== 'number') return json({ error: 'need {day: YYYY-MM-DD, score:{total,...}}' }, 400);
+      const scores = await blobGet(env, 'scores:' + pid, {});
+      const prior = scores[body.day];
+      scores[body.day] = { ...body.score, at: Date.now() };
+      await blobPut(env, 'scores:' + pid, scores);
+      if (!prior || body.score.total > prior.total) {
+        await feedAdd(env, { pid, name: myName, type: 'score', day: body.day, total: body.score.total });
+      }
+      return json({ ok: true });
+    }
+
+    if (req.method === 'GET' && path === '/scoreboard') {
+      const ref = dayOk(url.searchParams.get('day')) ? url.searchParams.get('day') : new Date().toISOString().slice(0, 10);
+      const week = weekDays(ref);
+      const month = ref.slice(0, 7);
+      const board = [];
+      for (const p of Object.keys(players)) {
+        const scores = await blobGet(env, 'scores:' + p, {});
+        const sum = days => days.reduce((s, d) => s + (scores[d]?.total || 0), 0);
+        board.push({
+          pid: p, name: players[p]?.name || p,
+          today: scores[ref]?.total || 0,
+          week: sum(week),
+          month: Object.entries(scores).filter(([d]) => d.startsWith(month)).reduce((s, [, v]) => s + (v.total || 0), 0),
+        });
+      }
+      board.sort((a, b) => b.week - a.week);
+      return json({ ref, board });
+    }
+
+    if (req.method === 'GET' && path === '/feed') return json(await blobGet(env, 'feed', []));
+
+    if (req.method === 'POST' && path === '/challenge') {
+      const body = await req.json();
+      if (!body.title) return json({ error: 'title required' }, 400);
+      const mode = body.mode === 'boss' ? 'boss' : 'player';
+      if (mode === 'boss' && !admin) return json({ error: 'boss battles come from the coach' }, 403);
+      const ch = await blobGet(env, 'challenges', []);
+      const id = 'c' + Date.now();
+      ch.push({ id, mode, title: body.title, desc: body.desc || '', by: pid, expiresDay: dayOk(body.expiresDay) ? body.expiresDay : null, results: {}, created: Date.now() });
+      await blobPut(env, 'challenges', ch.slice(-50));
+      await feedAdd(env, { pid, name: myName, type: 'challenge', id, title: body.title, mode });
+      return json({ ok: true, id });
+    }
+
+    if (req.method === 'POST' && path === '/challenge/result') {
+      const body = await req.json();
+      const ch = await blobGet(env, 'challenges', []);
+      const c = ch.find(x => x.id === body.id);
+      if (!c) return json({ error: 'not found' }, 404);
+      c.results[pid] = { result: body.result, clipKey: body.clipKey || null, at: Date.now() };
+      await blobPut(env, 'challenges', ch);
+      await feedAdd(env, { pid, name: myName, type: 'challenge-result', id: c.id, title: c.title, result: body.result });
+      return json({ ok: true });
+    }
+
+    if (req.method === 'GET' && path === '/challenges') return json(await blobGet(env, 'challenges', []));
 
     return json({ error: 'not found' }, 404);
   },

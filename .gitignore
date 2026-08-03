@@ -7,3 +7,6 @@ _STATE — resume here.md
 sync_agent.sh
 check_new.sh
 .claude/
+
+# discovery/design notes stay private
+*Discovery Notes*.md
