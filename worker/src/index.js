@@ -19,10 +19,11 @@
 // POST /score/adjust   {pid, day, coach?, whoop?} coach/WHOOP bonuses (admin only)
 // GET  /scoreboard?day=YYYY-MM-DD   daily/weekly/monthly totals for every player
 // GET  /feed           last 100 events
-// POST /challenge      {title, desc, mode:'boss'|'player', expiresDay?} -> challenge (boss = admin only)
+// POST /challenge      {title, desc, mode:'boss'|'player', wager?, expiresDay?} (boss = admin only; wager clamped 10-200, default 50)
 // POST /challenge/result {id, result, clipKey?}
-// POST /challenge/close  {id, winner?} settle it (issuer or admin); W-L in `cwl` blob;
-//                        winner +50 to today's score, player-issuer who lost his own callout -25 (adj.challenge)
+// POST /challenge/close  {id, winner?} settle it (issuer or admin); W-L in `cwl`; WAGER settles via
+//                        adj.challenge — player mode: each loser -wager, winner +wager*losers (the pot);
+//                        boss mode: winner +wager bounty, nobody pays
 // GET  /scoreboard also runs the lazy weekly close (`weeks` + `wl` blobs) and returns wl/cwl/lastWeek
 // GET  /challenges     open + recently closed
 // GET  /me             {pid, name, admin}
@@ -110,7 +111,10 @@ async function dailyReconcile(env) {
 }
 
 // ---- game helpers ----
-const CH_WIN = 50, CH_LOSE = 25; // challenge stakes: winner banks +50; a player-issuer whose own callout beats them eats -25
+// challenge stakes are a WAGER: issuer names it at throw-down (clamped), every participant
+// (answerers + the issuer on player challenges) has it on the line; winner takes the pot
+// (wager x losers). Boss battles: the wager is a coach bounty — winner banks it, nobody pays.
+const WAGER_MIN = 10, WAGER_MAX = 200, WAGER_DEFAULT = 50;
 // apply challenge points into a day's score via the server-side adj (survives client reposts, can be negative)
 async function challengePoints(env, pid, day, delta) {
   const scores = await blobGet(env, 'scores:' + pid, {});
@@ -403,7 +407,8 @@ export default {
       if (mode === 'boss' && !admin) return json({ error: 'boss battles come from the coach' }, 403);
       const ch = await blobGet(env, 'challenges', []);
       const id = 'c' + Date.now();
-      ch.push({ id, mode, title: body.title, desc: body.desc || '', by: pid, expiresDay: dayOk(body.expiresDay) ? body.expiresDay : null, results: {}, created: Date.now() });
+      const wager = Math.min(WAGER_MAX, Math.max(WAGER_MIN, Math.round(Number(body.wager)) || WAGER_DEFAULT));
+      ch.push({ id, mode, title: body.title, desc: body.desc || '', by: pid, wager, expiresDay: dayOk(body.expiresDay) ? body.expiresDay : null, results: {}, created: Date.now() });
       await blobPut(env, 'challenges', ch.slice(-50));
       await feedAdd(env, { pid, name: myName, type: 'challenge', id, title: body.title, mode });
       return json({ ok: true, id });
@@ -432,30 +437,35 @@ export default {
       const winner = body.winner && (players[body.winner] ? body.winner : null);
       c.closed = { winner: winner || null, by: pid, at: Date.now() };
       await blobPut(env, 'challenges', ch);
-      let issuerLoss = 0;
+      const wager = c.wager || WAGER_DEFAULT;
+      let pot = 0, losers = [];
       if (winner) {
+        // participants: everyone who answered, plus the issuer on player challenges
+        // (in the bet whether or not he posted a result — his callout, his stake)
+        const parts = new Set([winner, ...Object.keys(c.results || {}).filter(p => players[p]), ...(c.mode === 'player' && players[c.by] ? [c.by] : [])]);
         const cwl = await blobGet(env, 'cwl', {});
-        // the issuer is in the fight whether or not he posted a result — his callout, his L
-        for (const p of new Set([winner, ...Object.keys(c.results || {}), ...(c.mode === 'player' && players[c.by] ? [c.by] : [])])) {
+        for (const p of parts) {
           cwl[p] = cwl[p] || { w: 0, l: 0 };
           p === winner ? cwl[p].w++ : cwl[p].l++;
         }
         await blobPut(env, 'cwl', cwl);
-        // stakes: winner banks points; a player who called someone out and lost his own challenge pays
         const day = new Date().toISOString().slice(0, 10);
-        await challengePoints(env, winner, day, CH_WIN);
-        if (c.mode === 'player' && c.by !== winner && players[c.by]) {
-          issuerLoss = CH_LOSE;
-          await challengePoints(env, c.by, day, -CH_LOSE);
+        if (c.mode === 'boss') {
+          pot = wager; // coach bounty — house pays, nobody loses points
+          await challengePoints(env, winner, day, pot);
+        } else {
+          losers = [...parts].filter(p => p !== winner);
+          pot = wager * losers.length;
+          for (const p of losers) await challengePoints(env, p, day, -wager);
+          if (pot) await challengePoints(env, winner, day, pot);
         }
       }
       await feedAdd(env, {
         pid, name: myName, type: 'challenge-close', id: c.id, title: c.title,
         winner: winner ? (players[winner]?.name || winner) : null,
-        pts: winner ? CH_WIN : 0,
-        loser: issuerLoss ? (players[c.by]?.name || c.by) : null, loss: issuerLoss,
+        wager, pot, losers: losers.map(p => players[p]?.name || p),
       });
-      return json({ ok: true, pts: winner ? CH_WIN : 0, issuerLoss });
+      return json({ ok: true, wager, pot, losers });
     }
 
     if (req.method === 'GET' && path === '/challenges') return json(await blobGet(env, 'challenges', []));

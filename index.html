@@ -1020,6 +1020,7 @@ async function renderRivalry(){
       h+=`<div class="${isBoss?'marquee':'issuer'}">
         ${isBoss?`<div class="kicker">COACH-ISSUED BOSS BATTLE</div><h1>${esc(ch.title)}</h1>`:`<div class="danger">${esc((ch.by||'?').toUpperCase())} CALLED YOU OUT</div><div class="head" style="font-size:28px;margin:6px 0">${esc(ch.title)}</div>`}
         ${ch.desc?`<div style="color:var(--dim);font-size:14px">${esc(ch.desc)}</div>`:''}
+        <div class="label" style="margin-top:8px;color:var(--gold)">${isBoss?`${ch.wager||50}-PT BOUNTY`:`${ch.wager||50} PTS A HEAD — WINNER TAKES THE POT`}</div>
         ${ch.expiresDay?`<div class="label" style="margin-top:8px">ANSWER BY ${esc(ch.expiresDay)}</div>`:''}
         ${mine?`<div class="good" style="margin-top:10px">YOUR RESULT IS IN: ${esc(mine.result)} ✓</div>`
           :`<button class="btn ${isBoss?'boss':'rival'}" style="margin-top:14px" onclick="answerChallenge('${esc(ch.id)}')">${isBoss?'ENTER BATTLE':'ANSWER IT'}</button>`}
@@ -1029,7 +1030,7 @@ async function renderRivalry(){
     for(const ch of settled){
       const w=ch.closed.winner?((sb.board.find(x=>x.pid===ch.closed.winner)||{}).name||ch.closed.winner):null;
       h+=`<div class="card" style="padding:12px 14px;border-color:var(--gold)"><div class="label lit">${esc(ch.title)}</div>
-        <div class="label" style="font-size:11px;margin-top:4px;color:var(--gold)">${w?`SETTLED — ${esc(w.toUpperCase())} TOOK IT`:'SETTLED — NO WINNER CALLED'}</div></div>`;
+        <div class="label" style="font-size:11px;margin-top:4px;color:var(--gold)">${w?`SETTLED — ${esc(w.toUpperCase())} TOOK THE POT (${ch.wager||50} PTS A HEAD)`:'SETTLED — NO WINNER CALLED'}</div></div>`;
     }
     h+=`<button class="btn rival" onclick="throwDown()">CALL SOMEONE OUT</button>`;
     // feed
@@ -1043,7 +1044,7 @@ async function renderRivalry(){
         :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
         :e.type==='bonus'?`COACH GAVE ${e.name} +${e.coach} — NOW ${e.total}`
         :e.type==='week'?`${(e.winners||[e.name]).join(' + ')} TOOK THE WEEK WITH ${e.total}`
-        :e.type==='challenge-close'?(e.winner?`“${e.title}” SETTLED — ${e.winner} TOOK IT +${e.pts||50}${e.loser?`. ${e.loser} CALLED IT AND ATE −${e.loss}`:''}`:`“${e.title}” SETTLED. NO WINNER.`)
+        :e.type==='challenge-close'?(e.winner?`“${e.title}” SETTLED — ${e.winner} TAKES THE POT +${e.pot??e.pts??50}${e.losers&&e.losers.length?`. ${e.losers.join(' + ')} PAID −${e.wager} EACH`:e.loser?`. ${e.loser} CALLED IT AND ATE −${e.loss}`:''}`:`“${e.title}” SETTLED. NO WINNER, EVERYBODY KEEPS THEIR MONEY.`)
         :`${e.name} DID SOMETHING`;
       return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
     }).join('')}</section>`:`<div class="card" style="padding:14px"><div class="label">Dead quiet. Somebody do something.</div></div>`;
@@ -1055,15 +1056,16 @@ async function renderRivalry(){
 async function throwDown(){
   const title=prompt('Name the challenge (e.g. "100 burpees for time"):');
   if(!title)return;
+  const wager=parseInt(prompt('The wager — points each player puts up (10-200). Winner takes the pot. You\'re in it too.','50'))||50;
   const desc=prompt('Rules / how it\'s scored (optional):')||'';
   const expires=prompt('Answer-by date YYYY-MM-DD (optional):')||'';
   const c=cfg();if(!c)return;
   const [endpoint,token]=c;
   try{
     const r=await fetch(endpoint+'/challenge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({title,desc,mode:'player',expiresDay:expires})});
+      body:JSON.stringify({title,desc,mode:'player',wager,expiresDay:expires})});
     if(!r.ok)throw new Error();
-    toastMsg('CHALLENGE POSTED. IT\'S LIVE.');renderRivalry();
+    toastMsg('BET\'S ON THE TABLE.');renderRivalry();
   }catch(e){alert('Failed to post — try again with signal.')}
 }
 async function settleChallenge(id){
