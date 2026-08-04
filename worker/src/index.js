@@ -153,7 +153,7 @@ export default {
       for (const [h, p] of Object.entries(map)) if (p === npid) delete map[h];
       map[await sha256hex(tok)] = npid;
       await blobPut(env, 'auth', map);
-      players[npid] = { ...(players[npid] || {}), name: body.name, created: players[npid]?.created || Date.now() };
+      players[npid] = { ...(players[npid] || {}), name: body.name, profile: body.profile || players[npid]?.profile || {}, created: players[npid]?.created || Date.now() };
       await blobPut(env, 'players', players);
       return json({ ok: true, pid: npid, token: tok, note: 'token shown once — store it now' });
     }
@@ -162,7 +162,38 @@ export default {
       return json(players);
     }
 
-    if (path === '/me') return json({ pid, name: myName, admin });
+    if (path === '/me') {
+      const prof = players[pid]?.profile || {};
+      // profile defaults keep Patrick's historical plan without a stored profile
+      return json({ pid, name: myName, admin, profile: { foodTarget: 140, foodFloor: 100, age: 43, ...prof } });
+    }
+
+    // media listing that works for every player: admin sees the vault lanes (non-p/),
+    // players see exactly their own p/<pid>/ prefix. Feeds the Film room.
+    if (path === '/media-list' && req.method === 'GET') {
+      const media = [];
+      let mcur;
+      do {
+        const r = await env.FOOTAGE.list(mcur ? { cursor: mcur } : {});
+        media.push(...r.objects.map(o => ({ key: o.key, size: o.size, uploaded: o.uploaded })));
+        mcur = r.truncated ? r.cursor : null;
+      } while (mcur);
+      return json({ media: admin ? media.filter(m => !m.key.startsWith('p/')) : media.filter(m => m.key.startsWith(`p/${pid}/`)) });
+    }
+
+    // per-player session queue: coach publishes via admin POST; players read their own.
+    // No blob for a player -> client falls back to the static data/sessions.json (Patrick's channel).
+    if (path === '/sessions' && req.method === 'GET') {
+      const blob = await blobGet(env, 'sessions:' + pid, null);
+      return json(blob || { sessions: null });
+    }
+    if (path === '/admin/sessions' && req.method === 'POST') {
+      if (!admin) return json({ error: 'forbidden' }, 403);
+      const body = await req.json();
+      if (!body.pid || !Array.isArray(body.sessions)) return json({ error: 'need {pid, sessions:[]}' }, 400);
+      await blobPut(env, 'sessions:' + body.pid, { sessions: body.sessions, published: Date.now() });
+      return json({ ok: true, count: body.sessions.length });
+    }
 
     // ---- logs ----
     if (req.method === 'POST' && path === '/log') {
@@ -253,11 +284,11 @@ export default {
       if (!dayOk(body.day) || !body.score || typeof body.score.total !== 'number') return json({ error: 'need {day: YYYY-MM-DD, score:{total,...}}' }, 400);
       const scores = await blobGet(env, 'scores:' + pid, {});
       const prior = scores[body.day];
+      // max-wins per day: a stale or post-unfinish lower recompute can't clobber a better score
+      if (prior && prior.total >= body.score.total) return json({ ok: true, kept: prior.total });
       scores[body.day] = { ...body.score, at: Date.now() };
       await blobPut(env, 'scores:' + pid, scores);
-      if (!prior || body.score.total > prior.total) {
-        await feedAdd(env, { pid, name: myName, type: 'score', day: body.day, total: body.score.total });
-      }
+      await feedAdd(env, { pid, name: myName, type: 'score', day: body.day, total: body.score.total });
       return json({ ok: true });
     }
 

@@ -258,17 +258,43 @@ if(location.hash.startsWith('#cfg=')){
   history.replaceState(null,'',location.pathname);
 }
 function cfg(){const c=localStorage.getItem('synccfg');return c?c.split('|'):null}
+/* player identity — cached at connect; defaults keep a not-yet-refreshed install on Patrick's plan */
+function me(){return j('me',{pid:'patrick',admin:true,name:'Patrick',profile:{}})}
+function prof(){return {foodTarget:140,foodFloor:100,age:43,...(me().profile||{})}}
+// non-admin uploads live under p/<pid>/ on R2 — build the REAL key client-side so
+// feedback lookups (meals, suggest, clips, gear) match what the coach loop sees
+function mkey(k){const m=me();return m.admin?k:(k.startsWith(`p/${m.pid}/`)?k:`p/${m.pid}/`+k)}
+async function refreshMe(){
+  const c=cfg();if(!c)return;
+  try{
+    const r=await fetch(c[0]+'/me',{headers:{'Authorization':'Bearer '+c[1]}});
+    if(r.ok)sv('me',await r.json());
+  }catch(e){/* offline — cached identity stands */}
+}
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function j(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}}
 function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
 let loadFailed=false;
 async function init(){
-  try{
-    const r=await fetch('data/sessions.json?_='+Date.now());
-    if(!r.ok)throw new Error(r.status);
-    ALLSESS=(await r.json()).sessions;
-  }catch(e){ALLSESS=[];loadFailed=true}
+  loadFailed=false;
+  refreshMe();
+  let sess=null;
+  const c=cfg();
+  if(c){ // per-player queue from the worker wins when the coach has published one
+    try{
+      const r=await fetch(c[0]+'/sessions',{headers:{'Authorization':'Bearer '+c[1]}});
+      if(r.ok){const b=await r.json();if(b&&Array.isArray(b.sessions)){sess=b.sessions;sv('sesscache',b.sessions)}}
+    }catch(e){}
+  }
+  if(!sess){
+    try{
+      const r=await fetch('data/sessions.json?_='+Date.now());
+      if(!r.ok)throw new Error(r.status);
+      sess=(await r.json()).sessions;
+    }catch(e){sess=j('sesscache',null)}
+  }
+  if(sess)ALLSESS=sess;else{ALLSESS=[];loadFailed=true}
   S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
   flushOutbox();
   route();
@@ -301,12 +327,13 @@ function targetIn(lbs){if(lbs==null)return '';return unit()==='kg'?String(Math.r
 /* ---------- FUEL STRIP (home) ---------- */
 function fuelStrip(){
   const f=j('fuel:'+today(),{g:0,items:[]});
-  const pct=Math.min(100,Math.round(f.g/140*100));
+  const T=prof().foodTarget;
+  const pct=Math.min(100,Math.round(f.g/T*100));
   return `<div class="card" style="padding:12px 16px;cursor:pointer" onclick="view='fuel';route()">
     <div style="display:flex;justify-content:space-between;align-items:baseline">
       <span class="label lit">FUEL</span>
-      <span><span class="num" style="font-size:24px">${f.g}</span><span class="label">/140G</span></span></div>
-    <div class="track ${f.g>=140?'hit':''}" style="margin:8px 0 2px;height:8px"><i style="width:${pct}%"></i></div></div>`;
+      <span><span class="num" style="font-size:24px">${f.g}</span><span class="label">/${T}G</span></span></div>
+    <div class="track ${f.g>=T?'hit':''}" style="margin:8px 0 2px;height:8px"><i style="width:${pct}%"></i></div></div>`;
 }
 function howto(b){
   const q=b.howto||('how to '+b.name.replace(/\(.*?\)/g,'').replace(/[—-].*$/,'').trim()+' exercise proper form');
@@ -321,7 +348,7 @@ function connectBanner(){
     <button class="btn small" onclick="connect()">Connect (paste setup key)</button></div>`;
 }
 function connect(){
-  let v=prompt('Paste your setup key (or the full link) from Claude');
+  let v=prompt('Paste your setup key (or the full link)');
   if(!v)return;
   v=v.replace(/["'\s]/g,'');
   if(v.includes('#cfg='))v=v.split('#cfg=')[1];
@@ -329,14 +356,15 @@ function connect(){
   if(v.includes('|'))c=v;
   else{
     const tok=(v.match(/[a-f0-9]{32,}/i)||[])[0];
-    if(!tok){alert('No key found in that paste — paste the long code Claude sent.');return}
+    if(!tok){alert('No key in that paste. Paste the whole code you were sent.');return}
     c=DEFAULT_ENDPOINT+'|'+tok;
   }
   const [ep,tok]=c.split('|');
-  fetch(ep+'/pull',{headers:{'Authorization':'Bearer '+tok}}).then(r=>{
-    if(r.ok){localStorage.setItem('synccfg',c);alert('Connected ✓');route()}
-    else alert('That key was rejected by the server — it may be incomplete. Re-copy the whole code and try again.');
-  }).catch(()=>alert('Could not reach the sync server — check your connection and try again.'));
+  // /me works for EVERY player — /pull is admin-only and rejected valid friend tokens
+  fetch(ep+'/me',{headers:{'Authorization':'Bearer '+tok}}).then(async r=>{
+    if(r.ok){localStorage.setItem('synccfg',c);sv('me',await r.json());alert('Connected. You\'re in.');init()}
+    else alert('Server rejected that key. Re-copy the whole code and paste it again.');
+  }).catch(()=>alert('Can\'t reach the server. Get signal and try again.'));
 }
 
 /* ---------- TODAY ---------- */
@@ -463,7 +491,7 @@ function render(){
     <div class="label">RPE — how hard overall</div><div class="scales">${scale('rpe',L.rpe)}</div>
     <div class="label">Feel — mood / energy</div><div class="scales">${scale('feel',L.feel)}</div>
     <div class="label">Notes</div>
-    <textarea id="notes" placeholder="Pain points or breakthroughs?">${esc(L.notes||'')}</textarea>
+    <textarea id="notes" placeholder="What hurt. What moved.">${esc(L.notes||'')}</textarea>
     <button class="btn primary" style="margin-top:16px" onclick="finish()">Finish session</button></div>`;
   app.innerHTML=h+requestsCard();
 }
@@ -634,12 +662,12 @@ async function gotClip(bid,input){
     const n=(bl.uploads||[]).length+1;
     const isImg=(f.type||'').startsWith('image');
     if(!f.size)throw new Error('empty file');
-    const key=`${S.id}/${bid}-clip${n}-${Date.now()}.${fileExt(f,isImg?'jpg':'mov')}`;
+    const key=mkey(`${S.id}/${bid}-clip${n}-${Date.now()}.${fileExt(f,isImg?'jpg':'mov')}`);
     // File streams as the request body — no ArrayBuffer copy (a 4K clip would double in memory and can kill the PWA)
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
       headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||(isImg?'image/jpeg':'video/quicktime')},body:f});
     const rj=res.ok?await res.json():null;
-    if(rj&&rj.size===f.size){(bl.uploads=bl.uploads||[]).push(key)}
+    if(rj&&rj.size===f.size){(bl.uploads=bl.uploads||[]).push(rj.key||key)}
     else bl.uploadError=true;
   }catch(e){bl.uploadError=true}
   bl.uploading=false;store.save(log);render();
@@ -767,6 +795,7 @@ function hardMinutesOf(L,sess){
     if(b.type==='timed'&&(b.metric||'min')==='min'){
       const t=String(bl.sets[0].time||'').split(':');
       if(t.length===2)min+=parseInt(t[0])+parseInt(t[1])/60;
+      else if(t.length===1&&parseInt(t[0]))min+=parseInt(t[0]); // colon-less entry = whole minutes
     }
   }
   return Math.round(min);
@@ -784,16 +813,17 @@ function dayHistory(beforeDate){
 }
 function computeDayScore(L){
   if(!window.SCORING)return null;
-  const d=(L.completedAt||new Date().toISOString()).slice(0,10);
+  const d=today(); // LOCAL date — completedAt is UTC and files evening sessions under tomorrow
   const {vol}=sessionStats(L);
   const f=j('fuel:'+d,{g:0,items:[]});
   const weights=j('weights',[]);
   const bw=weights.length?weights[weights.length-1].w:null;
+  const P=prof();
   const s=SCORING.dayScore({
     session:{completed:true},
-    food:{planMet:f.g>=140},
+    food:{planMet:f.g>=P.foodTarget},
     today:{volumeLb:vol,hardMinutes:hardMinutesOf(L,S)},
-    profile:{bodyweightLb:bw,age:43},
+    profile:{bodyweightLb:bw,age:P.age},
     history:dayHistory(d),
     extras:{}
   });
@@ -876,7 +906,7 @@ async function refreshHomeBoard(){ // background scoreboard refresh; cached copy
   finally{homeRefreshing=false}
 }
 /* ---------- RIVALRY ---------- */
-const PCOLORS=['var(--volt)','var(--rage)','var(--ice)','var(--gold)','var(--violet)'];
+const PCOLORS=['var(--volt)','var(--ox)','var(--ice)','var(--gold)','var(--violet)'];
 let RTAB=localStorage.getItem('rtab')||'week';
 async function renderRivalry(){
   const app=$('app');
@@ -900,7 +930,7 @@ async function renderRivalry(){
     const colorOf={};sb.board.forEach((p,i)=>colorOf[p.pid]=PCOLORS[i%PCOLORS.length]);
     let h=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div>
       <div class="segs">${['day','week','month'].map(t=>`<button class="${RTAB===t?'on':''}" onclick="RTAB='${t}';localStorage.setItem('rtab','${t}');renderRivalry()">${t.toUpperCase()}</button>`).join('')}</div>`;
-    if(board.length<2)h+=`<div class="card"><div class="label lit" style="margin-bottom:6px">NO OPPONENTS YET</div><div style="color:var(--dim);font-size:14px">Nobody else is in yet. Add your rivals and it's on.</div></div>`;
+    if(board.length<2)h+=`<div class="card"><div class="label lit" style="margin-bottom:6px">NO OPPONENTS YET</div><div style="color:var(--dim);font-size:14px">Nobody else is in yet. You're beating no one.</div></div>`;
     board.forEach((p,i)=>{
       const pts=p[key]||0;
       h+=`<section class="leader" style="--player:${colorOf[p.pid]}"><div class="player">
@@ -938,7 +968,7 @@ async function renderRivalry(){
       const col=colorOf[e.pid]||'var(--ctrl)';
       const when=new Date(e.at).toLocaleString([],{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
       const line=e.type==='score'?`${e.name} BANKED ${e.total} PTS`
-        :e.type==='challenge'?`${e.name} ${e.mode==='boss'?'UNLEASHED':'THREW DOWN'} “${e.title}”`
+        :e.type==='challenge'?`${e.name} ${e.mode==='boss'?'DROPPED':'CALLED OUT THE ROOM:'} “${e.title}”`
         :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
         :`${e.name} DID SOMETHING`;
       return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
@@ -1022,11 +1052,12 @@ async function renderReview(){
   try{
     const H={'Authorization':'Bearer '+token};
     const okJson=r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()};
-    const [pull,fb]=await Promise.all([
-      fetch(endpoint+'/pull',{headers:H}).then(okJson),
+    const [ml,fb]=await Promise.all([
+      fetch(endpoint+'/media-list',{headers:H}).then(okJson), // works for every player, unlike admin-only /pull
       fetch(endpoint+'/feedback',{headers:H}).then(okJson)
     ]);
-    const media=(pull.media||[]).filter(m=>!m.key.startsWith('photos/')&&!m.key.startsWith('meals/')&&!m.key.startsWith('suggest/')).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
+    const skip=k=>['photos/','meals/','suggest/','gear/'].some(p=>k.includes(p));
+    const media=(ml.media||[]).filter(m=>!skip(m.key)).sort((a,b)=>b.uploaded.localeCompare(a.uploaded));
     let h=vaultNav()+'<h1 style="margin-top:8px">Film room</h1>';
     if(!media.length)h+='<div class="label" style="margin-top:12px">No clips in the last 7 days. Older footage lives in the vault archive.</div>';
     for(const m of media){
@@ -1182,7 +1213,7 @@ async function gotGear(input){
   if(!c){alert('Connect first (Today tab).');return}
   const [endpoint,token]=c;
   const note=prompt('What is it / where does it live? (optional)')||'';
-  const group=`gear/${today()}-${Date.now()}`;
+  const group=mkey(`gear/${today()}-${Date.now()}`);
   $('gearStatus').innerHTML='<div class="label" style="margin-top:10px">UPLOADING…</div>';
   try{
     for(let i=0;i<files.length;i++){
@@ -1249,16 +1280,17 @@ function renderFuel(){
   if(j('suggestq',[]).length)pollSuggest();
   const key='fuel:'+today();
   const f=j(key,{g:0,items:[]});
-  const pct=Math.min(100,Math.round(f.g/140*100));
-  let h=`<div class="label" style="margin-top:8px">Daily target: 140G protein</div>
+  const P=prof(),T=P.foodTarget,FL=P.foodFloor;
+  const pct=Math.min(100,Math.round(f.g/T*100));
+  let h=`<div class="label" style="margin-top:8px">Daily target: ${T}G protein</div>
   <div style="display:flex;align-items:baseline;gap:6px">
     <div class="poster num">${f.g}</div>
-    <span class="num" style="font-size:40px;color:var(--dim)">/140</span>
+    <span class="num" style="font-size:40px;color:var(--dim)">/${T}</span>
     <span class="head" style="font-size:20px;color:var(--dim)">G</span></div>
-  <div class="track ${f.g>=140?'hit':''}"><i style="width:${pct}%"></i></div>
-  <div class="label" style="margin-bottom:18px">${f.g>=140?'FUEL LOCKED. STOP EATING LIKE AN INTERN.':f.g>=100?'PAST THE FLOOR — PUSH TO 140.':'FLOOR IS 100. FEED THE MACHINE.'}</div>
+  <div class="track ${f.g>=T?'hit':''}"><i style="width:${pct}%"></i></div>
+  <div class="label" style="margin-bottom:18px">${f.g>=T?'FUEL LOCKED. STOP EATING LIKE AN INTERN.':f.g>=FL?`PAST THE FLOOR — PUSH TO ${T}.`:`FLOOR IS ${FL}. YOU'RE NOT CLOSE.`}</div>
   <button class="btn primary" onclick="$('mealIn').click()">+ Snap meal / menu</button>
-  <button class="btn small" onclick="nearMe()">// What's good near me</button>
+  <button class="btn small" onclick="nearMe()">Find protein near me</button>
   <input type="file" id="mealIn" accept="image/*" multiple style="display:none" onchange="gotMeal(this)">
   ${j('mealq',[]).filter(q=>q.date===today()).map(()=>`<div class="label" style="margin-top:12px">ANALYZING — PROTEIN LANDS IN ~2 MIN…</div>`).join('')}
   <div id="suggestBox">${suggestBox()}</div>
@@ -1276,8 +1308,8 @@ async function gotMeal(input){
   const c=cfg();
   if(!c){alert('Connect first (Today tab) — photo can\'t upload.');return}
   const [endpoint,token]=c;
-  const note=prompt('What is it? (optional — helps me get it right)')||'';
-  const group=`meals/${today()}-${Date.now()}`;
+  const note=prompt('What is it? (optional)')||'';
+  const group=mkey(`meals/${today()}-${Date.now()}`);
   try{
     let firstKey=null;
     for(let i=0;i<files.length;i++){
@@ -1287,7 +1319,7 @@ async function gotMeal(input){
         headers:{'Authorization':'Bearer '+token,'Content-Type':f.type||'image/jpeg'},body:f});
       const rj=res.ok?await res.json():null;
       if(!(rj&&rj.size===f.size))throw new Error('upload failed');
-      if(!firstKey)firstKey=key;
+      if(!firstKey)firstKey=rj.key||key;
     }
     if(note){
       await fetch(endpoint+'/upload?key='+encodeURIComponent(group+'/note.txt'),{method:'POST',
@@ -1309,11 +1341,11 @@ async function nearMe(){
   const send=async txt=>{
     const c=cfg();if(!c){alert('Connect first (Today tab).');return}
     const [endpoint,token]=c;
-    const key=`suggest/${today()}-${Date.now()}.txt`;
+    const key=mkey(`suggest/${today()}-${Date.now()}.txt`);
     const res=await fetch(endpoint+'/upload?key='+encodeURIComponent(key),{method:'POST',
       headers:{'Authorization':'Bearer '+token,'Content-Type':'text/plain'},body:txt});
     const rj=res.ok?await res.json():null;
-    if(rj&&rj.size>0){const q=j('suggestq',[]);q.push({key,date:today()});sv('suggestq',q);renderFuel();pollSuggest()}
+    if(rj&&rj.size>0){const q=j('suggestq',[]);q.push({key:rj.key||key,date:today()});sv('suggestq',q);renderFuel();pollSuggest()}
     else alert('Request failed — try again.');
   };
   if(navigator.geolocation){
