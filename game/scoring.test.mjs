@@ -13,6 +13,12 @@ eq(rest.total, 0, 'rest day scores 0');
 const adh = dayScore({ session: { completed: true }, food: { planMet: true } });
 eq(adh.parts.adherence, 400, 'full adherence = 400');
 eq(adh.parts.output, 0, 'no normalizer inputs → output 0');
+eq([adh.parts.session, adh.parts.food], [250, 150], 'adherence splits into session + food parts');
+
+// rest-day food-only: fuel still pays
+const foodOnly = dayScore({ food: { planMet: true } });
+eq(foodOnly.total, T.adherence.food, 'food-only rest day = food points');
+eq(foodOnly.parts.session, 0, 'no session points on a rest day');
 
 // ad-hoc class counts as a session at the minute floor
 ok(dayScore({ session: { adhocMinutes: T.adhocMinMinutes } }).sessionDone, 'adhoc >= floor counts');
@@ -35,9 +41,10 @@ eq(older, 0.75, 'age-adjusted big day');
 // trailing: needs >=4 history days
 eq(normTrailing({ volumeLb: 1000 }, [{ workUnits: 10 }]), null, 'thin history → null');
 const hist = Array.from({ length: 10 }, () => ({ workUnits: 100 }));
-const tNorm = normTrailing({ volumeLb: 10000 }, hist); // today WU=100 = 1.0x mean → 1.0/cap
-eq(tNorm, 1 / T.trailing.cap, 'normal day vs own baseline');
+const tNorm = normTrailing({ volumeLb: 10000 }, hist); // today WU=100 = 1.0x mean → atMean
+eq(tNorm, T.trailing.atMean, 'normal day vs own baseline earns atMean');
 eq(normTrailing({ volumeLb: 15000 }, hist), 1, 'cap: 1.5x baseline = 1.0');
+eq(normTrailing({ volumeLb: 5000 }, hist), T.trailing.atMean / 2, 'half your mean = half of atMean');
 
 // whoop is bonus-only and capped
 const w = dayScore({ session: { completed: true }, extras: { whoopStrain: 25 } });

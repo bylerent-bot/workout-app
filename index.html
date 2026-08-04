@@ -384,7 +384,7 @@ function render(){
   const app=$('app');
   if(!S){app.innerHTML=connectBanner()+fuelStrip()+(loadFailed
     ?`<div class="sealwrap"><div class="seal"><div class="mon">Can't load sessions</div><hr class="dotted"><div class="label">Offline and nothing cached — reopen with signal.</div></div><button class="btn small" onclick="init()">Retry</button></div>`
-    :`<div class="sealwrap"><div class="seal"><div class="mon">Coach is building the next round</div><hr class="dotted"><div class="label">Nothing queued. Enjoy it — it won't last.</div></div></div>`);return}
+    :`<div class="sealwrap"><div class="seal"><div class="mon">Coach is building the next round</div><hr class="dotted"><div class="label">Nothing queued. Enjoy it — it won't last.</div></div></div>`)+adhocCard();return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
   const idx=ALLSESS.indexOf(S);
@@ -394,15 +394,15 @@ function render(){
       <div class="poster num">DONE</div>
       <hr class="rule">
       <div class="head" style="color:var(--ox);font-size:20px">Recovery required</div>
-      <p style="color:var(--dim)">Next round unlocks tomorrow. Protein and sleep are the workout now — don't fuck with the recovery.</p></div>`+requestsCard();
+      <p style="color:var(--dim)">Next round unlocks tomorrow. Protein and sleep are the workout now — don't fuck with the recovery.</p></div>`+adhocCard()+requestsCard();
     return;
   }
   if(!L.revealed && today()<S.date){
-    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Sealed','');
+    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Sealed','')+adhocCard();
     return;
   }
   if(!L.revealed){
-    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Today',`<button class="btn accent" onclick="reveal()">PRESS START</button>`);
+    app.innerHTML=connectBanner()+fuelStrip()+sealCard('Today',`<button class="btn accent" onclick="reveal()">PRESS START</button>`)+adhocCard();
     return;
   }
   const snum=String(idx+1).padStart(3,'0');
@@ -501,6 +501,28 @@ function elapsedMin(L){
   return Math.max(0,Math.round((Date.now()-new Date(L.revealedAt))/60000))+' MIN';
 }
 setInterval(()=>{const el=$('whElapsed');if(el&&S&&log[S.id]&&log[S.id].revealed&&!log[S.id].completed)el.textContent=elapsedMin(log[S.id])},30000);
+/* ad-hoc / class work — a day the coach didn't program still counts (engine floor: 20 min) */
+function adhocCard(){
+  const list=j('adhoc:'+today(),[]);
+  return `<div class="card" style="border-style:dotted;background:transparent">
+    <div class="label" style="margin-bottom:10px">+ Outside work — class, run, game, anything</div>
+    <div style="display:flex;gap:10px">
+      <input id="adMin" inputmode="numeric" placeholder="MIN" style="flex:0 0 72px;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font-family:var(--fnum);font-weight:900;font-size:20px;text-align:center;outline:none;padding:8px 0">
+      <input id="adWhat" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font:16px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. jiu jitsu, 5k, pickup ball">
+      <button class="go head" style="border:2px solid var(--ctrl);padding:0 18px;min-height:48px" onclick="logAdhoc()">Log</button></div>
+    ${list.map(a=>`<div class="statrow"><span>${esc(a.what)}</span><span class="label" style="font-size:11px">${a.min} MIN${a.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
+}
+async function logAdhoc(){
+  const min=parseInt($('adMin').value);
+  if(!min){$('adMin').focus();return}
+  const what=$('adWhat').value.trim()||'Outside work';
+  const k='adhoc:'+today();
+  const list=j(k,[]);list.push({min,what,t:what+'|'+min,synced:false});sv(k,list);
+  toastMsg(min>=(window.SCORING?SCORING.T.adhocMinMinutes:20)?'COUNTS AS A SESSION. BANKED.':'LOGGED. SHORT OF A SESSION.');
+  route();
+  await queuePost('adhoc',{sessionId:'adhoc',log:{type:'adhoc-session',date:today(),minutes:min,what}},{store:k,t:what+'|'+min});
+  recomputeToday();
+}
 function requestsCard(){
   const reqs=j('movereqs',[]);
   return `<div class="card" style="border-style:dotted;background:transparent">
@@ -680,8 +702,8 @@ async function finish(){
   L.completed=true;L.completedAt=new Date().toISOString();
   L.notes=$('notes')?$('notes').value:L.notes;
   store.save(log);
-  const ds=computeDayScore(L);
-  if(ds){L.dayScore=ds.score.total;store.save(log);postScore(ds)}
+  const ds=computeDayScore();
+  if(ds){L.dayScore=ds.score.total;L.dayScoreDay=ds.day;store.save(log);postScore(ds)}
   await sync();renderDone();
   if(navigator.vibrate)navigator.vibrate([60,40,120]);
 }
@@ -703,7 +725,10 @@ function renderDone(){
   const L=log[S.id];
   const {vol,dur}=sessionStats(L);
   const snum=String(ALLSESS.indexOf(S)+1).padStart(3,'0');
-  const sc=L.dayScore??(j('dayscores',{})[(L.completedAt||'').slice(0,10)]||{}).total;
+  const scDay=L.dayScoreDay||(L.completedAt?localDate(L.completedAt):today());
+  const scEntry=j('dayscores',{})[scDay]||{};
+  const sc=scEntry.total??L.dayScore; // dayscores is fresher — recomputes land there
+  const parts=scEntry.parts;
   $('app').innerHTML=fuelStrip()+`<div class="sealwrap">
     <section class="win"><div class="kicker">SESSION ${snum} CLEARED</div><h1>DONE.</h1>
       <div class="head" style="font-size:17px;letter-spacing:.08em;color:var(--dim)">${dur?dur+' MIN · ':''}RPE ${L.rpe??'—'} · FEEL ${L.feel??'—'}</div></section>
@@ -711,6 +736,10 @@ function renderDone(){
       <div><strong class="gain">+${sc}</strong><small>DAILY SCORE</small></div>
       <div><strong>${both(vol).split(' · ')[0]||'—'}</strong><small>IRON MOVED</small></div>
       <div><strong>${dur??'—'}</strong><small>MINUTES</small></div></section>`:''}
+    ${parts?`<section class="scoregrid" style="margin-top:-8px">
+      <div><strong>${(parts.session??parts.adherence??0)+(parts.output||0)}</strong><small>WORK</small></div>
+      <div><strong>${parts.food??0}</strong><small>FUEL</small></div>
+      <div><strong>${(parts.coach||0)+(parts.whoop||0)}</strong><small>BONUS</small></div></section>`:''}
     ${loadoutStamp(vol)}
     ${benchTalkFor(L)}
     <div class="${L.synced?'good':'warn'}">${L.synced?'SYNCED TO COACH ✓':'QUEUED — retries automatically when you have signal. Nothing is lost.'}</div>
@@ -811,24 +840,40 @@ function dayHistory(beforeDate){
   }
   return hist;
 }
-function computeDayScore(L){
+function localDate(iso){const d=new Date(iso);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function sessionForDay(d){ // the completed session filed under LOCAL date d, if any
+  for(const s of ALLSESS){
+    const L=log[s.id];
+    if(L&&L.completed&&L.completedAt&&localDate(L.completedAt)===d)return{s,L};
+  }
+  return null;
+}
+// today's whole picture: programmed session + ad-hoc work + fuel. Called at finish AND
+// whenever fuel/ad-hoc changes, so rest days and late meals still move the board.
+function computeDayScore(){
   if(!window.SCORING)return null;
   const d=today(); // LOCAL date — completedAt is UTC and files evening sessions under tomorrow
-  const {vol}=sessionStats(L);
+  const done=sessionForDay(d);
+  const ad=j('adhoc:'+d,[]);
   const f=j('fuel:'+d,{g:0,items:[]});
+  if(!done&&!ad.length&&!f.g)return null; // nothing happened yet — nothing to post
+  const adMin=ad.reduce((s,a)=>s+(a.min||0),0);
+  const vol=(done?sessionStats(done.L).vol:0)+ad.reduce((s,a)=>s+(a.vol||0),0);
+  const hard=(done?hardMinutesOf(done.L,done.s):0)+adMin;
   const weights=j('weights',[]);
   const bw=weights.length?weights[weights.length-1].w:null;
   const P=prof();
   const s=SCORING.dayScore({
-    session:{completed:true},
+    session:{completed:!!done,adhocMinutes:adMin},
     food:{planMet:f.g>=P.foodTarget},
-    today:{volumeLb:vol,hardMinutes:hardMinutesOf(L,S)},
+    today:{volumeLb:vol,hardMinutes:hard},
     profile:{bodyweightLb:bw,age:P.age},
     history:dayHistory(d),
     extras:{}
   });
   return {day:d,score:s};
 }
+function recomputeToday(){const ds=computeDayScore();if(ds)postScore(ds)}
 function postScore(ds){
   if(!ds)return;
   const scores=j('dayscores',{});
@@ -970,6 +1015,7 @@ async function renderRivalry(){
       const line=e.type==='score'?`${e.name} BANKED ${e.total} PTS`
         :e.type==='challenge'?`${e.name} ${e.mode==='boss'?'DROPPED':'CALLED OUT THE ROOM:'} “${e.title}”`
         :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
+        :e.type==='bonus'?`COACH GAVE ${e.name} +${e.coach} — NOW ${e.total}`
         :`${e.name} DID SOMETHING`;
       return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
     }).join('')}</section>`:`<div class="card" style="padding:14px"><div class="label">Dead quiet. Somebody do something.</div></div>`;
@@ -1272,7 +1318,9 @@ async function checkMealQueue(){
         postLog({type:'nutrition',date:it.date,protein_g:day.g,items:day.items});
       }catch(e){remain.push(it)}
     }
-    sv('mealq',remain);return changed;
+    sv('mealq',remain);
+    if(changed)recomputeToday(); // analyzed meal protein just landed
+    return changed;
   }catch(e){return false}
 }
 function renderFuel(){
@@ -1383,6 +1431,7 @@ function addFuel(n,g){
   const key='fuel:'+today();const f=j(key,{g:0,items:[]});
   f.items.push({n,g});f.g+=g;sv(key,f);
   postLog({type:'nutrition',date:today(),protein_g:f.g,items:f.items});
+  recomputeToday(); // fuel moves the day score — plan hit, rest-day food points
   renderFuel();
 }
 function addCustom(){
@@ -1394,6 +1443,7 @@ function rmFuel(i){
   const key='fuel:'+today();const f=j(key,{g:0,items:[]});
   f.g-=f.items[i].g;f.items.splice(i,1);sv(key,f);
   postLog({type:'nutrition',date:today(),protein_g:f.g,items:f.items});
+  recomputeToday(); // server keeps the day's max — a removal can't lower a banked score
   renderFuel();
 }
 

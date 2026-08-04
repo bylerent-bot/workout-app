@@ -15,7 +15,8 @@
 // GET  /pull           PATRICK-ONLY logs+media since ?after= (vault sync agent; friends' data excluded by design)
 // GET/DELETE /media/:key   (non-admin restricted to own p/<pid>/ prefix)
 // POST/GET /feedback   per-clip coach notes (non-admin sees own clips only)
-// POST /score          {day, score} -> scores:<pid>; emits a feed event
+// POST /score          {day, score} -> scores:<pid>; keeps server-side adj; feed on big jumps
+// POST /score/adjust   {pid, day, coach?, whoop?} coach/WHOOP bonuses (admin only)
 // GET  /scoreboard?day=YYYY-MM-DD   daily/weekly/monthly totals for every player
 // GET  /feed           last 100 events
 // POST /challenge      {title, desc, mode:'boss'|'player', expiresDay?} -> challenge (boss = admin only)
@@ -284,12 +285,36 @@ export default {
       if (!dayOk(body.day) || !body.score || typeof body.score.total !== 'number') return json({ error: 'need {day: YYYY-MM-DD, score:{total,...}}' }, 400);
       const scores = await blobGet(env, 'scores:' + pid, {});
       const prior = scores[body.day];
+      // coach/whoop adjustments live server-side (see /score/adjust) and survive client reposts
+      const adj = prior?.adj || null;
+      const adjSum = adj ? (adj.coach || 0) + (adj.whoop || 0) : 0;
+      const total = body.score.total + adjSum;
       // max-wins per day: a stale or post-unfinish lower recompute can't clobber a better score
-      if (prior && prior.total >= body.score.total) return json({ ok: true, kept: prior.total });
-      scores[body.day] = { ...body.score, at: Date.now() };
+      if (prior && prior.total >= total) return json({ ok: true, kept: prior.total });
+      const parts = { ...(body.score.parts || {}), ...(adj ? { coach: adj.coach || 0, whoop: Math.max(body.score.parts?.whoop || 0, adj.whoop || 0) } : {}) };
+      scores[body.day] = { ...body.score, total, base: body.score.total, parts, ...(adj ? { adj } : {}), at: Date.now() };
       await blobPut(env, 'scores:' + pid, scores);
-      await feedAdd(env, { pid, name: myName, type: 'score', day: body.day, total: body.score.total });
+      // fuel recomputes fire all day — only headline jumps hit the feed (first post or +100)
+      if (!prior || total - prior.total >= 100) await feedAdd(env, { pid, name: myName, type: 'score', day: body.day, total });
       return json({ ok: true });
+    }
+
+    // coach loop / WHOOP leg posts bonuses after the fact: {pid, day, coach?, whoop?}
+    if (req.method === 'POST' && path === '/score/adjust') {
+      if (!admin) return json({ error: 'forbidden' }, 403);
+      const body = await req.json();
+      const tpid = body.pid || 'patrick';
+      if (!players[tpid] || !dayOk(body.day)) return json({ error: 'need {pid, day: YYYY-MM-DD}' }, 400);
+      const clampN = (x, hi) => Math.min(hi, Math.max(0, Math.round(x || 0)));
+      const scores = await blobGet(env, 'scores:' + tpid, {});
+      const e = scores[body.day] || { total: 0, base: 0, parts: {} };
+      const base = e.base ?? ((e.total || 0) - ((e.adj?.coach || 0) + (e.adj?.whoop || 0)));
+      const adj = { coach: clampN(body.coach ?? e.adj?.coach, 150), whoop: clampN(body.whoop ?? e.adj?.whoop, 50) };
+      scores[body.day] = { ...e, base, adj, total: base + adj.coach + adj.whoop, parts: { ...(e.parts || {}), coach: adj.coach, whoop: adj.whoop }, at: Date.now() };
+      await blobPut(env, 'scores:' + tpid, scores);
+      if (adj.coach)
+        await feedAdd(env, { pid: tpid, name: players[tpid]?.name || tpid, type: 'bonus', day: body.day, coach: adj.coach, total: scores[body.day].total });
+      return json({ ok: true, total: scores[body.day].total });
     }
 
     if (req.method === 'GET' && path === '/scoreboard') {

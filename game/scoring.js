@@ -15,8 +15,10 @@ export const T = {
   whoop: { max: 50, strainCap: 20 },
   // ad-hoc/class minimum to count as a completed session
   adhocMinMinutes: 20,
-  // trailing: today vs rolling mean; 1.0 = your normal day, capped so one monster day can't run away
-  trailing: { windowDays: 28, cap: 1.5 },
+  // trailing: today vs rolling mean over COMPLETED training days only; a normal day
+  // (1.0x your mean) earns atMean, the cap earns 1.0, so beating your baseline pays
+  // but matching it isn't punished (rebalanced from flat /cap, audit 2026-08-03)
+  trailing: { windowDays: 28, cap: 1.5, atMean: 0.85 },
   // bodyweight-relative lifting bands: session volume (lb) / bodyweight (lb).
   // 0 → 0, "solid" → ~0.7 of the band, "big" → 1.0. Rough gen-pop-informed anchors, tunable.
   volPerBw: { solid: 40, big: 80 },
@@ -49,7 +51,9 @@ export function normTrailing(today, history) {
   if (w.length < 4) return null; // not enough history to self-reference
   const mean = w.reduce((s, d) => s + d.workUnits, 0) / w.length;
   if (mean <= 0) return null;
-  return clamp(workUnits(today) / mean, 0, T.trailing.cap) / T.trailing.cap;
+  const r = clamp(workUnits(today) / mean, 0, T.trailing.cap);
+  const { cap, atMean } = T.trailing;
+  return r <= 1 ? atMean * r : atMean + (1 - atMean) * ((r - 1) / (cap - 1));
 }
 
 export function normBodyweight(today, profile) {
@@ -78,7 +82,9 @@ export function dayScore(inp) {
   const { session = {}, food = {}, today = {}, profile = {}, history = [], extras = {} } = inp;
 
   const sessionDone = !!session.completed || (session.adhocMinutes || 0) >= T.adhocMinMinutes;
-  const adherence = (sessionDone ? T.adherence.session : 0) + (food.planMet ? T.adherence.food : 0);
+  const sessionPts = sessionDone ? T.adherence.session : 0;
+  const foodPts = food.planMet ? T.adherence.food : 0;
+  const adherence = sessionPts + foodPts;
 
   const norms = [normTrailing(today, history), normBodyweight(today, profile)].filter(n => n !== null);
   const outputN = norms.length ? norms.reduce((s, n) => s + n, 0) / norms.length : 0;
@@ -91,7 +97,7 @@ export function dayScore(inp) {
 
   return {
     total: adherence + output + coach + whoop,
-    parts: { adherence, output, coach, whoop },
+    parts: { adherence, output, coach, whoop, session: sessionPts, food: foodPts },
     workUnits: workUnits(today),
     sessionDone,
   };
