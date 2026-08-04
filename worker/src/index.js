@@ -21,7 +21,8 @@
 // GET  /feed           last 100 events
 // POST /challenge      {title, desc, mode:'boss'|'player', expiresDay?} -> challenge (boss = admin only)
 // POST /challenge/result {id, result, clipKey?}
-// POST /challenge/close  {id, winner?} settle it (issuer or admin); W-L in `cwl` blob
+// POST /challenge/close  {id, winner?} settle it (issuer or admin); W-L in `cwl` blob;
+//                        winner +50 to today's score, player-issuer who lost his own callout -25 (adj.challenge)
 // GET  /scoreboard also runs the lazy weekly close (`weeks` + `wl` blobs) and returns wl/cwl/lastWeek
 // GET  /challenges     open + recently closed
 // GET  /me             {pid, name, admin}
@@ -109,6 +110,18 @@ async function dailyReconcile(env) {
 }
 
 // ---- game helpers ----
+const CH_WIN = 50, CH_LOSE = 25; // challenge stakes: winner banks +50; a player-issuer whose own callout beats them eats -25
+// apply challenge points into a day's score via the server-side adj (survives client reposts, can be negative)
+async function challengePoints(env, pid, day, delta) {
+  const scores = await blobGet(env, 'scores:' + pid, {});
+  const e = scores[day] || { total: 0, base: 0, parts: {} };
+  const adj = { ...(e.adj || {}) };
+  const base = e.base ?? ((e.total || 0) - ((adj.coach || 0) + (adj.whoop || 0) + (adj.challenge || 0)));
+  adj.challenge = (adj.challenge || 0) + delta;
+  const total = Math.max(0, base + (adj.coach || 0) + (adj.whoop || 0) + adj.challenge);
+  scores[day] = { ...e, base, adj, total, parts: { ...(e.parts || {}), challenge: adj.challenge }, at: Date.now() };
+  await blobPut(env, 'scores:' + pid, scores);
+}
 async function feedAdd(env, entry) {
   const feed = await blobGet(env, 'feed', []);
   feed.push({ ...entry, at: Date.now() });
@@ -326,7 +339,7 @@ export default {
       const prior = scores[body.day];
       // coach/whoop adjustments live server-side (see /score/adjust) and survive client reposts
       const adj = prior?.adj || null;
-      const adjSum = adj ? (adj.coach || 0) + (adj.whoop || 0) : 0;
+      const adjSum = adj ? (adj.coach || 0) + (adj.whoop || 0) + (adj.challenge || 0) : 0;
       const total = body.score.total + adjSum;
       // max-wins per day: a stale or post-unfinish lower recompute can't clobber a better score
       if (prior && prior.total >= total) return json({ ok: true, kept: prior.total });
@@ -347,9 +360,9 @@ export default {
       const clampN = (x, hi) => Math.min(hi, Math.max(0, Math.round(x || 0)));
       const scores = await blobGet(env, 'scores:' + tpid, {});
       const e = scores[body.day] || { total: 0, base: 0, parts: {} };
-      const base = e.base ?? ((e.total || 0) - ((e.adj?.coach || 0) + (e.adj?.whoop || 0)));
-      const adj = { coach: clampN(body.coach ?? e.adj?.coach, 150), whoop: clampN(body.whoop ?? e.adj?.whoop, 50) };
-      scores[body.day] = { ...e, base, adj, total: base + adj.coach + adj.whoop, parts: { ...(e.parts || {}), coach: adj.coach, whoop: adj.whoop }, at: Date.now() };
+      const base = e.base ?? ((e.total || 0) - ((e.adj?.coach || 0) + (e.adj?.whoop || 0) + (e.adj?.challenge || 0)));
+      const adj = { coach: clampN(body.coach ?? e.adj?.coach, 150), whoop: clampN(body.whoop ?? e.adj?.whoop, 50), challenge: e.adj?.challenge || 0 };
+      scores[body.day] = { ...e, base, adj, total: Math.max(0, base + adj.coach + adj.whoop + adj.challenge), parts: { ...(e.parts || {}), coach: adj.coach, whoop: adj.whoop }, at: Date.now() };
       await blobPut(env, 'scores:' + tpid, scores);
       if (adj.coach)
         await feedAdd(env, { pid: tpid, name: players[tpid]?.name || tpid, type: 'bonus', day: body.day, coach: adj.coach, total: scores[body.day].total });
@@ -419,16 +432,30 @@ export default {
       const winner = body.winner && (players[body.winner] ? body.winner : null);
       c.closed = { winner: winner || null, by: pid, at: Date.now() };
       await blobPut(env, 'challenges', ch);
+      let issuerLoss = 0;
       if (winner) {
         const cwl = await blobGet(env, 'cwl', {});
-        for (const p of new Set([winner, ...Object.keys(c.results || {})])) {
+        // the issuer is in the fight whether or not he posted a result — his callout, his L
+        for (const p of new Set([winner, ...Object.keys(c.results || {}), ...(c.mode === 'player' && players[c.by] ? [c.by] : [])])) {
           cwl[p] = cwl[p] || { w: 0, l: 0 };
           p === winner ? cwl[p].w++ : cwl[p].l++;
         }
         await blobPut(env, 'cwl', cwl);
+        // stakes: winner banks points; a player who called someone out and lost his own challenge pays
+        const day = new Date().toISOString().slice(0, 10);
+        await challengePoints(env, winner, day, CH_WIN);
+        if (c.mode === 'player' && c.by !== winner && players[c.by]) {
+          issuerLoss = CH_LOSE;
+          await challengePoints(env, c.by, day, -CH_LOSE);
+        }
       }
-      await feedAdd(env, { pid, name: myName, type: 'challenge-close', id: c.id, title: c.title, winner: winner ? (players[winner]?.name || winner) : null });
-      return json({ ok: true });
+      await feedAdd(env, {
+        pid, name: myName, type: 'challenge-close', id: c.id, title: c.title,
+        winner: winner ? (players[winner]?.name || winner) : null,
+        pts: winner ? CH_WIN : 0,
+        loser: issuerLoss ? (players[c.by]?.name || c.by) : null, loss: issuerLoss,
+      });
+      return json({ ok: true, pts: winner ? CH_WIN : 0, issuerLoss });
     }
 
     if (req.method === 'GET' && path === '/challenges') return json(await blobGet(env, 'challenges', []));

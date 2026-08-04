@@ -752,7 +752,7 @@ function renderDone(){
     ${parts?`<section class="scoregrid" style="margin-top:-8px">
       <div><strong>${(parts.session??parts.adherence??0)+(parts.output||0)}</strong><small>WORK</small></div>
       <div><strong>${parts.food??0}</strong><small>FUEL</small></div>
-      <div><strong>${(parts.coach||0)+(parts.whoop||0)}</strong><small>BONUS</small></div></section>`:''}
+      <div><strong>${(parts.coach||0)+(parts.whoop||0)+(parts.challenge||0)}</strong><small>BONUS</small></div></section>`:''}
     ${loadoutStamp(vol)}
     ${benchTalkFor(L)}
     <div class="${L.synced?'good':'warn'}">${L.synced?'SYNCED TO COACH ✓':'QUEUED — retries automatically when you have signal. Nothing is lost.'}</div>
@@ -1043,7 +1043,7 @@ async function renderRivalry(){
         :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
         :e.type==='bonus'?`COACH GAVE ${e.name} +${e.coach} — NOW ${e.total}`
         :e.type==='week'?`${(e.winners||[e.name]).join(' + ')} TOOK THE WEEK WITH ${e.total}`
-        :e.type==='challenge-close'?(e.winner?`“${e.title}” SETTLED — ${e.winner} TOOK IT`:`“${e.title}” SETTLED. NO WINNER.`)
+        :e.type==='challenge-close'?(e.winner?`“${e.title}” SETTLED — ${e.winner} TOOK IT +${e.pts||50}${e.loser?`. ${e.loser} CALLED IT AND ATE −${e.loss}`:''}`:`“${e.title}” SETTLED. NO WINNER.`)
         :`${e.name} DID SOMETHING`;
       return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
     }).join('')}</section>`:`<div class="card" style="padding:14px"><div class="label">Dead quiet. Somebody do something.</div></div>`;
