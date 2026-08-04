@@ -1,10 +1,10 @@
 {
-  "name": "Train",
-  "short_name": "Train",
+  "name": "Bar Fight",
+  "short_name": "Bar Fight",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#E8E2D5",
-  "theme_color": "#E8E2D5",
+  "background_color": "#070A0C",
+  "theme_color": "#070A0C",
   "icons": [
     {
       "src": "icon.png",

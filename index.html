@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#070A0C">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Train">
+<meta name="apple-mobile-web-app-title" content="Bar Fight">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>Train</title>
+<title>Bar Fight</title>
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -250,7 +250,7 @@ const store={
   load(){try{return JSON.parse(localStorage.getItem(this.k))||{}}catch(e){return{}}},
   save(d){localStorage.setItem(this.k,JSON.stringify(d))}
 };
-let S=null, ALLSESS=[], log=store.load(), sec=0, tint=null, tTotal=90, view='today';
+let S=null, ALLSESS=[], log=store.load(), sec=0, tint=null, tTotal=90, view='home';
 const DEFAULT_ENDPOINT='https://train-sync.byler-train.workers.dev';
 
 if(location.hash.startsWith('#cfg=')){
@@ -274,11 +274,11 @@ async function init(){
   route();
 }
 function tabbar(){
-  const t=[['today','Train'],['fuel','Fuel'],['rivalry','Rivalry'],['vault','Vault']];
+  const t=[['home','Home'],['today','Train'],['fuel','Fuel'],['rivalry','Rivalry'],['vault','Vault']];
   $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${v==='today'?'main ':''}${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
 }
 let VVIEW=localStorage.getItem('vview')||'film'; // vault sub-tab
-function route(){tabbar();({today:render,fuel:renderFuel,rivalry:renderRivalry,vault:renderVault})[view]()}
+function route(){tabbar();({home:renderHome,today:render,fuel:renderFuel,rivalry:renderRivalry,vault:renderVault})[view]()}
 function renderVault(){
   const sub={film:renderReview,progress:renderProgress,gear:renderGear,trophy:renderTrophy};
   (sub[VVIEW]||renderReview)();
@@ -501,7 +501,7 @@ function logSet(bid,i){
   bl.sets[i]={w:$(`w_${bid}_${i}`).value.trim(),u:unit(),r,done:true,at:new Date().toISOString()};
   delete DRAFTS[`w_${bid}_${i}`];delete DRAFTS[`r_${bid}_${i}`];
   const lb=Math.round(setLbs(bl.sets[i])*(parseFloat(r)||0));
-  if(lb)toastMsg(`+${lb.toLocaleString()} LB BANKED. CLEAN SHIT.`);
+  if(lb)toastMsg(`+${lb.toLocaleString()} LB BANKED`);
   EXP=null;store.save(log);autoSync();startTimer(90);render();
 }
 function logCheck(bid){
@@ -806,6 +806,75 @@ function postScore(ds){
   sv('dayscores',scores);
   queuePost('score',{day:ds.day,score:scores[ds.day]},null,'/score');
 }
+/* ---------- HOME — the marquee front page ---------- */
+function lastHaul(){ // most recent completed session's volume + its loadout object
+  let best=null;
+  for(const s of ALLSESS){
+    const L=log[s.id];
+    if(L&&L.completed&&L.completedAt&&(!best||L.completedAt>best.at)){
+      best={at:L.completedAt,vol:sessionStats(L).vol};
+    }
+  }
+  if(!best||!best.vol)return null;
+  return {...best,loadout:pickLoadout(best.vol)};
+}
+function renderHome(){
+  const scores=j('dayscores',{});
+  const todayScore=(scores[today()]||{}).total||0;
+  const wk=weekCount();
+  const haul=lastHaul();
+  const cachedSB=j('sblast',null);
+  let rankHtml=`<div class="card" style="padding:14px 16px"><div class="label">RANKING</div><div style="color:var(--dim);font-size:14px;margin-top:6px">Board loads when you're connected.</div></div>`;
+  if(cachedSB&&cachedSB.board&&cachedSB.board.length){
+    const board=[...cachedSB.board].sort((a,b)=>(b.week||0)-(a.week||0));
+    const myIdx=board.findIndex(p=>p.pid===(cachedSB.mePid||'patrick'));
+    const me=board[myIdx]||board[0];
+    const rival=board[myIdx===0?1:0];
+    rankHtml=`<section class="leader" style="--player:var(--volt)"><div class="player">
+      <div class="rank">${String(myIdx+1).padStart(2,'0')}</div>
+      <div class="avatar">${esc((me.name||'P').slice(0,2).toUpperCase())}</div>
+      <div class="pname">RANK ${myIdx+1}<small>${board.length>1?(myIdx===0?`${esc((rival.name||'').toUpperCase())} IS ${(me.week||0)-(rival.week||0)} BACK`:`${esc((rival.name||'').toUpperCase())} LEADS BY ${(rival.week||0)-(me.week||0)}`):'NO OPPONENTS YET'}</small></div>
+      <div class="pts">${me.week||0}<small>THIS WEEK</small></div></div></section>`;
+  }
+  const sessionReady=S&&!(log[S.id]&&log[S.id].completed);
+  $('app').innerHTML=connectBanner()+`
+    <div style="text-align:center;padding:6px 0 14px">
+      <div class="pix" style="font-size:22px;line-height:1.2">BAR FIGHT</div>
+      <div class="label" style="margin-top:6px">P1 · ${esc((j('sblast',{}).meName||'PATRICK').toUpperCase())}</div></div>
+    ${rankHtml}
+    <div class="scoregrid">
+      <div><strong class="${todayScore?'gain':''}">${todayScore||'—'}</strong><small>TODAY</small></div>
+      <div><strong>${wk}/3</strong><small>SESSIONS THIS WK</small></div>
+      <div><strong>${haul?both(haul.vol).split(' · ')[0]:'—'}</strong><small>LAST HAUL</small></div></div>
+    ${haul&&haul.loadout?`<div class="lreceipt"><div class="object">
+      <img src="assets/objects/${haul.loadout.items[0].o[0]}.svg" alt="Pixel art ${esc(haul.loadout.items[0].o[1].toLowerCase())}">
+      <div class="equiv">Last session you moved<strong>${haul.loadout.items[0].n} ${esc(haul.loadout.items[0].n===1?haul.loadout.items[0].o[1]:haul.loadout.items[0].o[2])}</strong>
+      <span class="exact">${esc(both(haul.vol))}</span></div></div></div>`:''}
+    <button class="btn primary" style="margin-top:16px" onclick="view='today';route()">${sessionReady?'TODAY\'S SESSION →':'TRAIN'}</button>
+    <button class="btn small" onclick="view='rivalry';route()">FULL SCOREBOARD</button>`;
+  refreshHomeBoard();
+}
+let homeRefreshing=false;
+async function refreshHomeBoard(){ // background scoreboard refresh; cached copy renders instantly
+  const c=cfg();if(!c||homeRefreshing)return;
+  const last=j('sblast',null);
+  if(last&&Date.now()-(last.at||0)<15000)return; // fresh enough — don't hammer the pipe
+  homeRefreshing=true;
+  try{
+    const [endpoint,token]=c;
+    const H={'Authorization':'Bearer '+token};
+    const [me,sb]=await Promise.all([
+      fetch(endpoint+'/me',{headers:H}).then(r=>r.json()),
+      fetch(endpoint+'/scoreboard?day='+today(),{headers:H}).then(r=>r.json())
+    ]);
+    if(sb&&sb.board){
+      const prev=j('sblast',null);
+      sv('sblast',{board:sb.board,mePid:me.pid,meName:me.name,at:Date.now()});
+      if(view==='home'&&JSON.stringify(prev&&prev.board)!==JSON.stringify(sb.board)){homeRefreshing=false;return renderHome()}
+    }
+  }catch(e){/* offline — cached board stands */}
+  finally{homeRefreshing=false}
+}
 /* ---------- RIVALRY ---------- */
 const PCOLORS=['var(--volt)','var(--rage)','var(--ice)','var(--gold)','var(--violet)'];
 let RTAB=localStorage.getItem('rtab')||'week';
@@ -813,7 +882,7 @@ async function renderRivalry(){
   const app=$('app');
   const c=cfg();
   if(!c){app.innerHTML=connectBanner()+`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div><div class="card"><div class="label">Connect first — no scoreboard without the wire.</div></div>`;return}
-  app.innerHTML=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div><div class="label">Dialing the scoreboard…</div>`;
+  app.innerHTML=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div><div class="label">Loading the board…</div>`;
   const [endpoint,token]=c;
   const H={'Authorization':'Bearer '+token};
   const okJson=r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()};
@@ -825,12 +894,13 @@ async function renderRivalry(){
       fetch(endpoint+'/challenges',{headers:H}).then(okJson)
     ]);
     window.ME=me;
+    sv('sblast',{board:sb.board,mePid:me.pid,meName:me.name,at:Date.now()}); // home page rides this cache
     const key={day:'today',week:'week',month:'month'}[RTAB];
     const board=[...sb.board].sort((a,b)=>b[key]-a[key]);
     const colorOf={};sb.board.forEach((p,i)=>colorOf[p.pid]=PCOLORS[i%PCOLORS.length]);
     let h=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div>
       <div class="segs">${['day','week','month'].map(t=>`<button class="${RTAB===t?'on':''}" onclick="RTAB='${t}';localStorage.setItem('rtab','${t}');renderRivalry()">${t.toUpperCase()}</button>`).join('')}</div>`;
-    if(board.length<2)h+=`<div class="card"><div class="label lit" style="margin-bottom:6px">NO OPPONENTS YET</div><div style="color:var(--dim);font-size:14px">The cabinet is warmed up and nobody's stepped in. Mint your rivals and let's ruin some friendships.</div></div>`;
+    if(board.length<2)h+=`<div class="card"><div class="label lit" style="margin-bottom:6px">NO OPPONENTS YET</div><div style="color:var(--dim);font-size:14px">Nobody else is in yet. Add your rivals and it's on.</div></div>`;
     board.forEach((p,i)=>{
       const pts=p[key]||0;
       h+=`<section class="leader" style="--player:${colorOf[p.pid]}"><div class="player">
@@ -843,24 +913,24 @@ async function renderRivalry(){
       const [a,b]=board;
       const gap=(a[key]||0)-(b[key]||0);
       const meLeads=a.pid===me.pid;
-      h+=`<div class="delta">${meLeads?`${esc(b.name.toUpperCase())} IS ${gap} BACK. KEEP YOUR BOOT ON HIS NECK.`:`${esc(a.name.toUpperCase())} LEADS BY ${gap}. FIX THAT SHIT.`}</div>`;
+      h+=`<div class="delta">${meLeads?`${esc(b.name.toUpperCase())} IS ${gap} BACK. DON'T LET UP.`:`${esc(a.name.toUpperCase())} LEADS BY ${gap}. FIX THAT SHIT.`}</div>`;
     }
     // challenges
     const open=(chals||[]).filter(x=>!x.expiresDay||x.expiresDay>=today());
     h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px" class="head"><span style="font-size:20px">OPEN CHALLENGES</span></div>`;
-    if(!open.length)h+=`<div class="card" style="padding:14px"><div class="label">Nothing on the table. Coward-free zone below.</div></div>`;
+    if(!open.length)h+=`<div class="card" style="padding:14px"><div class="label">Nothing on the table.</div></div>`;
     for(const ch of open){
       const isBoss=ch.mode==='boss';
       const mine=ch.results&&ch.results[me.pid];
       h+=`<div class="${isBoss?'marquee':'issuer'}">
-        ${isBoss?`<div class="kicker">COACH-ISSUED BOSS BATTLE</div><h1>${esc(ch.title)}</h1>`:`<div class="danger">${esc((ch.by||'?').toUpperCase())} THREW THIS DOWN</div><div class="head" style="font-size:28px;margin:6px 0">${esc(ch.title)}</div>`}
+        ${isBoss?`<div class="kicker">COACH-ISSUED BOSS BATTLE</div><h1>${esc(ch.title)}</h1>`:`<div class="danger">${esc((ch.by||'?').toUpperCase())} CALLED YOU OUT</div><div class="head" style="font-size:28px;margin:6px 0">${esc(ch.title)}</div>`}
         ${ch.desc?`<div style="color:var(--dim);font-size:14px">${esc(ch.desc)}</div>`:''}
         ${ch.expiresDay?`<div class="label" style="margin-top:8px">ANSWER BY ${esc(ch.expiresDay)}</div>`:''}
         ${mine?`<div class="good" style="margin-top:10px">YOUR RESULT IS IN: ${esc(mine.result)} ✓</div>`
           :`<button class="btn ${isBoss?'boss':'rival'}" style="margin-top:14px" onclick="answerChallenge('${esc(ch.id)}')">${isBoss?'ENTER BATTLE':'ANSWER IT'}</button>`}
       </div>`;
     }
-    h+=`<button class="btn rival" onclick="throwDown()">THROW DOWN A CHALLENGE</button>`;
+    h+=`<button class="btn rival" onclick="throwDown()">CALL SOMEONE OUT</button>`;
     // feed
     h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px" class="head"><span style="font-size:20px">LIVE WIRE</span><span class="label" style="font-size:11px">NO CHAT · TALK IN THE GROUP</span></div>`;
     const ev=(feed||[]).slice().reverse().slice(0,20);
@@ -889,7 +959,7 @@ async function throwDown(){
     const r=await fetch(endpoint+'/challenge',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({title,desc,mode:'player',expiresDay:expires})});
     if(!r.ok)throw new Error();
-    toastMsg('CHALLENGE LIVE. NO TAKESIES.');renderRivalry();
+    toastMsg('CHALLENGE POSTED. IT\'S LIVE.');renderRivalry();
   }catch(e){alert('Failed to post — try again with signal.')}
 }
 async function answerChallenge(id){
@@ -901,7 +971,7 @@ async function answerChallenge(id){
     const r=await fetch(endpoint+'/challenge/result',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
       body:JSON.stringify({id,result})});
     if(!r.ok)throw new Error();
-    toastMsg('RESULT POSTED. SCOREBOARD DON\'T LIE.');renderRivalry();
+    toastMsg('RESULT POSTED.');renderRivalry();
   }catch(e){alert('Failed to post — try again with signal.')}
 }
 /* ---------- TROPHY CASE ---------- */
