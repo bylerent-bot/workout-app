@@ -247,8 +247,13 @@ const safeUrl=u=>{try{const x=new URL(u);return x.protocol==='https:'?x.href:nul
 const MONTHS=['JANUARY','FEBRUARY','MARCH','APRIL','MAY','JUNE','JULY','AUGUST','SEPTEMBER','OCTOBER','NOVEMBER','DECEMBER'];
 const store={
   get k(){return 'wlog'},
-  load(){try{return JSON.parse(localStorage.getItem(this.k))||{}}catch(e){return{}}},
-  save(d){localStorage.setItem(this.k,JSON.stringify(d))}
+  // corruption guard: every save keeps a second copy; a mangled wlog falls back to it
+  load(){
+    try{const v=JSON.parse(localStorage.getItem(this.k));if(v&&typeof v==='object')return v}catch(e){}
+    try{const b=JSON.parse(localStorage.getItem(this.k+'_bak'));if(b&&typeof b==='object')return b}catch(e){}
+    return{};
+  },
+  save(d){const s=JSON.stringify(d);localStorage.setItem(this.k,s);try{localStorage.setItem(this.k+'_bak',s)}catch(e){/* quota — primary still saved */}}
 };
 let S=null, ALLSESS=[], log=store.load(), sec=0, tint=null, tTotal=90, view='home';
 const DEFAULT_ENDPOINT='https://train-sync.byler-train.workers.dev';
@@ -621,7 +626,15 @@ async function flushOutbox(depth=0){
       try{
         const res=await fetch(endpoint+(e.route||'/log'),{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
           body:JSON.stringify(e.body)});
-        if(!res.ok)continue;
+        if(!res.ok){
+          // 4xx = the server will NEVER take this entry — park it so it can't poison the
+          // queue forever. 401 excepted (fresh player tokens can lag ~60s in KV). 5xx retries.
+          if(res.status>=400&&res.status<500&&res.status!==401){
+            sv('outbox_dead',[...j('outbox_dead',[]),{...e,status:res.status,diedAt:Date.now()}].slice(-20));
+            sv('outbox',outbox().filter(x=>!(x.id===e.id&&x.v===e.v)));
+          }
+          continue;
+        }
         // remove ONLY the exact version we sent — if Finish replaced this entry mid-flight, the newer snapshot survives
         sv('outbox',outbox().filter(x=>!(x.id===e.id&&x.v===e.v)));
         markSynced(e.mark);
@@ -973,15 +986,21 @@ async function renderRivalry(){
     const key={day:'today',week:'week',month:'month'}[RTAB];
     const board=[...sb.board].sort((a,b)=>b[key]-a[key]);
     const colorOf={};sb.board.forEach((p,i)=>colorOf[p.pid]=PCOLORS[i%PCOLORS.length]);
+    window.SB=sb;
     let h=`<div class="pix" style="padding:6px 0 10px">RIVALRY MODE</div>
       <div class="segs">${['day','week','month'].map(t=>`<button class="${RTAB===t?'on':''}" onclick="RTAB='${t}';localStorage.setItem('rtab','${t}');renderRivalry()">${t.toUpperCase()}</button>`).join('')}</div>`;
+    if(sb.lastWeek&&sb.lastWeek.winners&&Object.keys(sb.lastWeek.totals||{}).length>1){
+      const wn=(sb.lastWeek.winners||[]).map(p=>((sb.board.find(x=>x.pid===p)||{}).name||p).toUpperCase()).join(' + ');
+      const top=Math.max(...Object.values(sb.lastWeek.totals));
+      h+=`<div class="delta" style="border-left-color:var(--gold)">LAST WEEK: ${esc(wn)} TOOK IT WITH ${top}.</div>`;
+    }
     if(board.length<2)h+=`<div class="card"><div class="label lit" style="margin-bottom:6px">NO OPPONENTS YET</div><div style="color:var(--dim);font-size:14px">Nobody else is in yet. You're beating no one.</div></div>`;
     board.forEach((p,i)=>{
       const pts=p[key]||0;
       h+=`<section class="leader" style="--player:${colorOf[p.pid]}"><div class="player">
         <div class="rank">${String(i+1).padStart(2,'0')}</div>
         <div class="avatar">${esc((p.name||p.pid).slice(0,2).toUpperCase())}</div>
-        <div class="pname">${esc(p.name||p.pid)}${p.pid===me.pid?'<small>THAT\'S YOU</small>':''}</div>
+        <div class="pname">${esc(p.name||p.pid)}<small>${[p.pid===me.pid?'THAT\'S YOU':'',p.wl&&(p.wl.w||p.wl.l)?`${p.wl.w}-${p.wl.l} WEEKS`:''].filter(Boolean).join(' · ')}</small></div>
         <div class="pts">${pts}<small>${p.today?`+${p.today} TODAY`:'NOTHING TODAY'}</small></div></div></section>`;
     });
     if(board.length>=2){
@@ -991,7 +1010,8 @@ async function renderRivalry(){
       h+=`<div class="delta">${meLeads?`${esc(b.name.toUpperCase())} IS ${gap} BACK. DON'T LET UP.`:`${esc(a.name.toUpperCase())} LEADS BY ${gap}. FIX THAT SHIT.`}</div>`;
     }
     // challenges
-    const open=(chals||[]).filter(x=>!x.expiresDay||x.expiresDay>=today());
+    const open=(chals||[]).filter(x=>!x.closed&&(!x.expiresDay||x.expiresDay>=today()));
+    const settled=(chals||[]).filter(x=>x.closed).slice(-3).reverse();
     h+=`<div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 8px" class="head"><span style="font-size:20px">OPEN CHALLENGES</span></div>`;
     if(!open.length)h+=`<div class="card" style="padding:14px"><div class="label">Nothing on the table.</div></div>`;
     for(const ch of open){
@@ -1003,7 +1023,13 @@ async function renderRivalry(){
         ${ch.expiresDay?`<div class="label" style="margin-top:8px">ANSWER BY ${esc(ch.expiresDay)}</div>`:''}
         ${mine?`<div class="good" style="margin-top:10px">YOUR RESULT IS IN: ${esc(mine.result)} ✓</div>`
           :`<button class="btn ${isBoss?'boss':'rival'}" style="margin-top:14px" onclick="answerChallenge('${esc(ch.id)}')">${isBoss?'ENTER BATTLE':'ANSWER IT'}</button>`}
+        ${(ch.by===me.pid||me.admin)&&ch.results&&Object.keys(ch.results).length?`<button class="btn small" style="margin-top:10px" onclick="settleChallenge('${esc(ch.id)}')">CALL THE WINNER</button>`:''}
       </div>`;
+    }
+    for(const ch of settled){
+      const w=ch.closed.winner?((sb.board.find(x=>x.pid===ch.closed.winner)||{}).name||ch.closed.winner):null;
+      h+=`<div class="card" style="padding:12px 14px;border-color:var(--gold)"><div class="label lit">${esc(ch.title)}</div>
+        <div class="label" style="font-size:11px;margin-top:4px;color:var(--gold)">${w?`SETTLED — ${esc(w.toUpperCase())} TOOK IT`:'SETTLED — NO WINNER CALLED'}</div></div>`;
     }
     h+=`<button class="btn rival" onclick="throwDown()">CALL SOMEONE OUT</button>`;
     // feed
@@ -1016,6 +1042,8 @@ async function renderRivalry(){
         :e.type==='challenge'?`${e.name} ${e.mode==='boss'?'DROPPED':'CALLED OUT THE ROOM:'} “${e.title}”`
         :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
         :e.type==='bonus'?`COACH GAVE ${e.name} +${e.coach} — NOW ${e.total}`
+        :e.type==='week'?`${(e.winners||[e.name]).join(' + ')} TOOK THE WEEK WITH ${e.total}`
+        :e.type==='challenge-close'?(e.winner?`“${e.title}” SETTLED — ${e.winner} TOOK IT`:`“${e.title}” SETTLED. NO WINNER.`)
         :`${e.name} DID SOMETHING`;
       return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
     }).join('')}</section>`:`<div class="card" style="padding:14px"><div class="label">Dead quiet. Somebody do something.</div></div>`;
@@ -1038,6 +1066,20 @@ async function throwDown(){
     toastMsg('CHALLENGE POSTED. IT\'S LIVE.');renderRivalry();
   }catch(e){alert('Failed to post — try again with signal.')}
 }
+async function settleChallenge(id){
+  const sb=window.SB;
+  const names=(sb&&sb.board||[]).map(p=>p.pid).join(' / ');
+  const winner=prompt(`Who took it? (${names} — blank = no winner)`);
+  if(winner===null)return;
+  const c=cfg();if(!c)return;
+  const [endpoint,token]=c;
+  try{
+    const r=await fetch(endpoint+'/challenge/close',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({id,winner:winner.trim().toLowerCase()||null})});
+    if(!r.ok)throw new Error();
+    toastMsg('SETTLED.');renderRivalry();
+  }catch(e){alert('Failed to settle — try again with signal.')}
+}
 async function answerChallenge(id){
   const result=prompt('Your result (time, reps, weight — the number that settles it):');
   if(!result)return;
@@ -1051,6 +1093,17 @@ async function answerChallenge(id){
   }catch(e){alert('Failed to post — try again with signal.')}
 }
 /* ---------- TROPHY CASE ---------- */
+// session streak: consecutive days (ending today or yesterday) whose banked score
+// includes a done session (>=250 = the session adherence floor). Food-only doesn't extend it.
+function sessionStreak(){
+  const scores=j('dayscores',{});
+  const hit=d=>(scores[d]||{}).total>=250;
+  const d=new Date();
+  if(!hit(localDate(d.toISOString())))d.setDate(d.getDate()-1); // today not banked yet ≠ broken
+  let n=0;
+  while(hit(localDate(d.toISOString()))){n++;d.setDate(d.getDate()-1)}
+  return n;
+}
 function renderTrophy(){
   let lifetime=0,prCount=0,done=0;
   const prs={};
@@ -1074,13 +1127,17 @@ function renderTrophy(){
       <div class="pix" style="color:var(--gold)">TROPHY CASE</div>
       <div style="text-align:right"><div class="num" style="font-size:34px;color:var(--gold)">LV ${lvl}</div><div class="label" style="font-size:10px">${xp.toLocaleString()} XP · ${(nextXp-xp).toLocaleString()} TO LV ${lvl+1}</div></div></div>
     <div class="scoregrid"><div><strong>${done}</strong><small>SESSIONS</small></div><div><strong>${prCount}</strong><small>PRs</small></div><div><strong>${Math.round(lifetime/1000)}K</strong><small>LIFETIME LB</small></div></div>
+    ${(()=>{const st=sessionStreak();const my=((j('sblast',{}).board)||[]).find(p=>p.pid===(j('sblast',{}).mePid||'patrick'))||{};
+      return `<div class="scoregrid"><div><strong class="${st?'gain':''}">${st}</strong><small>DAY STREAK</small></div>
+      <div><strong>${my.wl?`${my.wl.w}-${my.wl.l}`:'0-0'}</strong><small>WEEKS W-L</small></div>
+      <div><strong>${my.cwl?`${my.cwl.w}-${my.cwl.l}`:'0-0'}</strong><small>CHALLENGES</small></div></div>`})()}
     <h1 style="font-size:24px">TONNAGE LADDER</h1>
     ${badges.map(b=>`<div class="card" style="${b.earned?'border-color:var(--gold)':''};padding:14px 16px">
       <div style="display:flex;justify-content:space-between;align-items:baseline">
         <span class="head" style="font-size:17px;${b.earned?'color:var(--gold)':''}">${b.n}${b.earned?' ✓':''}</span>
         <span class="label" style="font-size:11px">${b.w.toLocaleString()} LB</span></div>
       <div class="track" style="height:8px;margin:10px 0 0"><i style="width:${b.pct}%;${b.earned?'background:var(--gold)':''}"></i></div></div>`).join('')}
-    <div class="label" style="margin-top:6px">W-L records, season trophies, and boss hardware land when the rivalry goes live.</div>`;
+    <div class="label" style="margin-top:6px">Season trophies and boss hardware land with the first full season.</div>`;
 }
 function exportLog(){
   const payload=JSON.stringify({sessionId:S.id,session:S.phase,log:log[S.id]},null,2);

@@ -1,4 +1,4 @@
-const CACHE = 'train-v35';
+const CACHE = 'train-v36';
 const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.png',
   'data/sessions.json', 'data/equipment.json',
   'game/scoring.js', 'game/benchmarks.js',

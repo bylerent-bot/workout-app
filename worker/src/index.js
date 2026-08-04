@@ -21,6 +21,8 @@
 // GET  /feed           last 100 events
 // POST /challenge      {title, desc, mode:'boss'|'player', expiresDay?} -> challenge (boss = admin only)
 // POST /challenge/result {id, result, clipKey?}
+// POST /challenge/close  {id, winner?} settle it (issuer or admin); W-L in `cwl` blob
+// GET  /scoreboard also runs the lazy weekly close (`weeks` + `wl` blobs) and returns wl/cwl/lastWeek
 // GET  /challenges     open + recently closed
 // GET  /me             {pid, name, admin}
 // POST /admin/player   {pid, name} -> mints + returns a token ONCE (admin only)
@@ -119,6 +121,43 @@ function weekDays(ref) {
   const d = new Date(ref + 'T00:00:00Z');
   for (let i = 0; i < 7; i++) { out.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() - 1); }
   return out;
+}
+// Monday-start calendar week containing ref: {id: monday, days:[7]}
+function calWeek(ref) {
+  const d = new Date(ref + 'T00:00:00Z');
+  d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7);
+  const days = [];
+  for (let i = 0; i < 7; i++) { days.push(d.toISOString().slice(0, 10)); d.setUTCDate(d.getUTCDate() + 1); }
+  return { id: days[0], days };
+}
+// lazy weekly close, run on scoreboard reads: once the previous Mon-Sun week has fully
+// elapsed, record its totals + winner and settle W-L. No cron needed — first read closes it.
+async function weeklyClose(env, players, ref) {
+  const weeks = await blobGet(env, 'weeks', []);
+  const prevSunday = new Date(calWeek(ref).id + 'T00:00:00Z');
+  prevSunday.setUTCDate(prevSunday.getUTCDate() - 1);
+  const prev = calWeek(prevSunday.toISOString().slice(0, 10));
+  if (weeks.some(w => w.id === prev.id)) return weeks;
+  const totals = {};
+  for (const p of Object.keys(players)) {
+    const sc = await blobGet(env, 'scores:' + p, {});
+    totals[p] = prev.days.reduce((s, d) => s + (sc[d]?.total || 0), 0);
+  }
+  const scored = Object.keys(totals).filter(p => totals[p] > 0);
+  if (!scored.length) { weeks.push({ id: prev.id, empty: true }); await blobPut(env, 'weeks', weeks.slice(-60)); return weeks; }
+  const max = Math.max(...scored.map(p => totals[p]));
+  const winners = scored.filter(p => totals[p] === max);
+  const wl = await blobGet(env, 'wl', {});
+  for (const p of scored) {
+    wl[p] = wl[p] || { w: 0, l: 0 };
+    winners.includes(p) ? wl[p].w++ : wl[p].l++;
+  }
+  await blobPut(env, 'wl', wl);
+  weeks.push({ id: prev.id, totals, winners });
+  await blobPut(env, 'weeks', weeks.slice(-60));
+  if (scored.length > 1)
+    await feedAdd(env, { pid: winners[0], name: players[winners[0]]?.name || winners[0], type: 'week', week: prev.id, total: max, winners: winners.map(p => players[p]?.name || p) });
+  return weeks;
 }
 
 export default {
@@ -319,6 +358,9 @@ export default {
 
     if (req.method === 'GET' && path === '/scoreboard') {
       const ref = dayOk(url.searchParams.get('day')) ? url.searchParams.get('day') : new Date().toISOString().slice(0, 10);
+      const weeks = await weeklyClose(env, players, ref);
+      const wl = await blobGet(env, 'wl', {});
+      const cwl = await blobGet(env, 'cwl', {});
       const week = weekDays(ref);
       const month = ref.slice(0, 7);
       const board = [];
@@ -330,10 +372,13 @@ export default {
           today: scores[ref]?.total || 0,
           week: sum(week),
           month: Object.entries(scores).filter(([d]) => d.startsWith(month)).reduce((s, [, v]) => s + (v.total || 0), 0),
+          wl: wl[p] || { w: 0, l: 0 },
+          cwl: cwl[p] || { w: 0, l: 0 },
         });
       }
       board.sort((a, b) => b.week - a.week);
-      return json({ ref, board });
+      const lastWeek = [...weeks].reverse().find(w => !w.empty) || null;
+      return json({ ref, board, lastWeek });
     }
 
     if (req.method === 'GET' && path === '/feed') return json(await blobGet(env, 'feed', []));
@@ -359,6 +404,30 @@ export default {
       c.results[pid] = { result: body.result, clipKey: body.clipKey || null, at: Date.now() };
       await blobPut(env, 'challenges', ch);
       await feedAdd(env, { pid, name: myName, type: 'challenge-result', id: c.id, title: c.title, result: body.result });
+      return json({ ok: true });
+    }
+
+    // settle a challenge: issuer (or coach) calls the winner once results are in.
+    // Winner banks a W in the challenge record; everyone else who answered takes the L.
+    if (req.method === 'POST' && path === '/challenge/close') {
+      const body = await req.json();
+      const ch = await blobGet(env, 'challenges', []);
+      const c = ch.find(x => x.id === body.id);
+      if (!c) return json({ error: 'not found' }, 404);
+      if (c.by !== pid && !admin) return json({ error: 'only the issuer or the coach settles it' }, 403);
+      if (c.closed) return json({ error: 'already settled' }, 400);
+      const winner = body.winner && (players[body.winner] ? body.winner : null);
+      c.closed = { winner: winner || null, by: pid, at: Date.now() };
+      await blobPut(env, 'challenges', ch);
+      if (winner) {
+        const cwl = await blobGet(env, 'cwl', {});
+        for (const p of new Set([winner, ...Object.keys(c.results || {})])) {
+          cwl[p] = cwl[p] || { w: 0, l: 0 };
+          p === winner ? cwl[p].w++ : cwl[p].l++;
+        }
+        await blobPut(env, 'cwl', cwl);
+      }
+      await feedAdd(env, { pid, name: myName, type: 'challenge-close', id: c.id, title: c.title, winner: winner ? (players[winner]?.name || winner) : null });
       return json({ ok: true });
     }
 
