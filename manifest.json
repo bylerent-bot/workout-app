@@ -3,8 +3,8 @@
   "short_name": "Bar Fight",
   "start_url": ".",
   "display": "standalone",
-  "background_color": "#070A0C",
-  "theme_color": "#070A0C",
+  "background_color": "#0B0D2B",
+  "theme_color": "#0B0D2B",
   "icons": [
     {
       "src": "icon.png",

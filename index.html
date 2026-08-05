@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#070A0C">
+<meta name="theme-color" content="#0B0D2B">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Bar Fight">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -13,86 +13,111 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
-  /* IRON CIRCUIT — Arcade Broadcast skin (Codex design-pack 2026-08-03), functionality intact.
-     Class contract preserved from v6 so the JS layer keeps working; only the paint changed.
-     Tokens per DESIGN_SYSTEM.md. Var names keep their historical ROLES:
-     --black = ground (ink-950), --bone = foreground text, --card = cabinet steel,
-     --ox = rage/danger + rival, --pine = volt/earned (success). */
+  /* BAR FIGHT — 90s FIGHTING-GAME CABINET skin (2026-08-04, Patrick's steer: Street Fighter II / TKO).
+     Class contract preserved so the JS layer keeps working; only the paint changed.
+     Signatures of the era, deliberately: CPS-style navy chrome, hard 3px bevels (light top-left,
+     dark bottom-right — NO soft shadows anywhere), heavy italic display type with a hard black
+     outline, and the yellow→orange segmented health bar as the universal progress meter.
+     Var names keep their historical ROLES so the JS never needs to know:
+     --black = ground, --bone = foreground text, --card = panel, --volt = earned/primary (now GOLD),
+     --ox = danger/rival, --ice = info, --violet = boss. */
   :root{
-    --black:#070A0C; --card:#10161A; --raised:#182126; --bone:#F4F7F2; --dim:#8FA3AA;
-    --ox:#FF3B30; --pine:#C7FF2E; --line:#34434A; --line2:#26333A; --ctrl:#5E7480;
-    --volt:#C7FF2E; --ice:#49C6FF; --gold:#FFCF40; --violet:#B48CFF;
+    --black:#0B0D2B; --card:#1C2059; --raised:#2B3080; --bone:#FFF4D6; --dim:#96A0DC;
+    --ox:#E23A26; --pine:#FFC523; --line:#4A52A8; --line2:#343A7E; --ctrl:#6E78C4;
+    --volt:#FFC523; --ice:#48B4E0; --gold:#FFC523; --violet:#B06BE8;
+    --hi:rgba(255,255,255,.34); --lo:rgba(0,0,0,.55);
     --fnum:'Barlow Condensed',Impact,sans-serif; --fhead:'Barlow Condensed',Impact,sans-serif;
     --fbody:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --fpix:'Press Start 2P','Arial Black',sans-serif;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   body{margin:0; background:var(--black); color:var(--bone);
     font:16px/1.35 var(--fbody);
-    background-image:linear-gradient(rgba(73,198,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(73,198,255,.025) 1px,transparent 1px);
-    background-size:16px 16px;
+    /* stage backdrop: horizon glow + faint scanlines, the CRT cabinet read */
+    background-image:
+      repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 1px,transparent 1px 3px),
+      radial-gradient(120% 55% at 50% 0%,#2C2F7A 0%,#171A47 45%,#0B0D2B 100%);
+    background-attachment:fixed;
     padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  /* the era's two workhorses: chunky bevel + hard-outlined display type */
+  .bevel,.card,.btn,.receipt,.logrow,.leader,.feed,.scoregrid,.seal,.win,.marquee,.lreceipt,.rowsx,.segs,.track{
+    box-shadow:inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo), 4px 4px 0 rgba(0,0,0,.55)}
+  h1,.poster,.marquee h1,.pts,.equiv strong{
+    text-shadow:3px 0 0 #000,-3px 0 0 #000,0 3px 0 #000,0 -3px 0 #000,2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000,5px 5px 0 rgba(0,0,0,.5)}
+  /* gradient-filled text can't use text-shadow — the shadow paints THROUGH the transparent
+     fill and blacks the letters out. Outline these with drop-shadow filters instead. */
+  .seal .day,.win h1,.timer .t{
+    filter:drop-shadow(3px 0 0 #000) drop-shadow(-3px 0 0 #000) drop-shadow(0 3px 0 #000) drop-shadow(0 -3px 0 #000) drop-shadow(4px 5px 0 rgba(0,0,0,.5))}
   .wrap{max-width:520px; margin:0 auto; padding:20px 16px 110px}
   body.resting .wrap{padding-bottom:300px}
-  .num{font-family:var(--fnum); font-weight:900; letter-spacing:.01em; font-variant-numeric:tabular-nums}
-  .head{font-family:var(--fhead); font-weight:700; text-transform:uppercase; letter-spacing:.045em}
-  .pix{font-family:var(--fpix); font-size:10px; line-height:1.5; color:var(--volt)}
-  h1{font-family:var(--fhead); font-weight:900; font-size:32px; text-transform:uppercase; letter-spacing:.02em; margin:4px 0 16px; line-height:1}
-  .label{font-family:var(--fhead); font-weight:700; font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim)}
+  .num{font-family:var(--fnum); font-weight:900; font-style:italic; letter-spacing:.01em; font-variant-numeric:tabular-nums}
+  .head{font-family:var(--fhead); font-weight:900; font-style:italic; text-transform:uppercase; letter-spacing:.045em}
+  .pix{font-family:var(--fpix); font-size:10px; line-height:1.5; color:var(--volt); text-shadow:2px 2px 0 #000}
+  /* display type: heavy italic with a hard black outline — the arcade marquee read */
+  h1{font-family:var(--fhead); font-weight:900; font-style:italic; font-size:34px; text-transform:uppercase;
+    letter-spacing:.01em; margin:4px 0 16px; line-height:1; color:var(--bone)}
+  .label{font-family:var(--fhead); font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.1em; color:var(--dim)}
   .label.lit{color:var(--bone)}
-  .card{position:relative; background:var(--card); border:2px solid var(--line); padding:18px; margin-bottom:16px;
-    box-shadow:5px 5px 0 #000; clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px))}
-  .rule{border:0; border-top:2px solid var(--line); margin:18px 0}
-  .dotted{border:0; border-top:2px dotted var(--line); margin:18px 0}
+  .card{position:relative; background:var(--card); border:3px solid #000; padding:18px; margin-bottom:16px}
+  .rule{border:0; border-top:3px solid #000; box-shadow:0 1px 0 var(--line); margin:18px 0}
+  .dotted{border:0; border-top:2px dashed var(--line2); margin:18px 0}
   button{font:inherit; border:none; border-radius:0; cursor:pointer; color:var(--bone); background:none}
   .btn{display:flex; align-items:center; justify-content:center; width:100%; height:58px;
-    border:2px solid var(--line); background:var(--raised); font-family:var(--fhead); font-weight:900; font-size:18px;
-    text-transform:uppercase; letter-spacing:.06em; box-shadow:4px 4px 0 #000}
-  .btn:active{transform:translate(2px,2px); box-shadow:1px 1px 0 #000}
-  .btn.primary{background:var(--volt); border-color:var(--volt); color:var(--black)}
-  .btn.accent{background:var(--volt); border-color:var(--volt); color:var(--black)}
-  .btn.rival{background:var(--ox); border-color:var(--ox); color:#fff}
-  .btn.boss{background:var(--card); border:2px solid var(--violet); color:var(--violet)}
-  .btn.small{height:48px; font-size:15px; border:2px solid var(--line); color:var(--dim); box-shadow:3px 3px 0 #000}
+    border:3px solid #000; background:linear-gradient(180deg,var(--raised),#1B1F5E);
+    font-family:var(--fhead); font-weight:900; font-style:italic; font-size:19px;
+    text-transform:uppercase; letter-spacing:.06em; text-shadow:2px 2px 0 rgba(0,0,0,.6)}
+  .btn:active{transform:translate(2px,2px);
+    box-shadow:inset -2px -2px 0 var(--hi), inset 2px 2px 0 var(--lo), 1px 1px 0 rgba(0,0,0,.55)}
+  .btn.primary,.btn.accent{background:linear-gradient(180deg,#FFE066,var(--volt) 55%,#F08A20); color:#2A1A00; text-shadow:1px 1px 0 rgba(255,255,255,.4)}
+  .btn.rival{background:linear-gradient(180deg,#F26551,var(--ox) 55%,#A82214); color:#fff}
+  .btn.boss{background:linear-gradient(180deg,#C489F0,var(--violet) 55%,#7B36B8); color:#fff}
+  .btn.small{height:48px; font-size:16px; color:var(--bone)}
   input:focus-visible,textarea:focus-visible{border-bottom-color:var(--ice) !important}
   button:focus-visible,a:focus-visible{outline:3px solid var(--ice); outline-offset:2px}
   .btn+.btn{margin-top:12px}
   /* sealed session = the marquee */
   .sealwrap{text-align:center; padding:12px 0}
-  .seal{position:relative; overflow:hidden; border:4px solid var(--volt); background:var(--card); padding:26px 18px 20px; margin:18px 0; box-shadow:7px 7px 0 #000}
-  .seal::before{content:''; position:absolute; left:0; right:0; top:0; height:7px;
-    background:repeating-linear-gradient(90deg,var(--volt) 0 8px,transparent 8px 16px)}
-  .seal .day{font-family:var(--fnum); font-weight:900; font-size:96px; line-height:.95; margin:0; color:var(--volt); text-shadow:5px 5px 0 #000}
-  .seal .mon{font-family:var(--fhead); font-weight:900; font-size:26px; text-transform:uppercase; letter-spacing:.08em; margin:2px 0 0}
+  /* the STAGE SELECT / round card: gold chrome frame over the stage backdrop */
+  .seal{position:relative; overflow:hidden; border:3px solid #000; padding:26px 18px 20px; margin:18px 0;
+    background:linear-gradient(180deg,#3A3F94,#1C2059 60%,#141852)}
+  .seal::before{content:''; position:absolute; left:0; right:0; top:0; height:8px;
+    background:linear-gradient(180deg,#FFE066,var(--volt) 60%,#E8791C)}
+  .seal .day{font-family:var(--fnum); font-weight:900; font-style:italic; font-size:100px; line-height:.95; margin:0;
+    color:var(--volt); background:linear-gradient(180deg,#FFF3A8,#FFC523 55%,#E8791C);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+  .seal .mon{font-family:var(--fhead); font-weight:900; font-style:italic; font-size:28px; text-transform:uppercase; letter-spacing:.08em; margin:2px 0 0; text-shadow:2px 2px 0 #000}
   .coach{border-left:4px solid var(--ice); background:var(--card); padding:12px 16px; margin:0 0 20px}
   .coach .label{margin-bottom:4px; color:var(--ice)}
   .coach p{margin:0; color:var(--dim); font-size:14px}
   .block .exname{font-family:var(--fhead); font-weight:900; font-size:24px; text-transform:uppercase; color:var(--bone); margin:0 0 4px}
   .block .rx{font:14px/1.45 var(--fbody); color:var(--dim); text-transform:none; letter-spacing:0; margin-bottom:14px}
-  .whead{position:sticky; top:0; z-index:15; background:rgba(7,10,12,.97); border-bottom:2px solid var(--line);
-    display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:12px 0; margin:-20px 0 14px;
-    font-family:var(--fhead); font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase}
-  .whead .sync.ok{color:var(--volt)} .whead .sync.q{color:var(--gold)}
+  /* match HUD strip */
+  .whead{position:sticky; top:0; z-index:15; background:#0B0D2B; border-bottom:3px solid #000;
+    display:flex; justify-content:space-between; align-items:baseline; gap:10px; padding:12px 8px; margin:-20px -8px 14px;
+    font-family:var(--fhead); font-weight:900; font-style:italic; font-size:12px; letter-spacing:.08em; text-transform:uppercase; text-shadow:2px 2px 0 #000}
+  .whead .sync.ok{color:#9BE334} .whead .sync.q{color:var(--gold)}
   .receipt{display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; text-align:left;
-    border:2px solid var(--line); background:var(--card); padding:15px 16px; margin-bottom:8px; min-height:52px;
-    font-family:var(--fhead); font-weight:700; font-size:15px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim)}
-  .receipt.done{border-color:#40552D; color:var(--bone)}
-  .receipt.done .st{color:var(--volt)}
-  .receipt .st{font-size:12px; white-space:nowrap}
-  .logrow{display:flex; height:66px; border:2px solid var(--line); background:var(--raised); margin-bottom:8px}
-  .logrow .sn{flex:0 0 40px; display:flex; align-items:center; justify-content:center; font-family:var(--fhead); font-weight:900; font-size:18px; color:var(--dim)}
-  .logrow .grp{flex:1; display:flex; border-left:2px solid var(--line); border-right:2px solid var(--line)}
+    border:3px solid #000; background:linear-gradient(180deg,#262B68,#191D55); padding:15px 16px; margin-bottom:8px; min-height:54px;
+    font-family:var(--fhead); font-weight:900; font-style:italic; font-size:15px; text-transform:uppercase; letter-spacing:.04em; color:var(--dim)}
+  .receipt.done{background:linear-gradient(180deg,#2E4A18,#1B2E0E); color:var(--bone)}
+  .receipt.done .st{color:#9BE334}
+  .receipt .st{font-size:12px; white-space:nowrap; font-style:normal}
+  .logrow{display:flex; height:68px; border:3px solid #000; background:linear-gradient(180deg,var(--raised),#1B1F5E); margin-bottom:8px}
+  .logrow .sn{flex:0 0 40px; display:flex; align-items:center; justify-content:center; font-family:var(--fhead); font-weight:900; font-style:italic; font-size:19px; color:var(--dim)}
+  .logrow .grp{flex:1; display:flex; border-left:3px solid #000; border-right:3px solid #000}
   .logrow .box{flex:1; position:relative; display:flex; flex-direction:column; justify-content:center}
   .logrow .box+.box{border-left:2px solid var(--line)}
   .logrow .box span{position:absolute; bottom:3px; left:0; width:100%; text-align:center;
     font-family:var(--fhead); font-weight:700; font-size:10px; letter-spacing:.1em; color:var(--dim)}
   .logrow input{background:transparent; border:none; outline:none; color:var(--bone); width:100%;
     font-family:var(--fnum); font-weight:900; font-size:28px; text-align:center; padding-bottom:10px}
-  .logrow .go{flex:0 0 72px; font-family:var(--fhead); font-weight:900; font-size:18px; letter-spacing:.04em; background:var(--volt); color:var(--black)}
-  .logrow .go:active{transform:translate(1px,1px)}
-  .logrow.done{height:48px; border-color:#40552D; opacity:.82; background:var(--card)}
-  .logrow.done .sn,.logrow.done .box span{color:var(--dim)}
-  .logrow.done input{color:var(--dim); font-size:20px; padding-bottom:10px}
-  .logrow.done .go{background:transparent; color:var(--volt); font-size:22px}
+  .logrow .go{flex:0 0 74px; font-family:var(--fhead); font-weight:900; font-style:italic; font-size:19px; letter-spacing:.04em;
+    background:linear-gradient(180deg,#FFE066,var(--volt) 55%,#E8791C); color:#2A1A00;
+    box-shadow:inset 2px 2px 0 rgba(255,255,255,.45), inset -2px -2px 0 rgba(0,0,0,.35)}
+  .logrow .go:active{transform:translate(1px,1px); box-shadow:inset -2px -2px 0 rgba(255,255,255,.45), inset 2px 2px 0 rgba(0,0,0,.35)}
+  .logrow.done{height:50px; opacity:.85; background:linear-gradient(180deg,#2E4A18,#1B2E0E)}
+  .logrow.done .sn,.logrow.done .box span{color:#8FB570}
+  .logrow.done input{color:var(--bone); font-size:20px; padding-bottom:10px}
+  .logrow.done .go{background:transparent; color:#9BE334; font-size:24px; box-shadow:none}
   .filmbadge{display:inline-flex; align-items:center; gap:8px; font-family:var(--fhead); font-weight:900; font-size:14px;
     text-transform:uppercase; letter-spacing:.06em; color:var(--ice); background:var(--raised); border:2px solid var(--ice); padding:13px 16px; margin-top:12px; box-shadow:3px 3px 0 #000}
   .filmbadge .dot{width:10px; height:10px; background:var(--ox); border-radius:50%}
@@ -104,15 +129,20 @@
   textarea{width:100%; background:transparent; border:none; border-bottom:2px solid var(--ctrl);
     color:var(--bone); font:16px var(--fbody); padding:8px 0; min-height:56px; resize:none; outline:none}
   /* rest timer — red cabinet drawer */
-  .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom)); background:var(--card);
-    border-top:4px solid var(--ox); padding:16px 20px 18px; display:none; align-items:center; justify-content:space-between; gap:12px; z-index:10; overflow:hidden; box-shadow:0 -10px 0 rgba(0,0,0,.35)}
+  /* ROUND TIMER — the big center-screen count, drained by a health-bar-style meter */
+  .timer{position:fixed; left:0; right:0; bottom:calc(72px + env(safe-area-inset-bottom));
+    background:linear-gradient(180deg,#262B68,#141852); border-top:4px solid #000;
+    padding:16px 20px 18px; display:none; align-items:center; justify-content:space-between; gap:12px; z-index:10; overflow:hidden}
   .timer.on{display:flex}
-  .timer.fin{background:var(--volt); border-top-color:var(--volt)}
-  .timer.fin .t,.timer.fin .label{color:var(--black)}
+  .timer.fin{background:linear-gradient(180deg,#FFE066,#E8791C)}
+  .timer.fin .t{color:#2A1A00; -webkit-text-fill-color:#2A1A00; text-shadow:2px 2px 0 rgba(255,255,255,.4)}
+  .timer.fin .label{color:#2A1A00}
   .timer.fin .drain{display:none}
-  .timer .drain{position:absolute; left:0; top:0; height:8px; background:var(--ox); transition:width 1s linear; pointer-events:none}
-  .timer .t{font-family:var(--fnum); font-weight:900; font-size:72px; line-height:.95; font-variant-numeric:tabular-nums; text-shadow:4px 4px 0 #000}
-  .timer.fin .t{text-shadow:none}
+  .timer .drain{position:absolute; left:0; top:0; height:9px; transition:width 1s linear; pointer-events:none;
+    background:linear-gradient(180deg,#FF9B87 0 2px,#E23A26 2px 60%,#A82214 60%)}
+  .timer .t{font-family:var(--fnum); font-weight:900; font-style:italic; font-size:76px; line-height:.95; font-variant-numeric:tabular-nums;
+    color:var(--volt); background:linear-gradient(180deg,#FFF3A8,#FFC523 55%,#E8791C);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
   .timer .tbtn{border:2px solid var(--line); background:var(--raised); color:var(--bone); padding:16px 18px; font-family:var(--fhead); font-weight:900; font-size:15px; text-transform:uppercase; letter-spacing:.06em; position:relative; z-index:1; box-shadow:3px 3px 0 #000}
   .timer .tbtn:active{transform:translate(2px,2px)}
   .fb{border-left:2px solid var(--dim); padding-left:14px; margin-top:12px; font-size:14px; color:var(--dim); white-space:pre-wrap}
@@ -130,9 +160,16 @@
   .lb-dots{flex:1; border-bottom:2px dotted var(--line); margin:0 8px; position:relative; top:-4px}
   .lb-val{font-family:var(--fnum); font-weight:900; font-size:22px; color:var(--volt)}
   .statrow{display:flex; justify-content:space-between; align-items:baseline; padding:10px 0; border-bottom:1px dotted var(--line2); font-size:14px}
-  .track{width:100%; height:14px; background:var(--line2); border:2px solid var(--line); margin:14px 0 8px}
-  .track i{display:block; height:100%; background:var(--gold); transition:width .3s}
-  .track.hit i{background:var(--volt)}
+  /* THE HEALTH BAR — the single most recognizable element of the era.
+     Dark chrome frame, yellow→orange gradient fill with a bright top edge, segmented by tick marks.
+     Used everywhere a meter appears (fuel, tonnage ladder, progress). */
+  .track{position:relative; width:100%; height:18px; background:#0A0C24; border:3px solid #000; margin:14px 0 8px; overflow:hidden}
+  .track::after{content:''; position:absolute; inset:0; pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0 11px,rgba(0,0,0,.55) 11px 13px)}
+  .track i{display:block; height:100%; transition:width .3s;
+    background:linear-gradient(180deg,#FFF08A 0 3px,#FFC523 3px 60%,#E8791C 60%,#C4520E 100%)}
+  .track.hit i{background:linear-gradient(180deg,#EAFFB0 0 3px,#9BE334 3px 60%,#4E9E12 60%,#357009 100%)}
+  .track.low i{background:linear-gradient(180deg,#FF9B87 0 3px,#E23A26 3px 60%,#A82214 60%,#7A1409 100%)}
   .chips{display:flex; gap:10px; overflow-x:auto; padding:6px 0 12px; scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chips button{flex:0 0 auto; border:2px solid var(--line); background:var(--raised); padding:12px 18px;
@@ -141,14 +178,24 @@
   .mealrow{display:flex; justify-content:space-between; gap:8px; border-bottom:1px dotted var(--line2); padding:12px 0;
     font-family:var(--fhead); font-weight:700; font-size:14px; text-transform:uppercase; color:var(--dim)}
   .mealrow .g{color:var(--bone); font-family:var(--fnum); font-weight:900; font-size:16px; white-space:nowrap}
-  .tabbar{position:fixed; left:0; right:0; bottom:0; height:calc(72px + env(safe-area-inset-bottom)); display:flex;
-    background:var(--card); border-top:2px solid var(--line); padding-bottom:env(safe-area-inset-bottom); z-index:20}
-  .tabbar button{flex:1; font-family:var(--fhead); font-weight:900; font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); border-right:1px solid var(--line)}
-  .tabbar button:last-child{border-right:0}
-  .tabbar button.main{flex:1.25; font-size:15px}
-  .tabbar button.sel{background:var(--volt); color:var(--black)}
-  .warn{color:var(--ox); font-size:13px; margin-top:8px}
-  .good{color:var(--volt); font-size:13px; margin-top:8px}
+  /* cabinet control panel: raised buttons in a black bezel */
+  .tabbar{position:fixed; left:0; right:0; bottom:0; height:calc(72px + env(safe-area-inset-bottom)); display:flex; gap:2px;
+    background:#000; border-top:3px solid #000; padding:3px 3px env(safe-area-inset-bottom); z-index:20}
+  .tabbar button{flex:1; font-family:var(--fhead); font-weight:900; font-style:italic; font-size:13px; text-transform:uppercase;
+    letter-spacing:.06em; color:var(--dim); background:linear-gradient(180deg,var(--raised),#171B4E);
+    box-shadow:inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo)}
+  .tabbar button.main{flex:1.25; font-size:15px; color:var(--bone)}
+  .tabbar button.sel{background:linear-gradient(180deg,#FFE066,var(--volt) 55%,#E8791C); color:#2A1A00;
+    box-shadow:inset -2px -2px 0 rgba(255,255,255,.45), inset 2px 2px 0 rgba(0,0,0,.35)}
+  .warn{color:#FF8A78; font-family:var(--fhead); font-weight:900; font-size:14px; letter-spacing:.04em; text-transform:uppercase; margin-top:8px; text-shadow:2px 2px 0 #000}
+  .good{color:#9BE334; font-family:var(--fhead); font-weight:900; font-size:14px; letter-spacing:.04em; text-transform:uppercase; margin-top:8px; text-shadow:2px 2px 0 #000}
+  /* THE WORDMARK — heavy italic, gold gradient, thick outline: the fighting-game logo read */
+  .logo{font-family:var(--fhead); font-weight:900; font-style:italic; font-size:52px; line-height:.85;
+    text-transform:uppercase; letter-spacing:-.01em; margin:0; padding:2px 0;
+    background:linear-gradient(180deg,#FFF7C2 0%,#FFD84D 38%,#F5A81C 62%,#C9540C 100%);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    filter:drop-shadow(3px 0 0 #000) drop-shadow(-3px 0 0 #000) drop-shadow(0 3px 0 #000) drop-shadow(0 -3px 0 #000) drop-shadow(4px 5px 0 rgba(0,0,0,.55))}
+  .logo span{display:block; font-size:.42em; letter-spacing:.24em; -webkit-text-fill-color:var(--bone); background:none; margin-top:6px}
   .cuebox{border-left:3px solid var(--ice); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
   .cuebox b{display:block; font-family:var(--fhead); font-weight:700; font-size:11px; letter-spacing:.12em; color:var(--ice); margin-bottom:6px}
   /* ---- game surfaces ---- */
@@ -156,35 +203,49 @@
     padding:12px 18px; font-family:var(--fhead); font-weight:900; font-size:18px; opacity:0; pointer-events:none; z-index:40}
   .toast.on{animation:score .6s ease-out}
   @keyframes score{0%{opacity:0;transform:translate(-50%,10px)}25%,70%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-18px)}}
-  .segs{display:grid; grid-template-columns:repeat(3,1fr); border:2px solid var(--line); margin-bottom:14px}
-  .segs button{height:48px; border:0; border-right:2px solid var(--line); background:var(--card); color:var(--dim); font-family:var(--fhead); font-weight:900; font-size:14px; letter-spacing:.08em}
-  .segs button:last-child{border-right:0}
-  .segs .on{background:var(--volt); color:var(--black)}
-  .leader{background:var(--card); border:2px solid var(--line); margin-bottom:10px; box-shadow:5px 5px 0 #000}
-  .player{display:grid; grid-template-columns:38px 52px 1fr auto; align-items:center; min-height:80px; padding:10px 12px; border-left:5px solid var(--player,#5E7480)}
-  .player .rank{font-family:var(--fpix); font-size:10px; color:var(--dim)}
-  .avatar{width:44px; height:44px; display:grid; place-items:center; background:var(--player,#5E7480); color:var(--black);
-    font-family:var(--fhead); font-weight:900; font-size:18px; clip-path:polygon(0 0,80% 0,100% 20%,100% 100%,20% 100%,0 80%)}
-  .pname{padding-left:10px; font-family:var(--fhead); font-weight:900; font-size:22px; line-height:1; text-transform:uppercase}
-  .pname small{display:block; font-family:var(--fhead); font-weight:700; font-size:11px; color:var(--dim); letter-spacing:.08em; margin-top:5px; text-transform:uppercase}
-  .pts{text-align:right; font-family:var(--fnum); font-weight:900; font-size:36px; line-height:.9; font-variant-numeric:tabular-nums}
-  .pts small{display:block; font-family:var(--fhead); font-weight:700; font-size:10px; color:var(--player,#5E7480); letter-spacing:.1em; margin-top:6px}
-  .delta{margin:16px 0; padding:13px 14px; background:var(--raised); border-left:4px solid var(--ox); font-family:var(--fhead); font-weight:900; font-size:17px; letter-spacing:.04em; text-transform:uppercase}
-  .feed{background:var(--card); border:2px solid var(--line)}
-  .event{padding:13px 14px 13px 16px; border-bottom:1px solid var(--line); border-left:4px solid var(--player,#5E7480)}
+  .segs{display:grid; grid-template-columns:repeat(3,1fr); border:3px solid #000; margin-bottom:14px; gap:2px; background:#000}
+  .segs button{height:48px; border:0; background:linear-gradient(180deg,var(--raised),#1B1F5E); color:var(--dim);
+    font-family:var(--fhead); font-weight:900; font-style:italic; font-size:14px; letter-spacing:.08em;
+    box-shadow:inset 2px 2px 0 var(--hi), inset -2px -2px 0 var(--lo)}
+  .segs .on{background:linear-gradient(180deg,#FFE066,var(--volt) 55%,#E8791C); color:#2A1A00;
+    box-shadow:inset -2px -2px 0 rgba(255,255,255,.45), inset 2px 2px 0 rgba(0,0,0,.35)}
+  /* VS SCOREBOARD — fighter-select rows: portrait tile, name plate, score readout */
+  .leader{background:linear-gradient(180deg,#262B68,#1A1E52); border:3px solid #000; margin-bottom:10px}
+  .player{display:grid; grid-template-columns:38px 52px 1fr auto; align-items:center; min-height:82px; padding:10px 12px;
+    border-left:6px solid var(--player,#6E78C4)}
+  .player .rank{font-family:var(--fpix); font-size:10px; color:var(--dim); text-shadow:2px 2px 0 #000}
+  .avatar{width:46px; height:46px; display:grid; place-items:center; color:#0B0D2B;
+    background:linear-gradient(180deg,var(--player,#6E78C4),rgba(0,0,0,.35)); border:2px solid #000;
+    font-family:var(--fhead); font-weight:900; font-style:italic; font-size:19px;
+    box-shadow:inset 2px 2px 0 rgba(255,255,255,.4), inset -2px -2px 0 rgba(0,0,0,.4)}
+  .pname{padding-left:10px; font-family:var(--fhead); font-weight:900; font-style:italic; font-size:23px; line-height:1;
+    text-transform:uppercase; text-shadow:2px 2px 0 #000}
+  .pname small{display:block; font-family:var(--fhead); font-weight:900; font-size:11px; color:var(--dim); letter-spacing:.08em; margin-top:5px; text-transform:uppercase; text-shadow:none}
+  .pts{text-align:right; font-family:var(--fnum); font-weight:900; font-style:italic; font-size:38px; line-height:.9; font-variant-numeric:tabular-nums; color:var(--volt)}
+  .pts small{display:block; font-family:var(--fhead); font-weight:900; font-size:10px; color:var(--player,#6E78C4); letter-spacing:.1em; margin-top:6px; text-shadow:none}
+  .delta{margin:16px 0; padding:14px; background:linear-gradient(180deg,#3A1310,#24100D); border:3px solid #000; border-left:6px solid var(--ox);
+    font-family:var(--fhead); font-weight:900; font-style:italic; font-size:17px; letter-spacing:.04em; text-transform:uppercase; text-shadow:2px 2px 0 #000}
+  .feed{background:linear-gradient(180deg,#232860,#181C52); border:3px solid #000}
+  .event{padding:13px 14px 13px 16px; border-bottom:2px solid #000; border-left:5px solid var(--player,#6E78C4)}
   .event:last-child{border-bottom:0}
-  .event b{font-family:var(--fhead); font-weight:900; font-size:15px; text-transform:uppercase}
-  .event small{display:block; margin-top:3px; color:var(--dim); font-size:12px}
-  .event strong{color:var(--player,#5E7480)}
-  .win{text-align:center; border:3px solid var(--volt); background:var(--card); padding:22px 14px 16px; box-shadow:7px 7px 0 #000;
-    clip-path:polygon(0 0,calc(100% - 14px) 0,100% 14px,100% 100%,14px 100%,0 calc(100% - 14px))}
-  .win .kicker{font-family:var(--fhead); font-weight:700; font-size:12px; letter-spacing:.16em; color:var(--volt); text-transform:uppercase}
-  .win h1{font-size:64px; line-height:.9; margin:8px 0; text-shadow:4px 4px 0 #000}
-  .scoregrid{display:grid; grid-template-columns:repeat(3,1fr); border:2px solid var(--line); margin:16px 0; background:var(--card)}
-  .scoregrid div{padding:12px 6px; text-align:center; border-right:2px solid var(--line)}
-  .scoregrid div:last-child{border:0}
-  .scoregrid strong{display:block; font-family:var(--fnum); font-weight:900; font-size:24px; color:var(--bone)}
-  .scoregrid small{font-family:var(--fhead); font-weight:700; font-size:10px; letter-spacing:.1em; color:var(--dim); text-transform:uppercase}
+  .event b{font-family:var(--fhead); font-weight:900; font-style:italic; font-size:15px; text-transform:uppercase; text-shadow:2px 2px 0 #000}
+  .event small{display:block; margin-top:4px; color:var(--dim); font-size:12px}
+  .event strong{color:var(--player,#6E78C4)}
+  /* K.O. / round-clear panel */
+  .win{position:relative; text-align:center; border:3px solid #000; padding:24px 14px 18px;
+    background:radial-gradient(120% 90% at 50% 0%,#4A3A94 0%,#241F63 55%,#141852 100%)}
+  .win::before{content:''; position:absolute; left:0; right:0; top:0; height:8px;
+    background:linear-gradient(180deg,#FFE066,var(--volt) 60%,#E8791C)}
+  .win .kicker{font-family:var(--fpix); font-size:10px; line-height:1.6; letter-spacing:.06em; color:var(--volt); text-transform:uppercase; text-shadow:2px 2px 0 #000}
+  .win h1{font-size:70px; line-height:.9; margin:10px 0 8px; font-style:italic;
+    text-shadow:none; /* MUST override the h1 outline rule — it paints through the gradient fill */
+    background:linear-gradient(180deg,#FFF3A8,#FFC523 55%,#E8791C);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent}
+  /* round tally: the post-match score readout */
+  .scoregrid{display:grid; grid-template-columns:repeat(3,1fr); border:3px solid #000; margin:16px 0; gap:2px; background:#000}
+  .scoregrid div{padding:13px 6px; text-align:center; background:linear-gradient(180deg,#262B68,#191D55)}
+  .scoregrid strong{display:block; font-family:var(--fnum); font-weight:900; font-style:italic; font-size:26px; color:var(--bone); text-shadow:2px 2px 0 #000}
+  .scoregrid small{font-family:var(--fhead); font-weight:900; font-size:10px; letter-spacing:.1em; color:var(--dim); text-transform:uppercase}
   .scoregrid .gain{color:var(--volt)}
   .lreceipt{position:relative; overflow:hidden; background:var(--card); border:3px solid var(--gold); padding:18px; margin-top:16px; box-shadow:6px 6px 0 #000; text-align:left}
   .lreceipt::before{content:"LOADOUT RECEIPT"; display:block; color:var(--gold); font-family:var(--fpix); font-size:10px; line-height:1.5; margin-bottom:12px}
@@ -198,12 +259,14 @@
   .lchips b{color:var(--bone)}
   .talk{margin-top:14px; border-left:4px solid var(--ice); background:var(--raised); padding:11px 13px; font-size:14px; color:var(--bone); text-align:left}
   .talk b{display:block; color:var(--ice); font-family:var(--fhead); font-weight:900; font-size:12px; letter-spacing:.1em; margin-bottom:4px}
-  .marquee{position:relative; overflow:hidden; text-align:center; background:var(--card); border:4px solid var(--violet); padding:24px 14px 18px; box-shadow:7px 7px 0 #000; margin-bottom:14px}
-  .marquee::before{content:''; position:absolute; left:0; right:0; top:0; height:7px; background:repeating-linear-gradient(90deg,var(--violet) 0 8px,transparent 8px 16px)}
-  .marquee .kicker{font-family:var(--fpix); font-size:10px; line-height:1.5; color:var(--violet)}
-  .marquee h1{font-size:42px; margin:12px 0 6px}
-  .issuer{border-left:5px solid var(--ox); background:var(--card); padding:16px; margin-bottom:14px}
-  .issuer .danger{color:var(--ox); font-family:var(--fhead); font-weight:900; font-size:16px; text-transform:uppercase}
+  /* BOSS marquee — the mid-boss splash */
+  .marquee{position:relative; overflow:hidden; text-align:center; border:3px solid #000; padding:24px 14px 18px; margin-bottom:14px;
+    background:radial-gradient(120% 90% at 50% 0%,#5B2C8C 0%,#331A5E 55%,#1E1140 100%)}
+  .marquee::before{content:''; position:absolute; left:0; right:0; top:0; height:8px; background:linear-gradient(180deg,#D8AEF7,var(--violet) 60%,#7B36B8)}
+  .marquee .kicker{font-family:var(--fpix); font-size:10px; line-height:1.6; color:#D8AEF7; text-shadow:2px 2px 0 #000}
+  .marquee h1{font-size:44px; margin:12px 0 6px}
+  .issuer{border:3px solid #000; border-left:6px solid var(--ox); background:linear-gradient(180deg,#3A1310,#22100D); padding:16px; margin-bottom:14px}
+  .issuer .danger{color:#FF8A78; font-family:var(--fhead); font-weight:900; font-style:italic; font-size:16px; text-transform:uppercase; text-shadow:2px 2px 0 #000}
   .rowsx{background:var(--card); border:2px solid var(--line); margin:15px 0}
   .rowx{display:grid; grid-template-columns:88px 1fr; gap:10px; padding:12px; border-bottom:1px solid var(--line)}
   .rowx:last-child{border:0}
@@ -338,7 +401,7 @@ function fuelStrip(){
     <div style="display:flex;justify-content:space-between;align-items:baseline">
       <span class="label lit">FUEL</span>
       <span><span class="num" style="font-size:24px">${f.g}</span><span class="label">/${T}G</span></span></div>
-    <div class="track ${f.g>=T?'hit':''}" style="margin:8px 0 2px;height:8px"><i style="width:${pct}%"></i></div></div>`;
+    <div class="track ${f.g>=T?'hit':f.g<(prof().foodFloor)?'low':''}" style="margin:8px 0 2px;height:12px"><i style="width:${pct}%"></i></div></div>`;
 }
 function howto(b){
   const q=b.howto||('how to '+b.name.replace(/\(.*?\)/g,'').replace(/[—-].*$/,'').trim()+' exercise proper form');
@@ -511,10 +574,10 @@ function adhocCard(){
   const list=j('adhoc:'+today(),[]);
   return `<div class="card" style="border-style:dotted;background:transparent">
     <div class="label" style="margin-bottom:10px">+ Outside work — class, run, game, anything</div>
-    <div style="display:flex;gap:10px">
-      <input id="adMin" inputmode="numeric" placeholder="MIN" style="flex:0 0 72px;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font-family:var(--fnum);font-weight:900;font-size:20px;text-align:center;outline:none;padding:8px 0">
-      <input id="adWhat" style="flex:1;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font:16px var(--fbody);outline:none;padding:8px 0" placeholder="e.g. jiu jitsu, 5k, pickup ball">
-      <button class="go head" style="border:2px solid var(--ctrl);padding:0 18px;min-height:48px" onclick="logAdhoc()">Log</button></div>
+    <input id="adWhat" style="width:100%;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font:16px var(--fbody);outline:none;padding:8px 0;margin-bottom:10px" placeholder="e.g. jiu jitsu, 5k, pickup ball">
+    <div style="display:flex;gap:10px;align-items:center">
+      <input id="adMin" inputmode="numeric" placeholder="MIN" size="4" style="width:88px;flex:none;min-width:0;background:transparent;border:none;border-bottom:2px solid var(--ctrl);color:var(--bone);font-family:var(--fnum);font-weight:900;font-size:22px;text-align:center;outline:none;padding:8px 0">
+      <button class="btn small" style="flex:1;margin:0" onclick="logAdhoc()">LOG IT</button></div>
     ${list.map(a=>`<div class="statrow"><span>${esc(a.what)}</span><span class="label" style="font-size:11px">${a.min} MIN${a.synced?' · SENT ✓':' · QUEUED'}</span></div>`).join('')}</div>`;
 }
 async function logAdhoc(){
@@ -926,9 +989,9 @@ function renderHome(){
   }
   const sessionReady=S&&!(log[S.id]&&log[S.id].completed);
   $('app').innerHTML=connectBanner()+`
-    <div style="text-align:center;padding:6px 0 14px">
-      <div class="pix" style="font-size:22px;line-height:1.2">BAR FIGHT</div>
-      <div class="label" style="margin-top:6px">P1 · ${esc((j('sblast',{}).meName||'PATRICK').toUpperCase())}</div></div>
+    <div style="text-align:center;padding:10px 0 16px">
+      <div class="logo">BAR<br>FIGHT</div>
+      <div class="label" style="margin-top:10px">P1 · ${esc((j('sblast',{}).meName||'PATRICK').toUpperCase())}</div></div>
     ${rankHtml}
     <div class="scoregrid">
       <div><strong class="${todayScore?'gain':''}">${todayScore||'—'}</strong><small>TODAY</small></div>
@@ -1399,7 +1462,7 @@ function renderFuel(){
     <div class="poster num">${f.g}</div>
     <span class="num" style="font-size:40px;color:var(--dim)">/${T}</span>
     <span class="head" style="font-size:20px;color:var(--dim)">G</span></div>
-  <div class="track ${f.g>=T?'hit':''}"><i style="width:${pct}%"></i></div>
+  <div class="track ${f.g>=T?'hit':f.g<FL?'low':''}"><i style="width:${pct}%"></i></div>
   <div class="label" style="margin-bottom:18px">${f.g>=T?'FUEL LOCKED. STOP EATING LIKE AN INTERN.':f.g>=FL?`PAST THE FLOOR — PUSH TO ${T}.`:`FLOOR IS ${FL}. YOU'RE NOT CLOSE.`}</div>
   <button class="btn primary" onclick="$('mealIn').click()">+ Snap meal / menu</button>
   <button class="btn small" onclick="nearMe()">Find protein near me</button>
