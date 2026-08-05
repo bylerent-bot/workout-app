@@ -1,5 +1,5 @@
-const CACHE = 'train-v43';
-const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.png',
+const CACHE = 'train-v44';
+const ASSETS = ['.', 'index.html', 'manifest.json', 'icon.png', 'icon-512.png', 'icon-180.png',
   'data/sessions.json', 'data/equipment.json',
   'game/scoring.js', 'game/benchmarks.js',
   ...['safe-500','piano-700','vending-900','gold-1000','motorcycle-1200','dragster-1800',
