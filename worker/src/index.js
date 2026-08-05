@@ -12,6 +12,7 @@
 // Routes:
 // POST /log            session log -> KV (player-scoped)
 // POST /upload?key=..  media -> R2 (non-admin keys forced under p/<pid>/)
+// GET  /logs           caller's OWN logs back (restore after an app reinstall wipes localStorage)
 // GET  /pull           PATRICK-ONLY logs+media since ?after= (vault sync agent; friends' data excluded by design)
 // GET/DELETE /media/:key   (non-admin restricted to own p/<pid>/ prefix)
 // POST/GET /feedback   per-clip coach notes (non-admin sees own clips only)
@@ -304,6 +305,18 @@ export default {
         httpMetadata: { contentType: req.headers.get('Content-Type') || 'application/octet-stream' },
       });
       return json({ ok: true, key, size: bytes.byteLength });
+    }
+
+    // self-restore: any player pulls their OWN logs back. A deleted/reinstalled app loses
+    // localStorage — history lives here. Own lane only, no media, no cross-player reads.
+    if (req.method === 'GET' && path === '/logs') {
+      await dailyReconcile(env);
+      const out = [];
+      for (const name of await idxGet(env, pid === 'patrick' ? 'log' : 'log:' + pid)) {
+        const v = await env.LOGS.get(name);
+        if (v) out.push({ key: name, log: JSON.parse(v) });
+      }
+      return json({ logs: out });
     }
 
     // vault sync agent — PATRICK'S data only, by design (friends' data stays out of the family vault)

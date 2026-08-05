@@ -346,6 +346,33 @@ function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 function j(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}}
 function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
+/* a deleted/reinstalled app loses localStorage; the worker keeps every log. When local
+   history is EMPTY but we're connected, pull it back — otherwise the queue rewinds to the
+   first session and fuel/baselines vanish (bit Patrick 8/5 after a reinstall). */
+let restoreTried=false;
+async function restoreFromServer(){
+  const c=cfg();
+  if(!c||restoreTried||Object.keys(log).length)return;
+  restoreTried=true;
+  let b;
+  try{
+    const r=await fetch(c[0]+'/logs',{headers:{'Authorization':'Bearer '+c[1]}});
+    if(!r.ok)return;
+    b=await r.json();
+  }catch(e){return}
+  const entries=(b.logs||[]).slice().sort((a,x)=>a.key<x.key?-1:1); // key carries the ts — later wins
+  for(const e of entries){
+    const o=e.log||{}, inner=o.log||{};
+    if(o.type==='session-log'&&o.sessionId&&inner&&typeof inner==='object'){log[o.sessionId]=inner}
+    else if(inner.type==='nutrition'&&inner.date){sv('fuel:'+inner.date,{g:inner.protein_g||0,items:inner.items||[]})}
+    else if(inner.type==='adhoc-session'&&inner.date){
+      const k='adhoc:'+inner.date,list=j(k,[]),t=(inner.what||'')+'|'+(inner.minutes||0);
+      if(!list.some(a=>a.t===t)){list.push({min:inner.minutes||0,what:inner.what||'',t,synced:true});sv(k,list)}
+    }
+  }
+  if(Object.keys(log).length)store.save(log);
+}
+
 let loadFailed=false, awaitingCoach=false;
 async function init(){
   loadFailed=false;
@@ -371,6 +398,7 @@ async function init(){
   awaitingCoach=false;
   if(sess)ALLSESS=sess;
   else{ALLSESS=[]; if(cfg()&&!me().admin)awaitingCoach=true; else loadFailed=true}
+  await restoreFromServer();
   S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
   flushOutbox();
   route();
