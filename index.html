@@ -346,7 +346,7 @@ function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 function j(k,f){try{return JSON.parse(localStorage.getItem(k))??f}catch(e){return f}}
 function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
-let loadFailed=false;
+let loadFailed=false, awaitingCoach=false;
 async function init(){
   loadFailed=false;
   refreshMe();
@@ -358,14 +358,19 @@ async function init(){
       if(r.ok){const b=await r.json();if(b&&Array.isArray(b.sessions)){sess=b.sessions;sv('sesscache',b.sessions)}}
     }catch(e){}
   }
-  if(!sess){
+  // the static queue is PATRICK'S program (his loads, his pec gate) — never hand it to
+  // another player. A friend with no published queue waits for the coach instead.
+  if(!sess&&me().admin){
     try{
       const r=await fetch('data/sessions.json?_='+Date.now());
       if(!r.ok)throw new Error(r.status);
       sess=(await r.json()).sessions;
     }catch(e){sess=j('sesscache',null)}
   }
-  if(sess)ALLSESS=sess;else{ALLSESS=[];loadFailed=true}
+  if(!sess&&!me().admin)sess=j('sesscache',null);
+  awaitingCoach=false;
+  if(sess)ALLSESS=sess;
+  else{ALLSESS=[]; if(cfg()&&!me().admin)awaitingCoach=true; else loadFailed=true}
   S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
   flushOutbox();
   route();
@@ -375,7 +380,10 @@ function tabbar(){
   $('tabbar').innerHTML=t.map(([v,l])=>`<button class="${v==='today'?'main ':''}${view===v?'sel':''}" onclick="view='${v}';route()">${l}</button>`).join('');
 }
 let VVIEW=localStorage.getItem('vview')||'film'; // vault sub-tab
-function route(){tabbar();({home:renderHome,today:render,fuel:renderFuel,rivalry:renderRivalry,vault:renderVault})[view]()}
+function route(){
+  if(obNeeded()){$('tabbar').innerHTML='';return renderOnboard()} // intake blocks the app until done
+  tabbar();({home:renderHome,today:render,fuel:renderFuel,rivalry:renderRivalry,vault:renderVault})[view]();
+}
 function renderVault(){
   const sub={film:renderReview,progress:renderProgress,gear:renderGear,trophy:renderTrophy};
   (sub[VVIEW]||renderReview)();
@@ -455,6 +463,8 @@ function render(){
   const app=$('app');
   if(!S){app.innerHTML=connectBanner()+fuelStrip()+(loadFailed
     ?`<div class="sealwrap"><div class="seal"><div class="mon">Can't load sessions</div><hr class="dotted"><div class="label">Offline and nothing cached — reopen with signal.</div></div><button class="btn small" onclick="init()">Retry</button></div>`
+    :awaitingCoach
+    ?`<div class="sealwrap"><div class="seal"><div class="mon">Coach is writing your first block</div><hr class="dotted"><div class="label">Your setup is in. Sessions land here — usually within a day.</div></div><button class="btn small" style="margin-top:14px" onclick="init()">CHECK AGAIN</button></div>`
     :`<div class="sealwrap"><div class="seal"><div class="mon">Coach is building the next round</div><hr class="dotted"><div class="label">Nothing queued. Enjoy it — it won't last.</div></div></div>`)+adhocCard();return}
   const L=log[S.id]||(log[S.id]={revealed:false,blocks:{},completed:false});
   if(L.completed)return renderDone();
@@ -960,6 +970,107 @@ function postScore(ds){
   sv('dayscores',scores);
   queuePost('score',{day:ds.day,score:scores[ds.day]},null,'/score');
 }
+/* ---------- ONBOARDING — first run for a new player ("create your fighter") ----------
+   Runs once, after connect, when /me says the profile isn't onboarded. Captures the intake
+   the COACH needs to program for them (nobody inherits Patrick's numbers), writes it to the
+   worker profile, and posts an intake record down the pipe so the coach loop can build
+   their first block. Patrick is admin — he only sees this if his own profile lacks the flag. */
+const OBQ=[
+  {k:'name', t:'FIGHTER NAME', sub:'What goes on the scoreboard.', type:'text', ph:'Mike'},
+  {k:'stats', t:'STATS', sub:'Bodyweight sets your score curve. Be honest, nobody sees it but the coach.', type:'stats'},
+  {k:'daysPerWeek', t:'DAYS PER WEEK', sub:'How many days can you actually train? Pick the number you will hit on a bad week.', type:'pick',
+   opts:[['2','2 DAYS'],['3','3 DAYS'],['4','4 DAYS'],['5','5 DAYS'],['6','6 DAYS']]},
+  {k:'equipment', t:'WHERE YOU TRAIN', sub:'Decides what can be programmed.', type:'pick',
+   opts:[['commercial gym','FULL GYM'],['home gym','HOME GYM'],['minimal','MINIMAL / TRAVEL'],['crossfit box','CROSSFIT BOX']]},
+  {k:'goal', t:'WHAT YOU WANT', sub:'Sets the balance of size work vs engine work.', type:'pick',
+   opts:[['size','BUILD MUSCLE'],['engine','BUILD ENGINE'],['both','BOTH'],['lean','LEAN OUT']]},
+  {k:'experience', t:'EXPERIENCE', sub:'Honest answer gets you better programming.', type:'pick',
+   opts:[['new','NEW TO LIFTING'],['returning','COMING BACK'],['experienced','EXPERIENCED'],['athlete','COMPETED BEFORE']]},
+  {k:'limits', t:'INJURIES / LIMITS', sub:'Anything that hurts, anything a doctor told you not to do. Blank if none.', type:'area', ph:'e.g. bad right shoulder, no overhead pressing'},
+  {k:'foodTarget', t:'PROTEIN TARGET', sub:'Calculated from your bodyweight. Change it if you want.', type:'protein'},
+];
+let OBI=0;
+function ob(){return j('obdraft',{})}
+function obSet(k,v){const d=ob();d[k]=v;sv('obdraft',d)}
+let OBFORCE=false; // set when re-running setup deliberately from Progress
+function obNeeded(){ // has the connected player finished intake?
+  if(OBFORCE)return true;
+  const m=me();
+  if(m.admin)return false; // the coach's plan lives in the vault — never block him with intake
+  return !!cfg() && !(m.profile&&m.profile.onboarded);
+}
+function startOnboard(){OBFORCE=true;OBI=0;const m=me();sv('obdraft',{...(m.profile||{}),name:m.name});route()}
+function renderOnboard(){
+  const d=ob(), q=OBQ[OBI], last=OBI===OBQ.length-1;
+  const dots=OBQ.map((_,i)=>`<span style="width:${i===OBI?'22px':'10px'};height:10px;background:${i<=OBI?'var(--volt)':'var(--line2)'};border:2px solid #000;display:inline-block"></span>`).join('');
+  let body='';
+  if(q.type==='text'){
+    body=`<input id="obv" value="${esc(d.name??me().name??'')}" placeholder="${esc(q.ph||'')}" style="width:100%;background:transparent;border:none;border-bottom:3px solid var(--ctrl);color:var(--bone);font-family:var(--fhead);font-weight:900;font-style:italic;font-size:30px;text-transform:uppercase;outline:none;padding:10px 0">`;
+  }else if(q.type==='area'){
+    body=`<textarea id="obv" placeholder="${esc(q.ph||'')}" style="min-height:90px">${esc(d.limits||'')}</textarea>`;
+  }else if(q.type==='stats'){
+    body=`<div style="display:flex;gap:12px">
+      <div style="flex:1"><div class="label">AGE</div>
+        <input id="obAge" inputmode="numeric" value="${esc(d.age??'')}" style="width:100%;background:transparent;border:none;border-bottom:3px solid var(--ctrl);color:var(--bone);font-family:var(--fnum);font-weight:900;font-size:34px;text-align:center;outline:none;padding:6px 0"></div>
+      <div style="flex:1"><div class="label">BODYWEIGHT (LB)</div>
+        <input id="obBw" inputmode="decimal" value="${esc(d.bodyweightLb??'')}" style="width:100%;background:transparent;border:none;border-bottom:3px solid var(--ctrl);color:var(--bone);font-family:var(--fnum);font-weight:900;font-size:34px;text-align:center;outline:none;padding:6px 0"></div></div>
+      <div class="label" style="margin-top:18px">SEX — used for load and nutrition norms</div>
+      <div class="segs" style="margin-top:8px">${[['m','MALE'],['f','FEMALE'],['x','SKIP']].map(([v,l])=>`<button class="${(d.sex||'')===v?'on':''}" onclick="obSet('sex','${v}');renderOnboard()">${l}</button>`).join('')}</div>`;
+  }else if(q.type==='pick'){
+    body=q.opts.map(([v,l])=>`<button class="btn ${d[q.k]===v?'primary':''}" style="margin-bottom:10px" onclick="obSet('${q.k}','${v}');renderOnboard()">${l}</button>`).join('');
+  }else if(q.type==='protein'){
+    const bw=parseFloat(d.bodyweightLb)||0;
+    const sug=bw?Math.round(bw*0.8/5)*5:140; // ~1.75 g/kg
+    if(d.foodTarget==null)obSet('foodTarget',sug);
+    const cur=ob().foodTarget??sug;
+    body=`<div style="text-align:center">
+      <input id="obv" inputmode="numeric" value="${esc(cur)}" style="width:190px;background:transparent;border:none;border-bottom:3px solid var(--ctrl);color:var(--volt);font-family:var(--fnum);font-weight:900;font-style:italic;font-size:64px;text-align:center;outline:none;padding:6px 0">
+      <div class="label" style="margin-top:8px">GRAMS OF PROTEIN A DAY</div>
+      ${bw?`<div class="label" style="margin-top:14px;color:var(--dim)">${sug} suggested for ${Math.round(bw)} lb. Floor gets set at ${Math.round(sug*0.7)}.</div>`:''}</div>`;
+  }
+  $('app').innerHTML=`<div style="padding:6px 0 14px;text-align:center">
+      <div class="pix" style="font-size:11px">FIGHTER SETUP</div>
+      <div style="margin-top:12px;display:flex;gap:5px;justify-content:center">${dots}</div></div>
+    <div class="card">
+      <h1 style="font-size:28px;margin:0 0 6px">${q.t}</h1>
+      <p style="color:var(--dim);font-size:14px;margin:0 0 18px">${q.sub}</p>
+      ${body}</div>
+    <button class="btn primary" onclick="obNext()">${last?'START':'NEXT'}</button>
+    ${OBI>0?`<button class="btn small" onclick="OBI--;renderOnboard()">BACK</button>`:''}`;
+}
+function obNext(){
+  const q=OBQ[OBI];
+  if(q.type==='text'){const v=($('obv').value||'').trim();if(!v){$('obv').focus();return}obSet('name',v)}
+  if(q.type==='area')obSet('limits',($('obv').value||'').trim());
+  if(q.type==='protein'){const v=parseInt($('obv').value);if(!v){$('obv').focus();return}obSet('foodTarget',v)}
+  if(q.type==='stats'){
+    const a=parseInt($('obAge').value),b=parseFloat($('obBw').value);
+    if(!a||!b){( !a?$('obAge'):$('obBw')).focus();return}
+    obSet('age',a);obSet('bodyweightLb',b);
+  }
+  if(q.type==='pick'&&!ob()[q.k])return; // must choose
+  if(OBI<OBQ.length-1){OBI++;renderOnboard();return}
+  finishOnboard();
+}
+async function finishOnboard(){
+  const d=ob();
+  d.foodFloor=Math.round((d.foodTarget||140)*0.7);
+  const c=cfg();if(!c){alert('Connect first.');return}
+  const [endpoint,token]=c;
+  try{
+    const r=await fetch(endpoint+'/me/profile',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify(d)});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    const b=await r.json();
+    sv('me',{...me(),name:d.name,profile:b.profile});
+  }catch(e){alert("Couldn't save your setup. Get signal and try again.");return}
+  // bodyweight seeds the score curve immediately; intake rides the pipe to the coach
+  const w=j('weights',[]);
+  if(d.bodyweightLb)  {w.push({d:today(),w:parseFloat(d.bodyweightLb)});sv('weights',w)}
+  await queuePost('intake',{sessionId:'intake',log:{type:'intake',date:today(),...d}});
+  localStorage.removeItem('obdraft');OBI=0;OBFORCE=false;
+  toastMsg('YOU\'RE IN.');
+  view='home';await init();
+}
 /* the wordmark's rule IS a barbell — loaded bar, gold plates, hard black outline to match the skin */
 function barbellSVG(){
   const P=(x,w,h)=>`<rect x="${x}" y="${28-h/2}" width="${w}" height="${h}" rx="2" fill="url(#pl)" stroke="#000" stroke-width="3"/>`;
@@ -1018,7 +1129,7 @@ function renderHome(){
     ${rankHtml}
     <div class="scoregrid">
       <div><strong class="${todayScore?'gain':''}">${todayScore||'—'}</strong><small>TODAY</small></div>
-      <div><strong>${wk}/3</strong><small>SESSIONS THIS WK</small></div>
+      <div><strong>${wk}/${weekTarget()}</strong><small>SESSIONS THIS WK</small></div>
       <div><strong>${haul?both(haul.vol).split(' · ')[0]:'—'}</strong><small>LAST HAUL</small></div></div>
     ${haul&&haul.loadout?`<div class="lreceipt"><div class="object">
       <img src="assets/objects/${haul.loadout.items[0].o[0]}.svg" alt="Pixel art ${esc(haul.loadout.items[0].o[1].toLowerCase())}">
@@ -1325,6 +1436,7 @@ function renderProgress(){
   <input type="file" id="photoIn" accept="image/*" capture="environment" style="display:none" onchange="gotPhoto(this)">
   <div id="photoStatus"></div>
   <div class="label" style="margin:6px 0 22px;font-size:11px">Weekly. Same spot, same light. Front · side · back.</div>
+  ${cfg()?`<button class="btn small" style="margin-bottom:22px" onclick="startOnboard()">EDIT FIGHTER SETUP</button>`:''}
   <h1 style="font-size:24px">Best logged</h1>
   <div class="card">`;
   const keys=Object.keys(prs);
@@ -1332,13 +1444,14 @@ function renderProgress(){
   h+=`</div>
   <h1 style="font-size:24px">Consistency</h1>
   <div class="card">
-    <div class="poster num" style="font-size:56px">${wk} / 3</div>
-    <div class="label">${wk>=3?'SESSIONS THIS WEEK (FLOOR MET)':'SESSIONS THIS WEEK VS FLOOR'}</div>
+    <div class="poster num" style="font-size:56px">${wk} / ${weekTarget()}</div>
+    <div class="label">${wk>=weekTarget()?'SESSIONS THIS WEEK (FLOOR MET)':'SESSIONS THIS WEEK VS FLOOR'}</div>
     <hr class="dotted">
     <div class="statrow" style="border:0"><span>Total sessions logged</span><span class="num" style="font-size:18px">${done}</span></div>
   </div>`;
   $('app').innerHTML=h;
 }
+function weekTarget(){return parseInt(prof().daysPerWeek)||3} // from intake; 3 = Patrick's floor
 function weekCount(){
   const now=new Date(); const day=(now.getDay()+6)%7;
   const mon=new Date(now); mon.setDate(now.getDate()-day); mon.setHours(0,0,0,0);

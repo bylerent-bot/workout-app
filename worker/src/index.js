@@ -26,7 +26,8 @@
 //                        (2nd: -half, out of the money: -wager); boss mode nobody pays
 // GET  /scoreboard also runs the lazy weekly close (`weeks` + `wl` blobs) and returns wl/cwl/lastWeek
 // GET  /challenges     open + recently closed
-// GET  /me             {pid, name, admin}
+// GET  /me             {pid, name, admin, onboarded, profile}
+// POST /me/profile     player writes their OWN intake (onboarding); sets profile.onboarded
 // POST /admin/player   {pid, name} -> mints + returns a token ONCE (admin only)
 // GET  /admin/players  roster w/o hashes (admin only)
 
@@ -222,8 +223,36 @@ export default {
 
     if (path === '/me') {
       const prof = players[pid]?.profile || {};
-      // profile defaults keep Patrick's historical plan without a stored profile
-      return json({ pid, name: myName, admin, profile: { foodTarget: 140, foodFloor: 100, age: 43, ...prof } });
+      // Patrick's historical defaults apply to HIM only — a new player with no profile
+      // must come back unonboarded and with no borrowed numbers.
+      const base = pid === 'patrick' ? { foodTarget: 140, foodFloor: 100, age: 43 } : {};
+      return json({ pid, name: myName, admin, onboarded: !!prof.onboarded, profile: { ...base, ...prof } });
+    }
+
+    // a player writes their OWN intake profile (onboarding). Coach fields stay admin-only.
+    if (path === '/me/profile' && req.method === 'POST') {
+      const b = await req.json();
+      const num = (v, lo, hi) => { const n = Math.round(Number(v)); return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : null; };
+      const str = (v, n = 200) => typeof v === 'string' ? v.slice(0, n) : '';
+      const prof = { ...(players[pid]?.profile || {}) };
+      if (b.age != null) prof.age = num(b.age, 13, 100);
+      if (b.bodyweightLb != null) prof.bodyweightLb = num(b.bodyweightLb, 60, 600);
+      if (b.sex != null) prof.sex = ['m', 'f', 'x'].includes(String(b.sex)) ? String(b.sex) : 'x';
+      if (b.daysPerWeek != null) prof.daysPerWeek = num(b.daysPerWeek, 1, 7);
+      if (b.foodTarget != null) prof.foodTarget = num(b.foodTarget, 40, 400);
+      if (b.foodFloor != null) prof.foodFloor = num(b.foodFloor, 30, 400);
+      if (b.equipment != null) prof.equipment = str(b.equipment, 60);
+      if (b.limits != null) prof.limits = str(b.limits, 500);
+      if (b.goal != null) prof.goal = str(b.goal, 60);
+      if (b.experience != null) prof.experience = str(b.experience, 40);
+      if (b.name) players[pid] = { ...(players[pid] || {}), name: str(b.name, 40) };
+      prof.onboarded = true;
+      prof.onboardedAt = prof.onboardedAt || Date.now();
+      prof.updatedAt = Date.now();
+      players[pid] = { ...(players[pid] || {}), profile: prof };
+      await blobPut(env, 'players', players);
+      await feedAdd(env, { pid, name: players[pid]?.name || pid, type: 'joined' });
+      return json({ ok: true, profile: prof });
     }
 
     // media listing that works for every player: admin sees the vault lanes (non-p/),
