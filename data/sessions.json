@@ -2,16 +2,16 @@
  "sessions": [
   {
    "id": "s3",
-   "phase": "Phase 1 \u00b7 Session 3 (Reboot C \u2014 Pull focus)",
+   "phase": "Phase 1 · Session 3 (Reboot C — Pull focus)",
    "date": "2026-07-29",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "Neutral hinge held well in S1 \u2014 this session: strict row, no torso twist, elbow to the hip.",
-   "notes": "Carries the 1-arm DB row skipped in S2. Load flat, finisher Zone 2, pec-safe. NEW: correctives block from 7/29 squat film (early hinge + torso pitch) \u2014 see Movement Profile.",
+   "formCue": "Neutral hinge held well in S1 — this session: strict row, no torso twist, elbow to the hip.",
+   "notes": "Carries the 1-arm DB row skipped in S2. Load flat, finisher Zone 2, pec-safe. NEW: correctives block from 7/29 squat film (early hinge + torso pitch) — see Movement Profile.",
    "blocks": [
     {
      "id": "w",
-     "name": "Correctives warm-up (new \u2014 from your squat film)",
+     "name": "Correctives warm-up (new — from your squat film)",
      "detail": "Knee-to-wall ankle test both sides (note inches, tell me in session notes) + 2x30s/side wall ankle rocks + 2x10 thoracic extensions over foam roller",
      "type": "check",
      "sets": 1,
@@ -22,7 +22,7 @@
     {
      "id": "a",
      "name": "1-arm DB row",
-     "detail": "3 sets \u00d7 10/side \u2014 FILM the top set, side-on",
+     "detail": "3 sets × 10/side — FILM the top set, side-on",
      "type": "sets",
      "sets": 3,
      "targetReps": 10,
@@ -32,7 +32,7 @@
     {
      "id": "b",
      "name": "Trap-bar deadlift",
-     "detail": "3 sets \u00d7 8 @ 221 lb (held flat from S1)",
+     "detail": "3 sets × 8 @ 221 lb (held flat from S1)",
      "type": "sets",
      "sets": 3,
      "targetReps": 8,
@@ -51,8 +51,8 @@
     },
     {
      "id": "d",
-     "name": "Finisher \u2014 steady row",
-     "detail": "8 min continuous, Zone 2 (conversational, ~1:55\u20132:05/500m). NOT a redline.",
+     "name": "Finisher — steady row",
+     "detail": "8 min continuous, Zone 2 (conversational, ~1:55–2:05/500m). NOT a redline.",
      "type": "timed",
      "sets": 1,
      "targetReps": null,
@@ -63,11 +63,11 @@
   },
   {
    "id": "s4",
-   "phase": "Phase 1 \u00b7 Session 4 (Engine A)",
+   "phase": "Phase 1 · Session 4 (Engine A)",
    "date": "2026-07-31",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "Engine day. Smooth is fast \u2014 hold the split, don't redline the first round.",
+   "formCue": "Engine day. Smooth is fast — hold the split, don't redline the first round.",
    "notes": "First engine day of the new mix (HWPO-style pacing). Pec-safe. Intervals, not a hero WOD.",
    "blocks": [
     {
@@ -105,12 +105,12 @@
   },
   {
    "id": "s5",
-   "phase": "Phase 1 \u00b7 Session 5 (Hypertrophy \u2014 legs)",
+   "phase": "Phase 1 · Session 5 (Hypertrophy — legs)",
    "date": "2026-08-01",
    "place": "Home gym",
    "time": "after work",
    "formCue": "From your squat film: chest tall, break knees and hips together, sit between your feet.",
-   "notes": "Hypertrophy lower. Tempo work grooves the squat pattern from Movement Profile. Adjusted 7/30: you're going lighter to protect the pec \u2014 so the baseline is now BY FEEL, not a fixed 221. Trap-bar is pec-safe (arms hang, no pec stretch/load) but you set the ceiling.",
+   "notes": "Hypertrophy lower. Tempo work grooves the squat pattern from Movement Profile. Adjusted 7/30: you're going lighter to protect the pec — so the baseline is now BY FEEL, not a fixed 221. Trap-bar is pec-safe (arms hang, no pec stretch/load) but you set the ceiling.",
    "blocks": [
     {
      "id": "w",
@@ -125,7 +125,7 @@
     {
      "id": "a",
      "name": "Trap-bar deadlift",
-     "detail": "Work UP over 3 sets of 8 (e.g. 160 \u2192 180 \u2192 200, by feel), then one last set of 8 at RPE 8-9 \u2014 heavy but crisp, stop instantly if the pec says anything. Whatever that weight is, that's our baseline.",
+     "detail": "Work UP over 3 sets of 8 (e.g. 160 → 180 → 200, by feel), then one last set of 8 at RPE 8-9 — heavy but crisp, stop instantly if the pec says anything. Whatever that weight is, that's our baseline.",
      "type": "sets",
      "sets": 4,
      "targetReps": 8,
@@ -134,8 +134,8 @@
     },
     {
      "id": "b",
-     "name": "Goblet squat \u2014 3s down, 1s pause",
-     "detail": "3 x 10, light KB. FILM set 3 side-on \u2014 this is the pattern check.",
+     "name": "Goblet squat — 3s down, 1s pause",
+     "detail": "3 x 10, light KB. FILM set 3 side-on — this is the pattern check.",
      "type": "sets",
      "sets": 3,
      "targetReps": 10,
@@ -156,7 +156,7 @@
   },
   {
    "id": "s6",
-   "phase": "Phase 1 \u00b7 Session 6 (Baselines \u2014 engine)",
+   "phase": "Phase 1 · Session 6 (Baselines — engine)",
    "date": "2026-08-02",
    "place": "Home gym or a track",
    "time": "after work",
@@ -175,7 +175,7 @@
     },
     {
      "id": "a",
-     "name": "1-mile run \u2014 TIME TRIAL",
+     "name": "1-mile run — TIME TRIAL",
      "detail": "Enter total minutes. Even pacing; this is a baseline, not a death march",
      "type": "timed",
      "sets": 1,
@@ -185,7 +185,7 @@
     },
     {
      "id": "b",
-     "name": "500m row \u2014 TIME TRIAL",
+     "name": "500m row — TIME TRIAL",
      "detail": "Full rest after the mile (10+ min), then one hard 500. Enter time",
      "type": "timed",
      "sets": 1,
@@ -197,7 +197,7 @@
   },
   {
    "id": "s7",
-   "phase": "Phase 1 \u00b7 Session 7 (Hypertrophy \u2014 pull)",
+   "phase": "Phase 1 · Session 7 (Hypertrophy — pull)",
    "date": "2026-08-03",
    "place": "Home gym",
    "time": "after work",
@@ -207,7 +207,7 @@
     {
      "id": "w",
      "name": "Correctives + ankle screen (OWED from S3)",
-     "detail": "Knee-to-wall test both sides \u2014 foot flat, knee to wall, farthest toe distance that still touches. Enter inches below. Then ankle rocks 2x30s/side + t-spine ext 2x10.",
+     "detail": "Knee-to-wall test both sides — foot flat, knee to wall, farthest toe distance that still touches. Enter inches below. Then ankle rocks 2x30s/side + t-spine ext 2x10.",
      "type": "measure",
      "sets": 1,
      "targetReps": null,
@@ -228,8 +228,8 @@
     },
     {
      "id": "a",
-     "name": "1-arm DB row \u2014 heavier",
-     "detail": "4 x 10/side @ 0-3 RIR. You have up to 60 lb on the rack \u2014 25 was too light (30 reps last time). FILM the top set, side-on (owed since S2).",
+     "name": "1-arm DB row — heavier",
+     "detail": "4 x 10/side @ 0-3 RIR. You have up to 60 lb on the rack — 25 was too light (30 reps last time). FILM the top set, side-on (owed since S2).",
      "type": "sets",
      "sets": 4,
      "targetReps": 10,
@@ -287,11 +287,11 @@
   },
   {
    "id": "s8",
-   "phase": "Phase 1 \u00b7 Session 8 (Engine B)",
+   "phase": "Phase 1 · Session 8 (Engine B)",
    "date": "2026-08-04",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "For-time pieces score CALORIES now \u2014 the rower counts them for you. Smooth is fast.",
+   "formCue": "For-time pieces score CALORIES now — the rower counts them for you. Smooth is fast.",
    "notes": "Engine intervals, pec-safe. New scoring convention: for-time = calories.",
    "blocks": [
     {
@@ -306,7 +306,7 @@
     },
     {
      "id": "a",
-     "name": "Row intervals \u2014 for calories",
+     "name": "Row intervals — for calories",
      "detail": "5 rounds: 3 min row for MAX CALORIES + 10 goblet squats + 10 KB swings between rounds. Enter TOTAL calories across all 5. Rest 90s between rounds. FILM round 3 side-on.",
      "type": "timed",
      "metric": "cal",
@@ -330,17 +330,17 @@
   },
   {
    "id": "s9",
-   "phase": "Phase 1 \u00b7 Session 9 (Hypertrophy \u2014 legs B)",
+   "phase": "Phase 2 · Session 9 (Hypertrophy A — lower + pull)",
    "date": "2026-08-05",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "Chest tall, break knees and hips together, sit between your feet.",
-   "notes": "Hyp lower. Loads by feel per pec caution \u2014 pick weights that make the target reps hard at 0-3 RIR.",
+   "formCue": "Control the way down about 3 seconds, drive up fast. Full depth beats extra weight.",
+   "notes": "HYP A. Stimulus: heavy-ish lower + back. 55-70 min. SCALE TEST: if set 1 of belt squat doesn't leave 1-2 reps in the tank at the target reps, the load is wrong — fix it on set 2. Compounds 1-3 RIR, isolations 0-1 RIR. Score = loads. PEC GATE: nothing here loads the pec. Finishing superset keeps every muscle at 2x/week without adding session time.",
    "blocks": [
     {
      "id": "w",
      "name": "Correctives warm-up",
-     "detail": "Ankle rocks 2x30s/side + t-spine ext 2x10",
+     "detail": "Ankle rocks 2x30s/side, t-spine extensions 2x10, band pull-aparts 2x15. Then 2 ramp sets on the first lift.",
      "type": "check",
      "sets": 1,
      "targetReps": null,
@@ -350,7 +350,262 @@
     {
      "id": "a",
      "name": "Trap-bar deadlift",
-     "detail": "4 x 8, work up by feel to hard-but-crisp (0-3 RIR). Snap a photo of the loaded bar and I'll log the exact kg/lb.",
+     "detail": "4 x 6-8 @ 2 RIR. Work up to a hard-but-crisp top set, then hold that load. Rest 2-3 min — rest long enough that reps don't collapse. Progress: add reps to 8 across all sets, then add load. FILM set 3 side-on.",
+     "type": "sets",
+     "sets": 4,
+     "targetReps": 8,
+     "targetWeight": null,
+     "film": true
+    },
+    {
+     "id": "b",
+     "name": "Belt squat (Hyper Pro)",
+     "detail": "3 x 10-12 @ 1-2 RIR. Full depth, knees track over toes. Rest 2 min. Pec-free loaded squatting.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "c",
+     "name": "Leg extension (leg developer)",
+     "detail": "3 x 12-15 @ 0-1 RIR, last set to failure. Rest 60-90s. This is the rectus femoris work squats do NOT cover — don't skip it.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "d",
+     "name": "Weighted pull-up / chin-up",
+     "detail": "4 x 6-8 @ 2 RIR. Add load once you clear 8 clean. Full hang each rep. Rest 2 min.",
+     "type": "sets",
+     "sets": 4,
+     "targetReps": 8,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "e",
+     "name": "Chest-supported incline DB row",
+     "detail": "3 x 10-12 @ 1 RIR. Chest stays on the bench, full stretch at the bottom. Rest 90s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "f",
+     "name": "DB lateral raise",
+     "detail": "3 x 12-15 @ 0-1 RIR. Lean away slightly. Last set: partials past failure. Rest 60s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "g",
+     "name": "Ring hanging leg raise",
+     "detail": "3 x 10-12, controlled down. Rest 60s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "h",
+     "name": "Superset: calf raise + overhead triceps extension",
+     "detail": "3 rounds, back to back, minimal rest between the pair, 90s after each round. Calf raise 12-15 off a plate (full stretch, 1s pause at the bottom) THEN overhead DB/EZ extension 10-12 @ 0-1 RIR (full stretch behind the head). Log the calf load here; note the triceps load in the wrap-up.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "phase": "Phase 2 · Session 10 (Engine B — row intervals)",
+   "date": "2026-08-06",
+   "place": "Home gym",
+   "time": "after work",
+   "formCue": "Hold the split. If it slips more than 3 seconds, you went out too hot.",
+   "notes": "ENGINE, placed the day AFTER heavy legs on purpose — never before. Stimulus: hard repeatable intervals, ~18 min of work. SCALE TEST: pick a pace you can HOLD for all 5 — if round 4 falls apart, you paced it wrong, not trained it wrong. Score = TOTAL calories. Rower/carry only: no pressing, no dips (pec gate).",
+   "blocks": [
+    {
+     "id": "w",
+     "name": "Correctives warm-up",
+     "detail": "Ankle rocks 2x30s/side, t-spine extensions 2x10, band pull-aparts 2x15. Then 2 ramp sets on the first lift.",
+     "type": "check",
+     "sets": 1,
+     "targetReps": null,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "a",
+     "name": "Row intervals — max calories",
+     "detail": "5 rounds: row 3 min HARD for calories, rest 90s. Enter TOTAL calories across all 5 rounds. Target: rounds 1 and 5 within 3 cal of each other. FILM round 2 side-on for the catch.",
+     "type": "timed",
+     "sets": 1,
+     "targetReps": null,
+     "targetWeight": null,
+     "film": true,
+     "metric": "cal"
+    },
+    {
+     "id": "b",
+     "name": "Farmer carry",
+     "detail": "4 x 40yd heavy, tall posture, rest 60s. Grip and trunk — no shoulder loading.",
+     "type": "work",
+     "sets": 4,
+     "targetReps": null,
+     "targetWeight": null,
+     "film": false,
+     "rest": 60
+    },
+    {
+     "id": "c",
+     "name": "Back extension (Hyper Pro)",
+     "detail": "3 x 12-15, slow, squeeze at the top. Rest 60s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "phase": "Phase 2 · Session 11 (Hypertrophy B — posterior + arms)",
+   "date": "2026-08-07",
+   "place": "Home gym",
+   "time": "after work",
+   "formCue": "On the RDL: push the hips back, feel the hamstrings load. Stop when your back would round, not when the bar hits the floor.",
+   "notes": "HYP B. Stimulus: hinge + knee flexion + arms. 55-70 min. SCALE TEST: on the leg curl, the last 2 reps of set 3 should be genuinely hard. Compounds 1-3 RIR, isolations 0-1 RIR. Score = loads. Overhead triceps work is deliberate — it grows the long head ~1.5x what pushdowns do, and it's pec-safe. Finishing superset keeps every muscle at 2x/week without adding session time.",
+   "blocks": [
+    {
+     "id": "w",
+     "name": "Correctives warm-up",
+     "detail": "Ankle rocks 2x30s/side, t-spine extensions 2x10, band pull-aparts 2x15. Then 2 ramp sets on the first lift.",
+     "type": "check",
+     "sets": 1,
+     "targetReps": null,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "a",
+     "name": "Barbell RDL",
+     "detail": "4 x 8-10 @ 2 RIR. Slow 3s lowering, hips back, soft knees. Rest 2-3 min. Progress reps to 10 before adding load. FILM set 3 side-on.",
+     "type": "sets",
+     "sets": 4,
+     "targetReps": 10,
+     "targetWeight": null,
+     "film": true
+    },
+    {
+     "id": "b",
+     "name": "Leg curl (leg developer)",
+     "detail": "3 x 10-12 @ 0-1 RIR. This covers the hamstring head RDLs miss — non-optional. Rest 90s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "c",
+     "name": "Bulgarian split squat",
+     "detail": "3 x 10-12 per leg @ 1-2 RIR. Front foot flat, long stride, deep. DBs at your sides. Rest 90s between legs.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "d",
+     "name": "TRX / ring row",
+     "detail": "3 x 12-15 @ 1 RIR. Feet forward to make it harder. Full protraction at the bottom, squeeze at the top. Rest 90s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "e",
+     "name": "Overhead DB or EZ triceps extension",
+     "detail": "3 x 10-12 @ 0-1 RIR. Seated, elbows in, full stretch behind the head. Rest 60-90s. Best-evidenced triceps pick there is.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "f",
+     "name": "Incline DB curl",
+     "detail": "3 x 10-12 @ 0-1 RIR. Bench at 45deg, arms hanging behind you, full stretch. Rest 60s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "g",
+     "name": "Standing calf raise",
+     "detail": "3 x 12-15 off a plate, full stretch at the bottom, pause 1s. Last set: bottom-half partials to failure. Rest 60s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "h",
+     "name": "Superset: lateral raise + ab wheel",
+     "detail": "3 rounds, back to back, 90s after each round. DB lateral raise 12-15 @ 0-1 RIR (lean away slightly, partials past failure on the last set) THEN ab wheel or ring fallout 8-12 (ribs down, slow). Log the lateral raise load here.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    }
+   ]
+  },
+  {
+   "id": "s12",
+   "phase": "Phase 2 · Session 12 (Hypertrophy A2 — progressed)",
+   "date": "2026-08-08",
+   "place": "Home gym",
+   "time": "after work",
+   "formCue": "Same lifts as Session 9. Beat last time by reps or load — that is the whole job today.",
+   "notes": "HYP A repeat, week 2 of the block. PROGRESSION: hit the top of each rep range at the SAME load you used in s9, then add load next time. One extra set on lateral raises (volume ramp). Compare to s9 — the app shows your logged numbers. Score = loads. Finishing superset keeps every muscle at 2x/week without adding session time.",
+   "blocks": [
+    {
+     "id": "w",
+     "name": "Correctives warm-up",
+     "detail": "Ankle rocks 2x30s/side, t-spine extensions 2x10, band pull-aparts 2x15. Then 2 ramp sets on the first lift.",
+     "type": "check",
+     "sets": 1,
+     "targetReps": null,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "a",
+     "name": "Trap-bar deadlift",
+     "detail": "4 x 6-8 @ 2 RIR. Match or beat s9 — same load for more reps, or more load. Rest 2-3 min.",
      "type": "sets",
      "sets": 4,
      "targetReps": 8,
@@ -360,7 +615,7 @@
     {
      "id": "b",
      "name": "Belt squat (Hyper Pro)",
-     "detail": "3 x 12 @ 0-2 RIR \u2014 pec-free leg volume",
+     "detail": "3 x 10-12 @ 1-2 RIR. Beat s9's reps at the same load. Rest 2 min.",
      "type": "sets",
      "sets": 3,
      "targetReps": 12,
@@ -369,29 +624,79 @@
     },
     {
      "id": "c",
-     "name": "Back extension + band pull-aparts",
-     "detail": "3 rounds: 12 + 15",
+     "name": "Leg extension (leg developer)",
+     "detail": "3 x 12-15 @ 0-1 RIR, last set to failure. Rest 60-90s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "d",
+     "name": "Weighted pull-up / chin-up",
+     "detail": "4 x 6-8 @ 2 RIR. Rest 2 min. FILM set 2 — checking the bottom position.",
+     "type": "sets",
+     "sets": 4,
+     "targetReps": 8,
+     "targetWeight": null,
+     "film": true
+    },
+    {
+     "id": "e",
+     "name": "Chest-supported incline DB row",
+     "detail": "3 x 10-12 @ 1 RIR. Rest 90s.",
      "type": "sets",
      "sets": 3,
      "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "f",
+     "name": "DB lateral raise",
+     "detail": "4 x 12-15 @ 0-1 RIR (one more set than s9). Rest 60s.",
+     "type": "sets",
+     "sets": 4,
+     "targetReps": 15,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "g",
+     "name": "Ring hanging leg raise",
+     "detail": "3 x 10-12. Rest 60s.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 12,
+     "targetWeight": null,
+     "film": false
+    },
+    {
+     "id": "h",
+     "name": "Superset: calf raise + overhead triceps extension",
+     "detail": "3 rounds, back to back, minimal rest between the pair, 90s after each round. Calf raise 12-15 off a plate (full stretch, 1s pause at the bottom) THEN overhead DB/EZ extension 10-12 @ 0-1 RIR (full stretch behind the head). Log the calf load here; note the triceps load in the wrap-up. Beat s9 by reps at the same loads.",
+     "type": "sets",
+     "sets": 3,
+     "targetReps": 15,
      "targetWeight": null,
      "film": false
     }
    ]
   },
   {
-   "id": "s10",
-   "phase": "Phase 1 \u00b7 Session 10 (Hypertrophy \u2014 pull B)",
-   "date": "2026-08-06",
+   "id": "s13",
+   "phase": "Phase 2 · Session 13 (Engine C — mixed couplet)",
+   "date": "2026-08-09",
    "place": "Home gym",
    "time": "after work",
-   "formCue": "Row: elbow to the hip, no torso twist. Lengthened partials at the bottom when full reps run out.",
-   "notes": "Hyp pull, pec-safe. Myoreps on the finisher per the RP template.",
+   "formCue": "This one is meant to be continuous. Pick a KB you can swing 15 unbroken when fresh.",
+   "notes": "ENGINE, after the heavy lower day. Stimulus: 12-15 min continuous couplet, steady pace with limited breaks — not a sprint. SCALE TEST: if you have to break the swings in round 1, the bell is too heavy or the reps too many. Score = TOTAL ROUNDS + reps. Pec-safe: no pressing, no dips.",
    "blocks": [
     {
      "id": "w",
      "name": "Correctives warm-up",
-     "detail": "Ankle rocks 2x30s/side + t-spine ext 2x10",
+     "detail": "Ankle rocks 2x30s/side, t-spine extensions 2x10, band pull-aparts 2x15. Then 2 ramp sets on the first lift.",
      "type": "check",
      "sets": 1,
      "targetReps": null,
@@ -400,35 +705,38 @@
     },
     {
      "id": "a",
-     "name": "1-arm DB row",
-     "detail": "4 x 10/side @ 0-3 RIR, heavier than last time. FILM top set side-on.",
-     "type": "sets",
-     "sets": 4,
-     "targetReps": 10,
+     "name": "AMRAP 14 — row / swing / step-up",
+     "detail": "As many rounds as possible in 14 min: row 250m + 15 KB swings + 20 box step-ups (10/leg, 20in). Enter ROUNDS completed (count a partial round as a decimal, e.g. 5.5). Keep moving — limited breaks.",
+     "type": "timed",
+     "sets": 1,
+     "targetReps": null,
      "targetWeight": null,
-     "film": true
+     "film": false,
+     "metric": "min"
     },
     {
      "id": "b",
-     "name": "Pull-ups (band-assist as needed)",
-     "detail": "4 sets, 2-3 shy of failure; 3s lowers if needed",
-     "type": "sets",
-     "sets": 4,
+     "name": "Suitcase carry",
+     "detail": "3 x 40yd per side, heavy, tall. Rest 60s.",
+     "type": "work",
+     "sets": 3,
      "targetReps": null,
      "targetWeight": null,
-     "film": false
+     "film": false,
+     "rest": 60
     },
     {
      "id": "c",
-     "name": "Band pull-apart myoreps",
-     "detail": "1 x 20, then 4 mini-sets of 5 with 15s rests",
+     "name": "Ab wheel / ring fallout",
+     "detail": "3 x 8-12, slow, ribs down. Rest 60s.",
      "type": "sets",
-     "sets": 5,
-     "targetReps": null,
+     "sets": 3,
+     "targetReps": 12,
      "targetWeight": null,
      "film": false
     }
    ]
   }
- ]
+ ],
+ "updated": "2026-08-04"
 }
