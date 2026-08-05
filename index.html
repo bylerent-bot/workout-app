@@ -352,7 +352,9 @@ function sv(k,v){localStorage.setItem(k,JSON.stringify(v))}
 let restoreTried=false;
 async function restoreFromServer(){
   const c=cfg();
-  if(!c||restoreTried||Object.keys(log).length)return;
+  // trigger = NO completed session locally (a merely-revealed one still means fresh install);
+  // per-sid, a local entry only yields to a COMPLETED server record so in-progress work survives
+  if(!c||restoreTried||Object.values(log).some(v=>v&&v.completed))return;
   restoreTried=true;
   let b;
   try{
@@ -363,7 +365,9 @@ async function restoreFromServer(){
   const entries=(b.logs||[]).slice().sort((a,x)=>a.key<x.key?-1:1); // key carries the ts — later wins
   for(const e of entries){
     const o=e.log||{}, inner=o.log||{};
-    if(o.type==='session-log'&&o.sessionId&&inner&&typeof inner==='object'){log[o.sessionId]=inner}
+    if(o.type==='session-log'&&o.sessionId&&inner&&typeof inner==='object'){
+      if(!log[o.sessionId]||inner.completed)log[o.sessionId]=inner;
+    }
     else if(inner.type==='nutrition'&&inner.date){sv('fuel:'+inner.date,{g:inner.protein_g||0,items:inner.items||[]})}
     else if(inner.type==='adhoc-session'&&inner.date){
       const k='adhoc:'+inner.date,list=j(k,[]),t=(inner.what||'')+'|'+(inner.minutes||0);
