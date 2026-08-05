@@ -311,8 +311,10 @@ export default {
     // localStorage — history lives here. Own lane only, no media, no cross-player reads.
     if (req.method === 'GET' && path === '/logs') {
       await dailyReconcile(env);
+      const after = url.searchParams.get('after') || ''; // incremental merge (app launch); empty = full restore
       const out = [];
       for (const name of await idxGet(env, pid === 'patrick' ? 'log' : 'log:' + pid)) {
+        if (after && name <= after) continue;
         const v = await env.LOGS.get(name);
         if (v) out.push({ key: name, log: JSON.parse(v) });
       }

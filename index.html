@@ -377,6 +377,34 @@ async function restoreFromServer(){
   if(Object.keys(log).length)store.save(log);
 }
 
+/* the coach can log ad-hoc work SERVER-side (e.g. Patrick chats a class screenshot and the
+   coach posts the entry) — every launch merges new server adhoc entries so the phone
+   knows about them and scores today. Cursor-incremental; dedupe matches logAdhoc's t key. */
+async function mergeServerAdhoc(){
+  const c=cfg();if(!c)return;
+  const cur=localStorage.getItem('logsCursor')||'';
+  let b;
+  try{
+    const r=await fetch(c[0]+'/logs?after='+encodeURIComponent(cur),{headers:{'Authorization':'Bearer '+c[1]}});
+    if(!r.ok)return;
+    b=await r.json();
+  }catch(e){return}
+  const entries=(b.logs||[]).slice().sort((a,x)=>a.key<x.key?-1:1);
+  let scoreToday=false;
+  for(const e of entries){
+    const inner=((e.log||{}).log)||{};
+    if(inner.type==='adhoc-session'&&inner.date){
+      const k='adhoc:'+inner.date,list=j(k,[]),t=(inner.what||'')+'|'+(inner.minutes||0);
+      if(!list.some(a=>a.t===t)){
+        list.push({min:inner.minutes||0,what:inner.what||'',t,synced:true});sv(k,list);
+        if(inner.date===today())scoreToday=true;
+      }
+    }
+  }
+  if(entries.length)localStorage.setItem('logsCursor',entries[entries.length-1].key);
+  if(scoreToday)recomputeToday();
+}
+
 let loadFailed=false, awaitingCoach=false;
 async function init(){
   loadFailed=false;
@@ -403,6 +431,7 @@ async function init(){
   if(sess)ALLSESS=sess;
   else{ALLSESS=[]; if(cfg()&&!me().admin)awaitingCoach=true; else loadFailed=true}
   await restoreFromServer();
+  await mergeServerAdhoc();
   S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
   flushOutbox();
   route();
