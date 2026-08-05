@@ -863,7 +863,7 @@ function loadoutStamp(vol){
   const top=L.items[0];
   return `<div class="lreceipt">
     <div class="object"><img src="assets/objects/${top.o[0]}.svg" alt="Pixel art ${esc(top.o[1].toLowerCase())}">
-      <div class="equiv">You moved<strong>${top.n} ${esc(top.n===1?top.o[1]:top.o[2])}</strong><span class="exact">${esc(both(vol))} TOTAL IRON</span></div></div>
+      <div class="equiv">You lifted<strong>${top.n} ${esc(top.n===1?top.o[1]:top.o[2])}</strong><span class="exact">${esc(both(vol))} TOTAL IRON</span></div></div>
     <div class="lchips">${L.items.map(x=>`<span><b>${x.n}</b> ${esc(x.n===1?x.o[1]:x.o[2])}</span>`).join('')}
       ${L.leftover>40?`<span><b>${L.leftover}</b> LB LEFT OVER</span>`:''}</div></div>`;
 }
@@ -999,7 +999,7 @@ function renderHome(){
       <div><strong>${haul?both(haul.vol).split(' · ')[0]:'—'}</strong><small>LAST HAUL</small></div></div>
     ${haul&&haul.loadout?`<div class="lreceipt"><div class="object">
       <img src="assets/objects/${haul.loadout.items[0].o[0]}.svg" alt="Pixel art ${esc(haul.loadout.items[0].o[1].toLowerCase())}">
-      <div class="equiv">Last session you moved<strong>${haul.loadout.items[0].n} ${esc(haul.loadout.items[0].n===1?haul.loadout.items[0].o[1]:haul.loadout.items[0].o[2])}</strong>
+      <div class="equiv">Last session you lifted<strong>${haul.loadout.items[0].n} ${esc(haul.loadout.items[0].n===1?haul.loadout.items[0].o[1]:haul.loadout.items[0].o[2])}</strong>
       <span class="exact">${esc(both(haul.vol))}</span></div></div></div>`:''}
     <button class="btn primary" style="margin-top:16px" onclick="view='today';route()">${sessionReady?'TODAY\'S SESSION →':'TRAIN'}</button>
     <button class="btn small" onclick="view='rivalry';route()">FULL SCOREBOARD</button>`;
