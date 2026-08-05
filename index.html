@@ -303,6 +303,8 @@
   try{
     const sc=await import('./game/scoring.js'); window.SCORING=sc;
     const bm=await import('./game/benchmarks.js'); window.BENCHTALK=bm;
+    // init() can beat this import (merged server adhoc waits on SCORING) — recompute now it's here
+    if(window.recomputeToday)window.recomputeToday();
   }catch(e){/* offline first launch before sw precache — game math waits for next open */}
 </script>
 <script>
