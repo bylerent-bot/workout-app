@@ -1020,7 +1020,7 @@ async function renderRivalry(){
       h+=`<div class="${isBoss?'marquee':'issuer'}">
         ${isBoss?`<div class="kicker">COACH-ISSUED BOSS BATTLE</div><h1>${esc(ch.title)}</h1>`:`<div class="danger">${esc((ch.by||'?').toUpperCase())} CALLED YOU OUT</div><div class="head" style="font-size:28px;margin:6px 0">${esc(ch.title)}</div>`}
         ${ch.desc?`<div style="color:var(--dim);font-size:14px">${esc(ch.desc)}</div>`:''}
-        <div class="label" style="margin-top:8px;color:var(--gold)">${isBoss?`${ch.wager||50}-PT BOUNTY`:`${ch.wager||50} PTS A HEAD — WINNER TAKES THE POT`}</div>
+        <div class="label" style="margin-top:8px;color:var(--gold)">${isBoss?`${ch.wager||50}-PT BOUNTY · HALF TO 2ND`:`WIN ${ch.wager||50} · 2ND TAKES ${Math.round((ch.wager||50)/2)} · ONLY ${esc((ch.by||'?').toUpperCase())} CAN LOSE — FREE MONEY, ANSWER IT`}</div>
         ${ch.expiresDay?`<div class="label" style="margin-top:8px">ANSWER BY ${esc(ch.expiresDay)}</div>`:''}
         ${mine?`<div class="good" style="margin-top:10px">YOUR RESULT IS IN: ${esc(mine.result)} ✓</div>`
           :`<button class="btn ${isBoss?'boss':'rival'}" style="margin-top:14px" onclick="answerChallenge('${esc(ch.id)}')">${isBoss?'ENTER BATTLE':'ANSWER IT'}</button>`}
@@ -1044,7 +1044,9 @@ async function renderRivalry(){
         :e.type==='challenge-result'?`${e.name} ANSWERED “${e.title}”: ${e.result}`
         :e.type==='bonus'?`COACH GAVE ${e.name} +${e.coach} — NOW ${e.total}`
         :e.type==='week'?`${(e.winners||[e.name]).join(' + ')} TOOK THE WEEK WITH ${e.total}`
-        :e.type==='challenge-close'?(e.winner?`“${e.title}” SETTLED — ${e.winner} TAKES THE POT +${e.pot??e.pts??50}${e.losers&&e.losers.length?`. ${e.losers.join(' + ')} PAID −${e.wager} EACH`:e.loser?`. ${e.loser} CALLED IT AND ATE −${e.loss}`:''}`:`“${e.title}” SETTLED. NO WINNER, EVERYBODY KEEPS THEIR MONEY.`)
+        :e.type==='challenge-close'?(e.winner
+          ?`“${e.title}” SETTLED — ${e.winner} TAKES +${e.wager??e.pot??50}${e.second?`, ${e.second} ${e.secondPts?`+${e.secondPts} FOR 2ND`:'PLACED 2ND'}`:''}${e.issuerDelta<0?`. ${e.issuer} CALLED IT AND ATE ${e.issuerDelta}`:''}`
+          :`“${e.title}” SETTLED. NO WINNER, BET'S OFF.`)
         :`${e.name} DID SOMETHING`;
       return `<article class="event" style="--player:${col}"><b>${esc(line.toUpperCase())}</b><small>${esc(when)}</small></article>`;
     }).join('')}</section>`:`<div class="card" style="padding:14px"><div class="label">Dead quiet. Somebody do something.</div></div>`;
@@ -1071,13 +1073,16 @@ async function throwDown(){
 async function settleChallenge(id){
   const sb=window.SB;
   const names=(sb&&sb.board||[]).map(p=>p.pid).join(' / ');
-  const winner=prompt(`Who took it? (${names} — blank = no winner)`);
+  const winner=prompt(`Who took it? (${names} — blank = no winner, bet's off)`);
   if(winner===null)return;
+  let second=null;
+  if(winner.trim())second=prompt(`Who placed 2nd? Takes half the wager. (${names} — blank = nobody)`);
+  if(second===null&&winner.trim())return;
   const c=cfg();if(!c)return;
   const [endpoint,token]=c;
   try{
     const r=await fetch(endpoint+'/challenge/close',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
-      body:JSON.stringify({id,winner:winner.trim().toLowerCase()||null})});
+      body:JSON.stringify({id,winner:winner.trim().toLowerCase()||null,second:(second||'').trim().toLowerCase()||null})});
     if(!r.ok)throw new Error();
     toastMsg('SETTLED.');renderRivalry();
   }catch(e){alert('Failed to settle — try again with signal.')}
