@@ -189,13 +189,15 @@
     box-shadow:inset -2px -2px 0 rgba(255,255,255,.45), inset 2px 2px 0 rgba(0,0,0,.35)}
   .warn{color:#FF8A78; font-family:var(--fhead); font-weight:900; font-size:14px; letter-spacing:.04em; text-transform:uppercase; margin-top:8px; text-shadow:2px 2px 0 #000}
   .good{color:#9BE334; font-family:var(--fhead); font-weight:900; font-size:14px; letter-spacing:.04em; text-transform:uppercase; margin-top:8px; text-shadow:2px 2px 0 #000}
-  /* THE WORDMARK — heavy italic, gold gradient, thick outline: the fighting-game logo read */
-  .logo{font-family:var(--fhead); font-weight:900; font-style:italic; font-size:52px; line-height:.85;
-    text-transform:uppercase; letter-spacing:-.01em; margin:0; padding:2px 0;
-    background:linear-gradient(180deg,#FFF7C2 0%,#FFD84D 38%,#F5A81C 62%,#C9540C 100%);
-    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
-    filter:drop-shadow(3px 0 0 #000) drop-shadow(-3px 0 0 #000) drop-shadow(0 3px 0 #000) drop-shadow(0 -3px 0 #000) drop-shadow(4px 5px 0 rgba(0,0,0,.55))}
-  .logo span{display:block; font-size:.42em; letter-spacing:.24em; -webkit-text-fill-color:var(--bone); background:none; margin-top:6px}
+  /* THE WORDMARK — one line, BAR cream / FIGHT gold, heavy italic with a hard black outline,
+     sitting on a barbell rule (Patrick's call 8/04). Solid colors, not gradient-clipped,
+     so text-shadow can do the outline here. */
+  .logo{font-family:var(--fhead); font-weight:900; font-style:italic; font-size:clamp(38px,13vw,54px); line-height:.9;
+    text-transform:uppercase; letter-spacing:-.01em; margin:0; color:var(--bone); white-space:nowrap;
+    text-shadow:3px 0 0 #000,-3px 0 0 #000,0 3px 0 #000,0 -3px 0 #000,2px 2px 0 #000,-2px 2px 0 #000,2px -2px 0 #000,-2px -2px 0 #000,6px 7px 0 rgba(0,0,0,.5)}
+  .logo .g{color:var(--volt)}
+  .bell{display:block; width:min(86%,320px); margin:10px auto 0; height:auto;
+    filter:drop-shadow(3px 4px 0 rgba(0,0,0,.55))}
   .cuebox{border-left:3px solid var(--ice); background:var(--card); padding:12px 14px; margin-top:12px; font-size:14px}
   .cuebox b{display:block; font-family:var(--fhead); font-weight:700; font-size:11px; letter-spacing:.12em; color:var(--ice); margin-bottom:6px}
   /* ---- game surfaces ---- */
@@ -957,6 +959,25 @@ function postScore(ds){
   sv('dayscores',scores);
   queuePost('score',{day:ds.day,score:scores[ds.day]},null,'/score');
 }
+/* the wordmark's rule IS a barbell — loaded bar, gold plates, hard black outline to match the skin */
+function barbellSVG(){
+  const P=(x,w,h)=>`<rect x="${x}" y="${28-h/2}" width="${w}" height="${h}" rx="2" fill="url(#pl)" stroke="#000" stroke-width="3"/>`;
+  return `<svg class="bell" viewBox="0 0 320 56" role="img" aria-label="Loaded barbell">
+    <defs>
+      <linearGradient id="pl" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#FFF3A8"/><stop offset=".45" stop-color="#FFC523"/><stop offset="1" stop-color="#D9660F"/>
+      </linearGradient>
+      <linearGradient id="br" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#F2F6FF"/><stop offset=".5" stop-color="#A9B4D6"/><stop offset="1" stop-color="#5A6690"/>
+      </linearGradient>
+    </defs>
+    <rect x="6" y="23" width="308" height="10" rx="2" fill="url(#br)" stroke="#000" stroke-width="3"/>
+    ${P(30,9,22)}${P(43,11,34)}${P(58,15,48)}
+    ${P(247,15,48)}${P(266,11,34)}${P(281,9,22)}
+    <rect x="76" y="20" width="7" height="16" fill="#2E3555" stroke="#000" stroke-width="2"/>
+    <rect x="237" y="20" width="7" height="16" fill="#2E3555" stroke="#000" stroke-width="2"/>
+  </svg>`;
+}
 /* ---------- HOME — the marquee front page ---------- */
 function lastHaul(){ // most recent completed session's volume + its loadout object
   let best=null;
@@ -990,8 +1011,9 @@ function renderHome(){
   const sessionReady=S&&!(log[S.id]&&log[S.id].completed);
   $('app').innerHTML=connectBanner()+`
     <div style="text-align:center;padding:10px 0 16px">
-      <div class="logo">BAR<br>FIGHT</div>
-      <div class="label" style="margin-top:10px">P1 · ${esc((j('sblast',{}).meName||'PATRICK').toUpperCase())}</div></div>
+      <div class="logo">BAR <span class="g">FIGHT</span></div>
+      ${barbellSVG()}
+      <div class="label" style="margin-top:12px">P1 · ${esc((j('sblast',{}).meName||'PATRICK').toUpperCase())}</div></div>
     ${rankHtml}
     <div class="scoregrid">
       <div><strong class="${todayScore?'gain':''}">${todayScore||'—'}</strong><small>TODAY</small></div>
