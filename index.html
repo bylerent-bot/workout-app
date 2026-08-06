@@ -1183,6 +1183,20 @@ function renderHome(){
       <div class="pname">RANK ${myIdx+1}<small>${board.length>1?(myIdx===0?`${esc((rival.name||'').toUpperCase())} IS ${(me.week||0)-(rival.week||0)} BACK`:`${esc((rival.name||'').toUpperCase())} LEADS BY ${(rival.week||0)-(me.week||0)}`):'NO OPPONENTS YET'}</small></div>
       <div class="pts">${me.week||0}<small>THIS WEEK</small></div></div></section>`;
   }
+  // THE FIELD — every rival's day so far, split by how they earned it (know what it takes to beat them)
+  let fieldHtml='';
+  if(cachedSB&&cachedSB.board&&cachedSB.board.length>1){
+    const mePid=cachedSB.mePid||'patrick';
+    const rows=cachedSB.board.filter(p=>p.pid!==mePid).map(p=>{
+      const parts=p.todayParts||{}, adj=p.todayAdj||{};
+      const work=(parts.session||0)+(parts.output||0);
+      const fuel=parts.food||0;
+      const bonus=(parts.coach||0)+(parts.whoop||0)+(adj.coach||0)+(adj.whoop||0)+(adj.challenge||0);
+      return `<div class="statrow"><span><strong>${esc((p.name||p.pid).toUpperCase())}</strong> · ${p.today||0} TODAY</span>
+        <span class="label" style="font-size:11px">WORK ${work} · FUEL ${fuel} · BONUS ${bonus} · WK ${p.week||0}</span></div>`;
+    }).join('');
+    fieldHtml=`<div class="card" style="padding:12px 16px;margin-top:12px"><div class="label">THE FIELD — TODAY</div>${rows}</div>`;
+  }
   const sessionReady=S&&!(log[S.id]&&log[S.id].completed);
   $('app').innerHTML=connectBanner()+`
     <div style="text-align:center;padding:10px 0 16px">
@@ -1190,6 +1204,7 @@ function renderHome(){
       ${barbellSVG()}
       <div class="label" style="margin-top:12px">P1 · ${esc((j('sblast',{}).meName||'PATRICK').toUpperCase())}</div></div>
     ${rankHtml}
+    ${fieldHtml}
     <div class="scoregrid">
       <div><strong class="${todayScore?'gain':''}">${todayScore||'—'}</strong><small>TODAY</small></div>
       <div><strong>${wk}/${weekTarget()}</strong><small>SESSIONS THIS WK</small></div>

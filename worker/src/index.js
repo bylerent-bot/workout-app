@@ -432,6 +432,8 @@ export default {
         board.push({
           pid: p, name: players[p]?.name || p,
           today: scores[ref]?.total || 0,
+          todayParts: scores[ref]?.parts || null, // WORK/FUEL/BONUS breakdown for the HOME field card
+          todayAdj: scores[ref]?.adj || null,
           week: sum(week),
           month: Object.entries(scores).filter(([d]) => d.startsWith(month)).reduce((s, [, v]) => s + (v.total || 0), 0),
           wl: wl[p] || { w: 0, l: 0 },
