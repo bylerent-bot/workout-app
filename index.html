@@ -331,8 +331,10 @@ if(location.hash.startsWith('#cfg=')){
   history.replaceState(null,'',location.pathname);
 }
 function cfg(){const c=localStorage.getItem('synccfg');return c?c.split('|'):null}
-/* player identity — cached at connect; defaults keep a not-yet-refreshed install on Patrick's plan */
-function me(){return j('me',{pid:'patrick',admin:true,name:'Patrick',profile:{}})}
+/* player identity — cached at connect. An UNCONNECTED not-yet-refreshed install defaults to
+   Patrick's plan; a CONNECTED one with no cached identity (fresh #cfg link, /me still 401ing
+   on KV lag) must NOT default to admin — that handed friends Patrick's program + loads. */
+function me(){return j('me',cfg()?{pid:'',admin:false,name:'',profile:{}}:{pid:'patrick',admin:true,name:'Patrick',profile:{}})}
 function prof(){return {foodTarget:140,foodFloor:100,age:43,...(me().profile||{})}}
 // non-admin uploads live under p/<pid>/ on R2 — build the REAL key client-side so
 // feedback lookups (meals, suggest, clips, gear) match what the coach loop sees
@@ -361,9 +363,9 @@ async function restoreFromServer(){
   let b;
   try{
     const r=await fetch(c[0]+'/logs',{headers:{'Authorization':'Bearer '+c[1]}});
-    if(!r.ok)return;
+    if(!r.ok){restoreTried=false;return} // failed fetch must not latch — retry next init
     b=await r.json();
-  }catch(e){return}
+  }catch(e){restoreTried=false;return}
   const entries=(b.logs||[]).slice().sort((a,x)=>a.key<x.key?-1:1); // key carries the ts — later wins
   for(const e of entries){
     const o=e.log||{}, inner=o.log||{};
@@ -434,9 +436,40 @@ async function init(){
   else{ALLSESS=[]; if(cfg()&&!me().admin)awaitingCoach=true; else loadFailed=true}
   await restoreFromServer();
   await mergeServerAdhoc();
-  S=ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
+  S=me().admin?(ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null):pickPlayerSession();
   flushOutbox();
   route();
+}
+/* players get a FRESH workout each local day (Patrick's call, 8/7 — Mike): the day's pick
+   holds all day (completed → DONE screen stays up); an unfinished session rolls to the
+   BACK of the line at the next day instead of repeating. Admin keeps roll-forward. */
+function pickPlayerSession(){
+  // identity unresolved / intake pending: show first-uncompleted, burn no rotation slot
+  if(obNeeded())return ALLSESS.find(s=>!(log[s.id]&&log[s.id].completed))||null;
+  // ONE programmed session a day: anything completed TODAY (local) holds the DONE screen,
+  // whatever the offer says — covers midnight finishes, reinstalls, queue republishes
+  const done=ALLSESS.find(s=>{const L=log[s.id];return L&&L.completed&&L.completedAt&&localDate(L.completedAt)===today()});
+  if(done){sv('offer',{d:today(),sid:done.id});return done}
+  const o=j('offer',null);
+  if(o&&o.d===today()){
+    const s=ALLSESS.find(x=>x.id===o.sid);
+    // hold the day's pick — unless a restore revealed it was completed long ago (stale)
+    if(s&&!(log[s.id]&&log[s.id].completed))return s;
+  }
+  const n=ALLSESS.length;
+  if(!n)return null;
+  let start=0;
+  if(o){const i=ALLSESS.findIndex(x=>x.id===o.sid);if(i>=0)start=i+1}
+  for(let k=0;k<n;k++){
+    const s=ALLSESS[(start+k)%n];
+    const L=log[s.id];
+    if(L&&L.completed)continue;
+    // a reveal from a previous day re-seals to PRESS START (logged sets are kept)
+    if(L&&L.revealed&&L.revealedAt&&localDate(L.revealedAt)!==today()){L.revealed=false;store.save(log)}
+    sv('offer',{d:today(),sid:s.id});
+    return s;
+  }
+  return null;
 }
 function tabbar(){
   const t=[['home','Home'],['today','Train'],['fuel','Fuel'],['rivalry','Rivalry'],['vault','Vault']];
@@ -511,7 +544,8 @@ function connect(){
 
 /* ---------- TODAY ---------- */
 function sealCard(kicker,btn){
-  const d=new Date(S.date+'T12:00');
+  // players' rotated pick is for TODAY whatever the session's authored date says
+  const d=me().admin?new Date(S.date+'T12:00'):new Date();
   return `<div class="sealwrap">
     <div class="label">${kicker}</div>
     <div class="seal">
@@ -533,7 +567,7 @@ function render(){
   if(L.completed)return renderDone();
   const idx=ALLSESS.indexOf(S);
   const prev=idx>0?log[ALLSESS[idx-1].id]:null;
-  if(prev&&prev.completedAt&&prev.completedAt.slice(0,10)===today()){
+  if(me().admin&&prev&&prev.completedAt&&prev.completedAt.slice(0,10)===today()){
     app.innerHTML=connectBanner()+fuelStrip()+`<div class="sealwrap">
       <div class="poster num">DONE</div>
       <hr class="rule">
@@ -541,7 +575,7 @@ function render(){
       <p style="color:var(--dim)">Next round unlocks tomorrow. Protein and sleep are the workout now — don't fuck with the recovery.</p></div>`+adhocCard()+requestsCard();
     return;
   }
-  if(!L.revealed && today()<S.date){
+  if(me().admin && !L.revealed && today()<S.date){
     app.innerHTML=connectBanner()+fuelStrip()+sealCard('Sealed','')+adhocCard();
     return;
   }
@@ -788,7 +822,12 @@ async function flushOutbox(depth=0){
   if(depth<1&&outbox().some(x=>x.v>=passStart))await flushOutbox(depth+1);
 }
 addEventListener('online',flushOutbox);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)flushOutbox()});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){
+  flushOutbox();
+  // iOS keeps a suspended PWA alive across midnight — a player resumed on a NEW local day re-picks
+  const o=j('offer',null);
+  if(!me().admin&&o&&o.d!==today())init();
+}});
 let autoT=null;
 function autoSync(){ /* auto-save to the vault pipe ~90s after the last logged set — no button needed */
   clearTimeout(autoT);
